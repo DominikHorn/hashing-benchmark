@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2021-08-03T13:57:32+02:00",
+    "date": "2021-08-03T14:36:45+02:00",
     "host_name": "dominik-ubuntu-vm",
     "executable": "cmake-build-release/benchmarks",
     "num_cpus": 4,
@@ -32,7 +32,7 @@
         "num_sharing": 1
       }
     ],
-    "load_avg": [2.85,1.69,1.06],
+    "load_avg": [0.52,0.46,0.54],
     "library_build_type": "release"
   },
   "benchmarks": [
@@ -45,9 +45,9 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 251703,
-      "real_time": 2.6059963607877953e+03,
-      "cpu_time": 2.5802336086578234e+03,
+      "iterations": 354914,
+      "real_time": 2.0033610818390357e+03,
+      "cpu_time": 1.9929992589754133e+03,
       "time_unit": "ns"
     }
   ]
