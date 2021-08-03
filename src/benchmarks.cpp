@@ -1,7 +1,13 @@
-#include <hashing.hpp>
+#include <benchmark/benchmark.h>
 
-int main(int argc, char* argv[]) {
-  hashing::AquaHash<std::uint64_t> hash;
-  // TODO(dominik): implement
-  return hash(1);
+#include <iostream>
+
+static void BM_SortedArrayRangeLookup(benchmark::State& state) {
+  for (auto _ : state) {
+    std::cout << "hello world" << std::endl;
+  }
 }
+
+BENCHMARK(BM_SortedArrayRangeLookup);
+
+BENCHMARK_MAIN();

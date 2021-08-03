@@ -1,3 +1,0 @@
-[submodule "src/hashing"]
-	path = src/hashing
-	url = git@github.com:DominikHorn/hashing.git

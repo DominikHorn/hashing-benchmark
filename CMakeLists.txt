@@ -21,9 +21,17 @@ else()
 endif()
 
 # ==== Dependencies ====
-include(${PROJECT_SOURCE_DIR}/thirdparty/googlebenchmark.cmake)
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/hashing)
+include(thirdparty/googlebenchmark.cmake)
+include(FetchContent)
+
+FetchContent_Declare(
+  hashing
+  GIT_REPOSITORY git@github.com:DominikHorn/hashing.git
+  GIT_TAG main
+  )
+
+FetchContent_MakeAvailable(hashing)
 
 # ==== Benchmark executable ====
 add_executable(benchmarks src/benchmarks.cpp)
-target_link_libraries(benchmarks PRIVATE hashing ${GOOGLEBENCHMARK_LIBARY})
+target_link_libraries(benchmarks PRIVATE hashing ${GOOGLEBENCHMARK_LIBRARY})

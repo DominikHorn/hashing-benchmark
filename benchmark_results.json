@@ -1,0 +1,54 @@
+{
+  "context": {
+    "date": "2021-08-03T13:57:32+02:00",
+    "host_name": "dominik-ubuntu-vm",
+    "executable": "cmake-build-release/benchmarks",
+    "num_cpus": 4,
+    "mhz_per_cpu": 3400,
+    "cpu_scaling_enabled": false,
+    "caches": [
+      {
+        "type": "Data",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 1
+      },
+      {
+        "type": "Instruction",
+        "level": 1,
+        "size": 32768,
+        "num_sharing": 1
+      },
+      {
+        "type": "Unified",
+        "level": 2,
+        "size": 262144,
+        "num_sharing": 1
+      },
+      {
+        "type": "Unified",
+        "level": 3,
+        "size": 6291456,
+        "num_sharing": 1
+      }
+    ],
+    "load_avg": [2.85,1.69,1.06],
+    "library_build_type": "release"
+  },
+  "benchmarks": [
+    {
+      "name": "BM_SortedArrayRangeLookup",
+      "family_index": 0,
+      "per_family_instance_index": 0,
+      "run_name": "BM_SortedArrayRangeLookup",
+      "run_type": "iteration",
+      "repetitions": 1,
+      "repetition_index": 0,
+      "threads": 1,
+      "iterations": 251703,
+      "real_time": 2.6059963607877953e+03,
+      "cpu_time": 2.5802336086578234e+03,
+      "time_unit": "ns"
+    }
+  ]
+}

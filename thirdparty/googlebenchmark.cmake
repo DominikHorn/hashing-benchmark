@@ -2,7 +2,7 @@ include(ExternalProject)
 find_package(Git REQUIRED)
 
 # library name
-set(GOOGLEBENCHMARK_LIBRARY eh_googlebenchmark)
+set(GOOGLEBENCHMARK_LIBRARY googlebenchmark)
 
 ExternalProject_Add(
         ${GOOGLEBENCHMARK_LIBRARY}_src

@@ -19,7 +19,7 @@ cmake \
   .
 
 # Link compile_commands.json
-ln -fs ${BUILD_DIR}/compile_commands.json compile_commands.json
+ln -fs ${BUILD_DIR}compile_commands.json compile_commands.json
 
 # Build tests code
 cmake \
