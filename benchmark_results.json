@@ -1,6 +1,6 @@
 {
   "context": {
-    "date": "2021-08-05T19:19:55+02:00",
+    "date": "2021-08-05T19:23:26+02:00",
     "host_name": "Dominiks-MacBook-Pro-3.local",
     "executable": "cmake-build-release/benchmarks",
     "num_cpus": 4,
@@ -32,7 +32,7 @@
         "num_sharing": 4
       }
     ],
-    "load_avg": [1.58154,7.27295,7.71484],
+    "load_avg": [1.62402,4.46973,6.40186],
     "library_build_type": "release"
   },
   "benchmarks": [
@@ -45,9 +45,9 @@
       "repetitions": 1,
       "repetition_index": 0,
       "threads": 1,
-      "iterations": 388740,
-      "real_time": 1.5808293975360414e+03,
-      "cpu_time": 1.5721227555692749e+03,
+      "iterations": 395201,
+      "real_time": 1.6415016535536429e+03,
+      "cpu_time": 1.6247833380988391e+03,
       "time_unit": "ns"
     }
   ]
