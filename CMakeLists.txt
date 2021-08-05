@@ -27,11 +27,26 @@ include(FetchContent)
 FetchContent_Declare(
   hashing
   GIT_REPOSITORY git@github.com:DominikHorn/hashing.git
-  GIT_TAG main
+  GIT_TAG c30572f
+  )
+FetchContent_Declare(
+  learned-hashing
+  GIT_REPOSITORY git@github.com:DominikHorn/learned-hashing.git
+  GIT_TAG b35bc79
+  )
+FetchContent_Declare(
+  exotic-hashing
+  GIT_REPOSITORY git@github.com:DominikHorn/exotic-hashing.git
+  GIT_TAG b87e924
+  )
+FetchContent_Declare(
+  hashtable
+  GIT_REPOSITORY git@github.com:DominikHorn/hashtable.git
+  GIT_TAG 98c9509
   )
 
-FetchContent_MakeAvailable(hashing)
+FetchContent_MakeAvailable(hashing learned-hashing exotic-hashing hashtable)
 
 # ==== Benchmark executable ====
 add_executable(benchmarks src/benchmarks.cpp)
-target_link_libraries(benchmarks PRIVATE hashing ${GOOGLEBENCHMARK_LIBRARY})
+target_link_libraries(benchmarks PRIVATE hashing learned-hashing exotic-hashing hashtable ${GOOGLEBENCHMARK_LIBRARY})

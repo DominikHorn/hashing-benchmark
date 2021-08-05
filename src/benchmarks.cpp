@@ -1,7 +1,11 @@
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
+#include <exotic_hashing.hpp>
+#include <hashing.hpp>
+#include <hashtable.hpp>
 #include <iostream>
+#include <learned_hashing.hpp>
 #include <limits>
 #include <random>
 #include <vector>
