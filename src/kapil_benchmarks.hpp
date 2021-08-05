@@ -55,11 +55,8 @@ static std::vector<Key> get_dataset(size_t ind) {
 
 static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   const size_t interval_size = state.range(0);
-  const size_t dataset_ind = state.range(1);
+  const auto dataset = get_dataset(state.range(1));
 
-  const auto dataset = get_dataset(dataset_ind);
-
-  // Random lookups
   const auto min_key = dataset[0];
   const auto max_key = dataset[dataset.size() - 1];
   std::uniform_int_distribution<size_t> dist(min_key, max_key);
@@ -70,7 +67,6 @@ static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 
     std::vector<Payload> result;
     for (auto iter = std::lower_bound(dataset.begin(), dataset.end(), lower);
-         // TODO: use key <= upper?
          iter < dataset.end() && *iter < upper; iter++)
       result.push_back(*iter - 1);
 
@@ -80,8 +76,46 @@ static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 
 template <size_t SecondLevelModelCount>
 static void BM_SortedArrayRangeLookupRMI(benchmark::State& state) {
+  const size_t interval_size = state.range(0);
+  const auto dataset = get_dataset(state.range(1));
+
+  const auto min_key = dataset[0];
+  const auto max_key = dataset[dataset.size() - 1];
+  std::uniform_int_distribution<size_t> dist(min_key, max_key);
+
+  // determine maximum model error
+  const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
+      dataset.begin(), dataset.end(), dataset.size());
+  size_t max_error = 0;
+  for (const auto& key : dataset) {
+    const auto pred_ind = rmi(key);
+    size_t actual_ind = pred_ind;
+    while (dataset[actual_ind] > key) actual_ind--;
+    while (dataset[actual_ind] < key) actual_ind++;
+
+    max_error =
+        std::max(max_error, pred_ind > actual_ind ? pred_ind - actual_ind
+                                                  : actual_ind - pred_ind);
+  }
+
   for (auto _ : state) {
-    // TODO: implement
+    const auto lower = dist(rng);
+    const auto upper = lower + interval_size;
+
+    std::vector<Payload> result;
+
+    // Interval is determined by max error
+    const auto pred_ind = rmi(lower);
+    const auto begin_iter =
+        dataset.begin() + (pred_ind > max_error) * (pred_ind - max_error);
+    const auto end_iter =
+        dataset.begin() + std::min(pred_ind + max_error, dataset.size() - 1);
+
+    for (auto iter = std::lower_bound(begin_iter, end_iter, lower);
+         iter < dataset.end() && *iter < upper; iter++)
+      result.push_back(*iter - 1);
+
+    benchmark::DoNotOptimize(result.data());
   }
 }
 
