@@ -13,8 +13,8 @@ static void BM_SortedArrayRangeLookup(benchmark::State& state) {
     Key key = std::numeric_limits<Key>::max();
     Payload payload = 0;
 
-    bool operator<(const Slot& rhs) { return this->key < rhs.key; }
-    bool operator<(const Key& rhs) { return this->key < rhs; }
+    bool operator<(const Slot& rhs) const { return this->key < rhs.key; }
+    bool operator<(const Key& rhs) const { return this->key < rhs; }
   } __attribute__((packed));
 
   std::vector<Slot> dataset(1000000);
