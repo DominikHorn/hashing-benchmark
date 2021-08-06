@@ -219,24 +219,24 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   _BENCHMARK_TWO_PARAM(fun, 1000000) \
   _BENCHMARK_TWO_PARAM(fun, 10000000)
 
-// BENCHMARK(BM_SortedArrayRangeLookupBinarySearch)
-//     ->RangeMultiplier(2)
-//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10)
-//     ->RangeMultiplier(2)
-//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 100)
-//     ->RangeMultiplier(2)
-//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000)
-//     ->RangeMultiplier(2)
-//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 1000000)
-//     ->RangeMultiplier(2)
-//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000000)
-//     ->RangeMultiplier(2)
-//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+BENCHMARK(BM_SortedArrayRangeLookupBinarySearch)
+    ->RangeMultiplier(2)
+    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10)
+    ->RangeMultiplier(2)
+    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 100)
+    ->RangeMultiplier(2)
+    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000)
+    ->RangeMultiplier(2)
+    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 1000000)
+    ->RangeMultiplier(2)
+    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000000)
+    ->RangeMultiplier(2)
+    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
 BENCHMARK_TWO_PARAM(BM_BucketsRangeLookupRMI);
 }  // namespace _
 
