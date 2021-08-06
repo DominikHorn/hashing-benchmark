@@ -10,11 +10,11 @@
 #include <random>
 #include <vector>
 
-namespace _kapil_benchmark {
+namespace _ {
 using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
-const size_t dataset_size = 100000;
+const size_t dataset_size = 1000000;
 const size_t interval_min = 1;
 const size_t interval_max = dataset_size / 2;
 const size_t dataset_min = 1;
@@ -33,9 +33,9 @@ static std::vector<Key> get_dataset(size_t ind) {
       if (ds_uniform_random.empty()) {
         ds_uniform_random.resize(dataset_size);
         std::uniform_int_distribution<size_t> dist(0, 99);
-        for (size_t idx = 0, num = 0; idx < ds_uniform_random.size();
-             idx++, num++) {
-          while (dist(rng) < 90) num++;
+        for (size_t idx = 0, num = 0; idx < ds_uniform_random.size(); idx++) {
+          do num++;
+          while (dist(rng) < 90);
           ds_uniform_random[idx] = num;
         }
       }
@@ -166,9 +166,6 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   // insert all keys
   for (const auto& key : dataset) buckets[rmi(key)].insert(key);
 
-  // helper (better than using modulo operator)
-  hashing::reduction::FastModulo<std::uint64_t> mod(dataset.size());
-
   for (auto _ : state) {
     const auto lower = dist(rng);
     const auto upper = lower + interval_size;
@@ -176,10 +173,9 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
     std::vector<Payload> result;
 
     bool upper_encountered = false;
-    for (size_t bucket_ind = rmi(lower); !upper_encountered;
-         bucket_ind = mod(bucket_ind + 1)) {
-      for (Bucket<BucketSize>* b = &buckets[bucket_ind]; b != nullptr;
-           b = b->next) {
+    for (size_t bucket_ind = rmi(lower);
+         !upper_encountered && bucket_ind < buckets.size(); bucket_ind++) {
+      for (auto* b = &buckets[bucket_ind]; b != nullptr; b = b->next) {
         for (size_t i = 0; i < BucketSize; i++) {
           const auto& current_key = b->keys[i];
           if (current_key == Sentinel) {
@@ -193,6 +189,8 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
 
           result.push_back(current_key - 1);
         }
+
+        if (b == nullptr) break;
       }
     }
 
@@ -221,24 +219,24 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   _BENCHMARK_TWO_PARAM(fun, 1000000) \
   _BENCHMARK_TWO_PARAM(fun, 10000000)
 
-BENCHMARK(BM_SortedArrayRangeLookupBinarySearch)
-    ->RangeMultiplier(2)
-    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10)
-    ->RangeMultiplier(2)
-    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 100)
-    ->RangeMultiplier(2)
-    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000)
-    ->RangeMultiplier(2)
-    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 1000000)
-    ->RangeMultiplier(2)
-    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000000)
-    ->RangeMultiplier(2)
-    ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+// BENCHMARK(BM_SortedArrayRangeLookupBinarySearch)
+//     ->RangeMultiplier(2)
+//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10)
+//     ->RangeMultiplier(2)
+//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 100)
+//     ->RangeMultiplier(2)
+//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000)
+//     ->RangeMultiplier(2)
+//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 1000000)
+//     ->RangeMultiplier(2)
+//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
+// BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000000)
+//     ->RangeMultiplier(2)
+//     ->Ranges({{interval_min, interval_max}, {dataset_min, dataset_max}});
 BENCHMARK_TWO_PARAM(BM_BucketsRangeLookupRMI);
-}  // namespace _kapil_benchmark
+}  // namespace _
 
