@@ -72,6 +72,8 @@ forceinline void shuffle(std::vector<uint64_t>& dataset,
  */
 template <class Key>
 std::vector<Key> load(std::string filepath) {
+  std::cout << "LOADING DATASET" << std::endl;
+
   // Read file into memory from disk. Directly map file for more performance
   std::ifstream input(filepath, std::ios::binary | std::ios::ate);
   std::streamsize size = input.tellg();
@@ -123,9 +125,9 @@ std::vector<Key> load(std::string filepath) {
   return dataset;
 }
 
-enum ID { GAPPED_10 = 0, SEQUENTIAL, UNIFORM, FB, OSM, WIKI };
+enum ID { SEQUENTIAL = 0, GAPPED_10, UNIFORM, FB, OSM, WIKI };
 
-std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
+static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
   static std::random_device rd;
   static std::default_random_engine rng(rd());
 
@@ -137,6 +139,15 @@ std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
   static auto ds_wiki = load<std::uint64_t>("data/wiki_ts_200M_uint64");
 
   switch (id) {
+    case ID::SEQUENTIAL:
+      if (ds_sequential.size() != dataset_size) {
+        ds_sequential.resize(dataset_size);
+        std::uint64_t k = 2000;
+        for (size_t i = 0; i < ds_sequential.size(); i++, k++)
+          ds_sequential[i] = k;
+        shuffle(ds_sequential);
+      }
+      return ds_sequential;
     case ID::GAPPED_10:
       if (ds_gapped_10.size() != dataset_size) {
         ds_gapped_10.resize(dataset_size);
@@ -149,20 +160,12 @@ std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
         shuffle(ds_gapped_10);
       }
       return ds_gapped_10;
-    case ID::SEQUENTIAL:
-      if (ds_sequential.size() != dataset_size) {
-        ds_sequential.resize(dataset_size);
-        std::uint64_t k = 2000;
-        for (size_t i = 0; i < ds_sequential.size(); i++, k++)
-          ds_sequential[i] = k;
-        shuffle(ds_sequential);
-      }
-      return ds_sequential;
     case ID::UNIFORM:
       if (ds_uniform.size() != dataset_size) {
         ds_uniform.resize(dataset_size);
         std::uniform_int_distribution<std::uint64_t> dist(
             0, std::numeric_limits<std::uint64_t>::max() - 1);
+        // TODO: ensure there are no duplicates
         for (size_t i = 0; i < ds_uniform.size(); i++)
           ds_uniform[i] = dist(rng);
         shuffle(ds_uniform);
