@@ -16,24 +16,30 @@ namespace _ {
 using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
-const std::vector<std::int64_t> intervals{1, 2, 4, 8, 16, 32, 64, 128, 256};
+const std::vector<std::int64_t> intervals{
+    1 /*, 2, 4, 8, 16, 32, 64, 128, 256*/};
+const size_t gen_dataset_size = 100000000;
 const std::vector<std::int64_t> datasets{
-    Dataset::ID::SEQUENTIAL, Dataset::ID::GAPPED_10, Dataset::ID::UNIFORM,
-    Dataset::ID::FB,         Dataset::ID::OSM,       Dataset::ID::WIKI};
+    dataset::ID::SEQUENTIAL, dataset::ID::GAPPED_10, dataset::ID::UNIFORM,
+    dataset::ID::FB,         dataset::ID::OSM,       dataset::ID::WIKI};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
 
-static void BM_CopyArray(benchmark::State& state) {
+static void BM_ShuffleArray(benchmark::State& state) {
+  auto dataset =
+      dataset::load_cached(dataset::ID::SEQUENTIAL, gen_dataset_size);
   for (auto _ : state) {
-    auto dataset = Dataset::load_cached(Dataset::ID::SEQUENTIAL);
+    dataset::shuffle(dataset);
     benchmark::DoNotOptimize(dataset.data());
   }
 }
 
-static void BM_SortArray(benchmark::State& state) {
+static void BM_ShuffleAndSortArray(benchmark::State& state) {
+  auto dataset =
+      dataset::load_cached(dataset::ID::SEQUENTIAL, gen_dataset_size);
   for (auto _ : state) {
-    auto dataset = Dataset::load_cached(Dataset::ID::SEQUENTIAL);
+    dataset::shuffle(dataset);
     std::sort(dataset.begin(), dataset.end());
     benchmark::DoNotOptimize(dataset.data());
   }
@@ -41,7 +47,8 @@ static void BM_SortArray(benchmark::State& state) {
 
 static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   const size_t interval_size = state.range(0);
-  auto dataset = Dataset::load_cached(static_cast<Dataset::ID>(state.range(1)));
+  auto dataset = dataset::load_cached(static_cast<dataset::ID>(state.range(1)),
+                                      gen_dataset_size);
 
   // We must sort the entire array ;(
   std::sort(dataset.begin(), dataset.end());
@@ -66,8 +73,8 @@ static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 template <size_t SecondLevelModelCount>
 static void BM_SortedArrayRangeLookupRMI(benchmark::State& state) {
   const size_t interval_size = state.range(0);
-  const auto dataset =
-      Dataset::load_cached(static_cast<Dataset::ID>(state.range(1)));
+  const auto dataset = dataset::load_cached(
+      static_cast<dataset::ID>(state.range(1)), gen_dataset_size);
 
   const auto min_key = dataset[0];
   const auto max_key = dataset[dataset.size() - 1];
@@ -144,8 +151,8 @@ struct Bucket {
 template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   const size_t interval_size = state.range(0);
-  const auto dataset =
-      Dataset::load_cached(static_cast<Dataset::ID>(state.range(1)));
+  const auto dataset = dataset::load_cached(
+      static_cast<dataset::ID>(state.range(1)), gen_dataset_size);
 
   const auto min_key = dataset[0];
   const auto max_key = dataset[dataset.size() - 1];
@@ -215,8 +222,8 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   _BENCHMARK_TWO_PARAM(fun, 1000000) \
   _BENCHMARK_TWO_PARAM(fun, 10000000)
 
-BENCHMARK(BM_CopyArray);
-BENCHMARK(BM_SortArray);
+BENCHMARK(BM_ShuffleArray);
+BENCHMARK(BM_ShuffleAndSortArray);
 
 BENCHMARK(BM_SortedArrayRangeLookupBinarySearch)
     ->ArgsProduct({intervals, datasets});
