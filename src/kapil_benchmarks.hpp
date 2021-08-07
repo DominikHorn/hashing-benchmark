@@ -65,13 +65,9 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   // We must sort the entire array ;(
   std::sort(dataset.begin(), dataset.end());
 
-  const auto min_key = *std::min_element(dataset.begin(), dataset.end());
-  const auto max_key = *std::max_element(dataset.begin(), dataset.end());
-  std::cout << "probing in [" << min_key << ", " << max_key << "]" << std::endl;
-  std::uniform_int_distribution<size_t> dist(min_key, max_key);
-
+  std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
-    const auto lower = dist(rng);
+    const auto lower = dataset[dist(rng)];
     const auto upper = lower + interval_size;
 
     std::vector<Payload> result;
@@ -99,11 +95,6 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
     return;
   }
 
-  const auto min_key = *std::min_element(dataset.begin(), dataset.end());
-  const auto max_key = *std::max_element(dataset.begin(), dataset.end());
-  std::cout << "probing in [" << min_key << ", " << max_key << "]" << std::endl;
-  std::uniform_int_distribution<size_t> dist(min_key, max_key);
-
   // build model based on data sample. assume data is random shuffled (which it
   // is) to compactify this code
   std::vector<decltype(dataset)::value_type> sample(
@@ -126,8 +117,9 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
                                                   : actual_ind - pred_ind);
   }
 
+  std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
-    const auto lower = dist(rng);
+    const auto lower = dataset[dist(rng)];
     const auto upper = lower + interval_size;
 
     std::vector<Payload> result;
@@ -208,11 +200,6 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
     return;
   }
 
-  const auto min_key = *std::min_element(dataset.begin(), dataset.end());
-  const auto max_key = *std::max_element(dataset.begin(), dataset.end());
-  std::cout << "probing in [" << min_key << ", " << max_key << "]" << std::endl;
-  std::uniform_int_distribution<size_t> dist(min_key, max_key);
-
   std::vector<Bucket<BucketSize>> buckets(
       dataset.size());  // TODO: load factors?
 
@@ -230,8 +217,9 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   typename Bucket<BucketSize>::Tape tape;
   for (const auto& key : dataset) buckets[rmi(key)].insert(key, tape);
 
+  std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
-    const auto lower = dist(rng);
+    const auto lower = dataset[dist(rng)];
     const auto upper = lower + interval_size;
 
     std::vector<Payload> result;
