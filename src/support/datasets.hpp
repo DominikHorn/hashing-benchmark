@@ -133,7 +133,7 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
       if (ds_sequential.size() != dataset_size) {
         std::cout << "redo sequential" << std::endl;
         ds_sequential.resize(dataset_size);
-        std::uint64_t k = 2000;
+        std::uint64_t k = 20000;
         for (size_t i = 0; i < ds_sequential.size(); i++, k++)
           ds_sequential[i] = k;
         shuffle(ds_sequential);

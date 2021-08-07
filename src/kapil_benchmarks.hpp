@@ -143,24 +143,48 @@ const Key Sentinel = std::numeric_limits<Key>::max();
 template <size_t BucketSize>
 struct Bucket {
   std::array<Key, BucketSize> keys;
-
   Bucket* next = nullptr;
+
+  struct Tape {
+    std::vector<Bucket*> begins;
+    size_t index;
+    size_t size;
+
+    ~Tape() {
+      for (auto begin : begins) delete[] begin;
+    }
+
+    forceinline Bucket* new_bucket(size_t tape_size = 10000) {
+      if (unlikely(index == size || begins.size() == 0 ||
+                   begins[begins.size() - 1] == nullptr)) {
+        begins.push_back(new Bucket[tape_size]);
+        index = 0;
+        size = tape_size;
+      }
+
+      return &begins[begins.size() - 1][index++];
+    }
+  };
 
   Bucket() {
     // Sentinel value in each slot per default
     std::fill(keys.begin(), keys.end(), Sentinel);
   }
 
-  forceinline void insert(const Key& key) {
+  forceinline bool insert(const Key& key, Tape& tape) {
     for (size_t i = 0; i < BucketSize; i++) {
       if (keys[i] == Sentinel) {
         keys[i] = key;
-        return;
+        return false;
       }
     }
 
-    if (next == nullptr) next = new Bucket();
-    next->insert(key);
+    bool new_bucket = false;
+    if (next == nullptr) {
+      next = tape.new_bucket();
+      new_bucket = true;
+    }
+    return next->insert(key, tape) || new_bucket;
   }
 } packit;
 
@@ -184,16 +208,19 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   std::vector<Bucket<BucketSize>> buckets(
       dataset.size());  // TODO: load factors?
 
-  // build model based on data sample. assume data is random shuffled (which it
+  // sample data. assume t is random shuffled (which it
   // is) to compactify this code
   std::vector<decltype(dataset)::value_type> sample(
       dataset.begin(), dataset.begin() + dataset.size() / 100);
+
+  // build model (sorted input!)
   std::sort(sample.begin(), sample.end());
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
       sample.begin(), sample.end(), buckets.size() - 1);
 
   // insert all keys exactly where model tells us to
-  for (const auto& key : dataset) buckets[rmi(key)].insert(key);
+  typename Bucket<BucketSize>::Tape tape;
+  for (const auto& key : dataset) buckets[rmi(key)].insert(key, tape);
 
   for (auto _ : state) {
     const auto lower = dist(rng);
@@ -240,14 +267,12 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   __BENCHMARK_TWO_PARAM(fun, model_size, 2)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 4)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 8)   \
-  __BENCHMARK_TWO_PARAM(fun, model_size, 16)  \
-  __BENCHMARK_TWO_PARAM(fun, model_size, 32)
-#define BENCHMARK_TWO_PARAM(fun)     \
-  _BENCHMARK_TWO_PARAM(fun, 10)      \
-  _BENCHMARK_TWO_PARAM(fun, 100)     \
-  _BENCHMARK_TWO_PARAM(fun, 10000)   \
-  _BENCHMARK_TWO_PARAM(fun, 1000000) \
-  _BENCHMARK_TWO_PARAM(fun, 10000000)
+  __BENCHMARK_TWO_PARAM(fun, model_size, 16)
+#define BENCHMARK_TWO_PARAM(fun)   \
+  _BENCHMARK_TWO_PARAM(fun, 10)    \
+  _BENCHMARK_TWO_PARAM(fun, 100)   \
+  _BENCHMARK_TWO_PARAM(fun, 10000) \
+  _BENCHMARK_TWO_PARAM(fun, 1000000)
 
 BENCHMARK(BM_ShuffleArray);
 BENCHMARK(BM_ShuffleAndSortArray);
