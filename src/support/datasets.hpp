@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -16,36 +17,10 @@ namespace dataset {
  * Deduplicates the dataset. Data will be sorted to make this work
  * @param dataset
  */
-forceinline void deduplicate(std::vector<uint64_t>& dataset) {
+static forceinline void deduplicate(std::vector<uint64_t>& dataset) {
   std::sort(dataset.begin(), dataset.end());
   dataset.erase(std::unique(dataset.begin(), dataset.end()), dataset.end());
   dataset.shrink_to_fit();
-}
-
-/**
- * Helper to extract an 8 byte number encoded in little endian from a byte
- * vector
- */
-forceinline uint64_t read_little_endian_8(
-    const std::vector<unsigned char>& buffer, uint64_t offset) {
-  return static_cast<uint64_t>(buffer[offset + 0]) |
-         (static_cast<uint64_t>(buffer[offset + 1]) << 8) |
-         (static_cast<uint64_t>(buffer[offset + 2]) << (2 * 8)) |
-         (static_cast<uint64_t>(buffer[offset + 3]) << (3 * 8)) |
-         (static_cast<uint64_t>(buffer[offset + 4]) << (4 * 8)) |
-         (static_cast<uint64_t>(buffer[offset + 5]) << (5 * 8)) |
-         (static_cast<uint64_t>(buffer[offset + 6]) << (6 * 8)) |
-         (static_cast<uint64_t>(buffer[offset + 7]) << (7 * 8));
-}
-
-/**
- * Helper to extract a 4 byte number encoded in little endian from a byte
- * vector
- */
-forceinline uint64_t read_little_endian_4(
-    const std::vector<unsigned char>& buffer, uint64_t offset) {
-  return buffer[offset + 0] | (buffer[offset + 1] << 8) |
-         (buffer[offset + 2] << (2 * 8)) | (buffer[offset + 3] << (3 * 8));
 }
 
 /**
@@ -53,8 +28,8 @@ forceinline uint64_t read_little_endian_4(
  * @param dataset
  * @param seed
  */
-forceinline void shuffle(std::vector<uint64_t>& dataset,
-                         const uint64_t seed = std::random_device()()) {
+static forceinline void shuffle(std::vector<uint64_t>& dataset,
+                                const uint64_t seed = std::random_device()()) {
   if (dataset.empty()) return;
 
   std::default_random_engine gen(seed);
@@ -72,7 +47,25 @@ forceinline void shuffle(std::vector<uint64_t>& dataset,
  */
 template <class Key>
 std::vector<Key> load(std::string filepath) {
-  std::cout << "LOADING DATASET" << std::endl;
+  std::cout << "loading dataset " << filepath << std::endl;
+
+  // parsing helper functions
+  auto read_little_endian_8 = [](const std::vector<unsigned char>& buffer,
+                                 uint64_t offset) {
+    return static_cast<uint64_t>(buffer[offset + 0]) |
+           (static_cast<uint64_t>(buffer[offset + 1]) << 8) |
+           (static_cast<uint64_t>(buffer[offset + 2]) << (2 * 8)) |
+           (static_cast<uint64_t>(buffer[offset + 3]) << (3 * 8)) |
+           (static_cast<uint64_t>(buffer[offset + 4]) << (4 * 8)) |
+           (static_cast<uint64_t>(buffer[offset + 5]) << (5 * 8)) |
+           (static_cast<uint64_t>(buffer[offset + 6]) << (6 * 8)) |
+           (static_cast<uint64_t>(buffer[offset + 7]) << (7 * 8));
+  };
+  auto read_little_endian_4 = [](const std::vector<unsigned char>& buffer,
+                                 uint64_t offset) {
+    return buffer[offset + 0] | (buffer[offset + 1] << 8) |
+           (buffer[offset + 2] << (2 * 8)) | (buffer[offset + 3] << (3 * 8));
+  };
 
   // Read file into memory from disk. Directly map file for more performance
   std::ifstream input(filepath, std::ios::binary | std::ios::ate);
@@ -87,10 +80,8 @@ std::vector<Key> load(std::string filepath) {
   std::vector<uint64_t> dataset(max_num_elements, 0);
   {
     std::vector<unsigned char> buffer(size);
-    if (!input.read(reinterpret_cast<char*>(buffer.data()), size)) {
-      std::cerr << "Failed to read dataset '" + filepath + "'" << std::endl;
-      return {};
-    }
+    if (!input.read(reinterpret_cast<char*>(buffer.data()), size))
+      throw std::runtime_error("Failed to read dataset '" + filepath + "'");
 
     // Parse file
     uint64_t num_elements = read_little_endian_8(buffer, 0);
@@ -111,10 +102,9 @@ std::vector<Key> load(std::string filepath) {
         }
         break;
       default:
-        std::cerr << "Unimplemented amount of bytes per value in dataset: " +
-                         std::to_string(sizeof(Key))
-                  << std::endl;
-        return {};
+        throw std::runtime_error(
+            "unimplemented amount of bytes per value in dataset: " +
+            std::to_string(sizeof(Key)));
     }
   }
 
@@ -141,6 +131,7 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
   switch (id) {
     case ID::SEQUENTIAL:
       if (ds_sequential.size() != dataset_size) {
+        std::cout << "redo sequential" << std::endl;
         ds_sequential.resize(dataset_size);
         std::uint64_t k = 2000;
         for (size_t i = 0; i < ds_sequential.size(); i++, k++)
@@ -150,6 +141,7 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
       return ds_sequential;
     case ID::GAPPED_10:
       if (ds_gapped_10.size() != dataset_size) {
+        std::cout << "redo gapped" << std::endl;
         ds_gapped_10.resize(dataset_size);
         std::uniform_int_distribution<size_t> dist(0, 99999);
         for (size_t i = 0, num = 0; i < ds_gapped_10.size(); i++) {
@@ -162,6 +154,7 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
       return ds_gapped_10;
     case ID::UNIFORM:
       if (ds_uniform.size() != dataset_size) {
+        std::cout << "redo uniform" << std::endl;
         ds_uniform.resize(dataset_size);
         std::uniform_int_distribution<std::uint64_t> dist(
             0, std::numeric_limits<std::uint64_t>::max() - 1);

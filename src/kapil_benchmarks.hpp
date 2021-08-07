@@ -8,8 +8,10 @@
 #include <learned_hashing.hpp>
 #include <limits>
 #include <random>
+#include <stdexcept>
 #include <vector>
 
+#include "include/convenience/builtins.hpp"
 #include "support/datasets.hpp"
 
 namespace _ {
@@ -50,11 +52,18 @@ static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   auto dataset = dataset::load_cached(static_cast<dataset::ID>(state.range(1)),
                                       gen_dataset_size);
 
+  if (dataset.empty()) {
+    // otherwise google benchmark produces an error ;(
+    for (auto _ : state) {
+    }
+    return;
+  }
+
   // We must sort the entire array ;(
   std::sort(dataset.begin(), dataset.end());
 
-  const auto min_key = dataset[0];
-  const auto max_key = dataset[dataset.size() - 1];
+  const auto min_key = *std::min_element(dataset.begin(), dataset.end());
+  const auto max_key = *std::max_element(dataset.begin(), dataset.end());
   std::uniform_int_distribution<size_t> dist(min_key, max_key);
 
   for (auto _ : state) {
@@ -76,8 +85,15 @@ static void BM_SortedArrayRangeLookupRMI(benchmark::State& state) {
   const auto dataset = dataset::load_cached(
       static_cast<dataset::ID>(state.range(1)), gen_dataset_size);
 
-  const auto min_key = dataset[0];
-  const auto max_key = dataset[dataset.size() - 1];
+  if (dataset.empty()) {
+    // otherwise google benchmark produces an error ;(
+    for (auto _ : state) {
+    }
+    return;
+  }
+
+  const auto min_key = *std::min_element(dataset.begin(), dataset.end());
+  const auto max_key = *std::max_element(dataset.begin(), dataset.end());
   std::uniform_int_distribution<size_t> dist(min_key, max_key);
 
   // build model based on data sample. assume data is random shuffled (which it
@@ -146,7 +162,7 @@ struct Bucket {
     if (next == nullptr) next = new Bucket();
     next->insert(key);
   }
-};
+} packit;
 
 template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
@@ -154,8 +170,15 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   const auto dataset = dataset::load_cached(
       static_cast<dataset::ID>(state.range(1)), gen_dataset_size);
 
-  const auto min_key = dataset[0];
-  const auto max_key = dataset[dataset.size() - 1];
+  if (dataset.empty()) {
+    // otherwise google benchmark produces an error ;(
+    for (auto _ : state) {
+    }
+    return;
+  }
+
+  const auto min_key = *std::min_element(dataset.begin(), dataset.end());
+  const auto max_key = *std::max_element(dataset.begin(), dataset.end());
   std::uniform_int_distribution<size_t> dist(min_key, max_key);
 
   std::vector<Bucket<BucketSize>> buckets(
@@ -192,6 +215,8 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
             upper_encountered = true;
             continue;  // Don't assume data was inserted in sorted order
           }
+          if (current_key < lower)
+            continue;  // Don't assume data was inserted in sorted order
 
           result.push_back(current_key - 1);
         }
@@ -199,6 +224,8 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
         if (b == nullptr) break;
       }
     }
+
+    assert(result.size() <= interval_size);
 
     benchmark::DoNotOptimize(result.data());
   }
