@@ -32,7 +32,7 @@ FetchContent_Declare(
 FetchContent_Declare(
   learned-hashing
   GIT_REPOSITORY git@github.com:DominikHorn/learned-hashing.git
-  GIT_TAG b35bc79
+  GIT_TAG 11dd4d0
   )
 FetchContent_Declare(
   exotic-hashing
