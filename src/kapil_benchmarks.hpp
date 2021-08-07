@@ -171,20 +171,16 @@ struct Bucket {
     std::fill(keys.begin(), keys.end(), Sentinel);
   }
 
-  forceinline bool insert(const Key& key, Tape& tape) {
+  forceinline void insert(const Key& key, Tape& tape) {
     for (size_t i = 0; i < BucketSize; i++) {
       if (keys[i] == Sentinel) {
         keys[i] = key;
-        return false;
+        return;
       }
     }
 
-    bool new_bucket = false;
-    if (next == nullptr) {
-      next = tape.new_bucket();
-      new_bucket = true;
-    }
-    return next->insert(key, tape) || new_bucket;
+    if (next == nullptr) next = tape.new_bucket();
+    next->insert(key, tape);
   }
 } packit;
 
