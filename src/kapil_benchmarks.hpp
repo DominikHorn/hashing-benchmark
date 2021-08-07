@@ -28,7 +28,7 @@ const std::vector<std::int64_t> datasets{
 std::random_device rd;
 std::default_random_engine rng(rd());
 
-static void BM_ShuffleArray(benchmark::State& state) {
+static void ShuffleArray(benchmark::State& state) {
   auto dataset =
       dataset::load_cached(dataset::ID::SEQUENTIAL, gen_dataset_size);
   for (auto _ : state) {
@@ -37,7 +37,7 @@ static void BM_ShuffleArray(benchmark::State& state) {
   }
 }
 
-static void BM_ShuffleAndSortArray(benchmark::State& state) {
+static void ShuffleAndSortArray(benchmark::State& state) {
   auto dataset =
       dataset::load_cached(dataset::ID::SEQUENTIAL, gen_dataset_size);
   for (auto _ : state) {
@@ -47,10 +47,13 @@ static void BM_ShuffleAndSortArray(benchmark::State& state) {
   }
 }
 
-static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
+static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   const size_t interval_size = state.range(0);
-  auto dataset = dataset::load_cached(static_cast<dataset::ID>(state.range(1)),
-                                      gen_dataset_size);
+  const auto did = static_cast<dataset::ID>(state.range(1));
+  auto dataset = dataset::load_cached(did, gen_dataset_size);
+
+  state.counters["dataset_size"] = dataset.size();
+  state.SetLabel(dataset::name(did));
 
   if (dataset.empty()) {
     // otherwise google benchmark produces an error ;(
@@ -80,10 +83,13 @@ static void BM_SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 }
 
 template <size_t SecondLevelModelCount>
-static void BM_SortedArrayRangeLookupRMI(benchmark::State& state) {
+static void SortedArrayRangeLookupRMI(benchmark::State& state) {
   const size_t interval_size = state.range(0);
-  const auto dataset = dataset::load_cached(
-      static_cast<dataset::ID>(state.range(1)), gen_dataset_size);
+  const auto did = static_cast<dataset::ID>(state.range(1));
+  auto dataset = dataset::load_cached(did, gen_dataset_size);
+
+  state.counters["dataset_size"] = dataset.size();
+  state.SetLabel(dataset::name(did));
 
   if (dataset.empty()) {
     // otherwise google benchmark produces an error ;(
@@ -185,10 +191,13 @@ struct Bucket {
 } packit;
 
 template <size_t SecondLevelModelCount, size_t BucketSize>
-static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
+static void BucketsRangeLookupRMI(benchmark::State& state) {
   const size_t interval_size = state.range(0);
-  const auto dataset = dataset::load_cached(
-      static_cast<dataset::ID>(state.range(1)), gen_dataset_size);
+  const auto did = static_cast<dataset::ID>(state.range(1));
+  auto dataset = dataset::load_cached(did, gen_dataset_size);
+
+  state.counters["dataset_size"] = dataset.size();
+  state.SetLabel(dataset::name(did));
 
   if (dataset.empty()) {
     // otherwise google benchmark produces an error ;(
@@ -270,23 +279,23 @@ static void BM_BucketsRangeLookupRMI(benchmark::State& state) {
   _BENCHMARK_TWO_PARAM(fun, 10000) \
   _BENCHMARK_TWO_PARAM(fun, 1000000)
 
-BENCHMARK(BM_ShuffleArray);
-BENCHMARK(BM_ShuffleAndSortArray);
+BENCHMARK(ShuffleArray);
+BENCHMARK(ShuffleAndSortArray);
 
-BENCHMARK(BM_SortedArrayRangeLookupBinarySearch)
-    ->ArgsProduct({intervals, datasets});
-
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10)
-    ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 100)
-    ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000)
-    ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 1000000)
-    ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(BM_SortedArrayRangeLookupRMI, 10000000)
+BENCHMARK(SortedArrayRangeLookupBinarySearch)
     ->ArgsProduct({intervals, datasets});
 
-BENCHMARK_TWO_PARAM(BM_BucketsRangeLookupRMI);
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10000)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000000)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10000000)
+    ->ArgsProduct({intervals, datasets});
+
+BENCHMARK_TWO_PARAM(BucketsRangeLookupRMI);
 }  // namespace _
 

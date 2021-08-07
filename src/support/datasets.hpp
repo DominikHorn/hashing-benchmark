@@ -115,7 +115,31 @@ std::vector<Key> load(std::string filepath) {
   return dataset;
 }
 
-enum ID { SEQUENTIAL = 0, GAPPED_10, UNIFORM, FB, OSM, WIKI };
+enum ID {
+  SEQUENTIAL = 0,
+  GAPPED_10 = 1,
+  UNIFORM = 2,
+  FB = 3,
+  OSM = 4,
+  WIKI = 5
+};
+
+static std::string name(ID id) {
+  switch (id) {
+    case ID::SEQUENTIAL:
+      return "seq";
+    case ID::GAPPED_10:
+      return "gap_10";
+    case ID::UNIFORM:
+      return "uniform";
+    case ID::FB:
+      return "fb";
+    case ID::OSM:
+      return "osm";
+    case ID::WIKI:
+      return "wiki";
+  }
+};
 
 static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
   static std::random_device rd;
@@ -131,17 +155,16 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
   switch (id) {
     case ID::SEQUENTIAL:
       if (ds_sequential.size() != dataset_size) {
-        std::cout << "redo sequential" << std::endl;
         ds_sequential.resize(dataset_size);
         std::uint64_t k = 20000;
         for (size_t i = 0; i < ds_sequential.size(); i++, k++)
           ds_sequential[i] = k;
+        deduplicate(ds_sequential);
         shuffle(ds_sequential);
       }
       return ds_sequential;
     case ID::GAPPED_10:
       if (ds_gapped_10.size() != dataset_size) {
-        std::cout << "redo gapped" << std::endl;
         ds_gapped_10.resize(dataset_size);
         std::uniform_int_distribution<size_t> dist(0, 99999);
         for (size_t i = 0, num = 0; i < ds_gapped_10.size(); i++) {
@@ -149,18 +172,19 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
           while (dist(rng) < 10000);
           ds_gapped_10[i] = num;
         }
+        deduplicate(ds_gapped_10);
         shuffle(ds_gapped_10);
       }
       return ds_gapped_10;
     case ID::UNIFORM:
       if (ds_uniform.size() != dataset_size) {
-        std::cout << "redo uniform" << std::endl;
         ds_uniform.resize(dataset_size);
         std::uniform_int_distribution<std::uint64_t> dist(
             0, std::numeric_limits<std::uint64_t>::max() - 1);
         // TODO: ensure there are no duplicates
         for (size_t i = 0; i < ds_uniform.size(); i++)
           ds_uniform[i] = dist(rng);
+        deduplicate(ds_uniform);
         shuffle(ds_uniform);
       }
       return ds_uniform;
