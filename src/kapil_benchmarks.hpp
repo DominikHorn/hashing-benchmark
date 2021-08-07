@@ -67,6 +67,7 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 
   const auto min_key = *std::min_element(dataset.begin(), dataset.end());
   const auto max_key = *std::max_element(dataset.begin(), dataset.end());
+  std::cout << "probing in [" << min_key << ", " << max_key << "]" << std::endl;
   std::uniform_int_distribution<size_t> dist(min_key, max_key);
 
   for (auto _ : state) {
@@ -100,6 +101,7 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
 
   const auto min_key = *std::min_element(dataset.begin(), dataset.end());
   const auto max_key = *std::max_element(dataset.begin(), dataset.end());
+  std::cout << "probing in [" << min_key << ", " << max_key << "]" << std::endl;
   std::uniform_int_distribution<size_t> dist(min_key, max_key);
 
   // build model based on data sample. assume data is random shuffled (which it
@@ -208,6 +210,7 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 
   const auto min_key = *std::min_element(dataset.begin(), dataset.end());
   const auto max_key = *std::max_element(dataset.begin(), dataset.end());
+  std::cout << "probing in [" << min_key << ", " << max_key << "]" << std::endl;
   std::uniform_int_distribution<size_t> dist(min_key, max_key);
 
   std::vector<Bucket<BucketSize>> buckets(
