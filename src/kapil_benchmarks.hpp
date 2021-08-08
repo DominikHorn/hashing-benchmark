@@ -154,7 +154,7 @@ struct Bucket {
       for (auto begin : begins) delete[] begin;
     }
 
-    forceinline Bucket* new_bucket(size_t tape_size = 10000) {
+    forceinline Bucket* new_bucket(size_t tape_size = 1000000) {
       if (unlikely(index == size || begins.size() == 0 ||
                    begins[begins.size() - 1] == nullptr)) {
         begins.push_back(new Bucket[tape_size]);
@@ -210,13 +210,16 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 
   // build model (sorted input!)
   std::sort(sample.begin(), sample.end());
+  std::cout << "(1) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
       sample.begin(), sample.end(), buckets.size() - 1);
+  std::cout << "(2) inserting keys" << std::endl;
 
   // insert all keys exactly where model tells us to
   typename Bucket<BucketSize>::Tape tape;
   for (const auto& key : dataset) buckets[rmi(key)].insert(key, tape);
 
+  std::cout << "(3) probing" << std::endl;
   std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
     const auto lower = dataset[dist(rng)];
