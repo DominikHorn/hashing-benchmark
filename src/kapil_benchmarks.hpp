@@ -103,6 +103,9 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
       sample.begin(), sample.end(), dataset.size() - 1);
 
+  // We must sort the entire array ;(
+  std::sort(dataset.begin(), dataset.end());
+
   // determine maximum model error
   size_t max_error = 0;
   for (const auto& key : dataset) {
