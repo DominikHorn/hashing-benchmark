@@ -120,6 +120,8 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
                                                   : actual_ind - pred_ind);
   }
 
+  std::cout << "max_error: " << max_error << std::endl;
+
   std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
     const auto lower = dataset[dist(rng)];
