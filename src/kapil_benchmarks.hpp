@@ -270,13 +270,13 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   __BENCHMARK_TWO_PARAM(fun, model_size, 1)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 2)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 4)   \
-  __BENCHMARK_TWO_PARAM(fun, model_size, 8)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 16)
 #define BENCHMARK_TWO_PARAM(fun)   \
+  _BENCHMARK_TWO_PARAM(fun, 0)    \
   _BENCHMARK_TWO_PARAM(fun, 10)    \
-  _BENCHMARK_TWO_PARAM(fun, 100)   \
-  _BENCHMARK_TWO_PARAM(fun, 10000) \
-  _BENCHMARK_TWO_PARAM(fun, 1000000)
+  _BENCHMARK_TWO_PARAM(fun, 1000)   \
+  _BENCHMARK_TWO_PARAM(fun, 100000) \
+  _BENCHMARK_TWO_PARAM(fun, 10000000)
 
 BENCHMARK(ShuffleArray);
 BENCHMARK(ShuffleAndSortArray);
@@ -284,13 +284,13 @@ BENCHMARK(ShuffleAndSortArray);
 BENCHMARK(SortedArrayRangeLookupBinarySearch)
     ->ArgsProduct({intervals, datasets});
 
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 0)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100)
     ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10000)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000)
     ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000000)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100000)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10000000)
     ->ArgsProduct({intervals, datasets});
