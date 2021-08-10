@@ -1,9 +1,67 @@
 ,name,family_index,per_family_instance_index,run_name,run_type,repetitions,repetition_index,threads,iterations,real_time,cpu_time,time_unit,dataset_size,label
-0,ShuffleArray,0,0,ShuffleArray,iteration,1,0,1,1,12145960230.380297,12136719731.0,ns,,
-1,ShuffleAndSortArray,1,0,ShuffleAndSortArray,iteration,1,0,1,1,20697958259.84329,20683527414.00001,ns,,
-2,SortedArrayRangeLookupBinarySearch/1/0,2,0,SortedArrayRangeLookupBinarySearch/1/0,iteration,1,0,1,908344,732.238412819226,731.6790819337078,ns,100000000.0,seq
-3,SortedArrayRangeLookupBinarySearch/1/1,2,1,SortedArrayRangeLookupBinarySearch/1/1,iteration,1,0,1,904041,742.0831619180412,741.5047315331567,ns,100000000.0,gap_10
-4,SortedArrayRangeLookupBinarySearch/1/2,2,2,SortedArrayRangeLookupBinarySearch/1/2,iteration,1,0,1,907960,742.3062033482237,741.7646944798803,ns,100000000.0,uniform
-5,SortedArrayRangeLookupBinarySearch/1/3,2,3,SortedArrayRangeLookupBinarySearch/1/3,iteration,1,0,1,804992,831.1575042495691,830.4309036611412,ns,200000000.0,fb
-6,SortedArrayRangeLookupBinarySearch/1/4,2,4,SortedArrayRangeLookupBinarySearch/1/4,iteration,1,0,1,795897,831.4119131726075,830.7818524255974,ns,200000000.0,osm
-7,SortedArrayRangeLookupBinarySearch/1/5,2,5,SortedArrayRangeLookupBinarySearch/1/5,iteration,1,0,1,925015,721.7239173911187,721.1590666096938,ns,90437011.0,wiki
+0,SortedArrayRangeLookupBinarySearch/1/0,2,0,SortedArrayRangeLookupBinarySearch/1/0,iteration,1,0,1,908344,732.238412819226,731.6790819337078,ns,100000000.0,seq
+1,SortedArrayRangeLookupBinarySearch/1/1,2,1,SortedArrayRangeLookupBinarySearch/1/1,iteration,1,0,1,904041,742.0831619180412,741.5047315331567,ns,100000000.0,gap_10
+2,SortedArrayRangeLookupBinarySearch/1/2,2,2,SortedArrayRangeLookupBinarySearch/1/2,iteration,1,0,1,907960,742.3062033482237,741.7646944798803,ns,100000000.0,uniform
+3,SortedArrayRangeLookupBinarySearch/1/3,2,3,SortedArrayRangeLookupBinarySearch/1/3,iteration,1,0,1,804992,831.1575042495691,830.4309036611412,ns,200000000.0,fb
+4,SortedArrayRangeLookupBinarySearch/1/4,2,4,SortedArrayRangeLookupBinarySearch/1/4,iteration,1,0,1,795897,831.4119131726075,830.7818524255974,ns,200000000.0,osm
+5,SortedArrayRangeLookupBinarySearch/1/5,2,5,SortedArrayRangeLookupBinarySearch/1/5,iteration,1,0,1,925015,721.7239173911187,721.1590666096938,ns,90437011.0,wiki
+6,"BucketsRangeLookupRMI<10, 1>/1/0",0,0,"BucketsRangeLookupRMI<10, 1>/1/0",iteration,1,0,1,2195099,318.67586611506226,318.4559721452192,ns,100000000.0,seq
+7,"BucketsRangeLookupRMI<10, 1>/1/1",0,1,"BucketsRangeLookupRMI<10, 1>/1/1",iteration,1,0,1,1982430,352.8671342320617,352.6310830647214,ns,100000000.0,gap_10
+8,"BucketsRangeLookupRMI<10, 1>/1/2",0,2,"BucketsRangeLookupRMI<10, 1>/1/2",iteration,1,0,1,1318298,454.42601527843584,454.10246469310954,ns,100000000.0,uniform
+9,"BucketsRangeLookupRMI<10, 1>/1/3",0,3,"BucketsRangeLookupRMI<10, 1>/1/3",iteration,1,0,1,848020,759.352326982834,758.8263342845635,ns,200000000.0,fb
+10,"BucketsRangeLookupRMI<10, 1>/1/5",0,4,"BucketsRangeLookupRMI<10, 1>/1/5",iteration,1,0,1,1831696,392.19648992272397,391.90464629502736,ns,90437011.0,wiki
+11,"BucketsRangeLookupRMI<10, 2>/1/0",1,0,"BucketsRangeLookupRMI<10, 2>/1/0",iteration,1,0,1,2171833,314.91631390822306,314.7099956580515,ns,100000000.0,seq
+12,"BucketsRangeLookupRMI<10, 2>/1/1",1,1,"BucketsRangeLookupRMI<10, 2>/1/1",iteration,1,0,1,2035651,321.6202787372048,321.3669145644482,ns,100000000.0,gap_10
+13,"BucketsRangeLookupRMI<10, 2>/1/2",1,2,"BucketsRangeLookupRMI<10, 2>/1/2",iteration,1,0,1,1720615,391.8024682945448,391.51041459013044,ns,100000000.0,uniform
+14,"BucketsRangeLookupRMI<10, 2>/1/3",1,3,"BucketsRangeLookupRMI<10, 2>/1/3",iteration,1,0,1,923149,677.2697394530505,676.7645764659932,ns,200000000.0,fb
+15,"BucketsRangeLookupRMI<10, 2>/1/5",1,4,"BucketsRangeLookupRMI<10, 2>/1/5",iteration,1,0,1,2002120,332.7426435662369,332.5129093161291,ns,90437011.0,wiki
+16,"BucketsRangeLookupRMI<10, 8>/1/0",2,0,"BucketsRangeLookupRMI<10, 8>/1/0",iteration,1,0,1,1902652,354.9070458835232,354.65032018466604,ns,100000000.0,seq
+17,"BucketsRangeLookupRMI<10, 8>/1/1",2,1,"BucketsRangeLookupRMI<10, 8>/1/1",iteration,1,0,1,1817314,380.51306767875167,380.2455789148223,ns,100000000.0,gap_10
+18,"BucketsRangeLookupRMI<10, 8>/1/2",2,2,"BucketsRangeLookupRMI<10, 8>/1/2",iteration,1,0,1,1582843,432.96517810898484,432.64903025759094,ns,100000000.0,uniform
+19,"BucketsRangeLookupRMI<10, 8>/1/3",2,3,"BucketsRangeLookupRMI<10, 8>/1/3",iteration,1,0,1,1077990,591.7439817824363,591.2487472053906,ns,200000000.0,fb
+20,"BucketsRangeLookupRMI<10, 8>/1/5",2,4,"BucketsRangeLookupRMI<10, 8>/1/5",iteration,1,0,1,1779215,382.8018410981385,382.52601681077255,ns,90437011.0,wiki
+21,"BucketsRangeLookupRMI<1000, 1>/1/0",3,0,"BucketsRangeLookupRMI<1000, 1>/1/0",iteration,1,0,1,2151590,317.8172505083504,317.57211782915397,ns,100000000.0,seq
+22,"BucketsRangeLookupRMI<1000, 1>/1/1",3,1,"BucketsRangeLookupRMI<1000, 1>/1/1",iteration,1,0,1,1952628,355.1908452430828,354.9200979397791,ns,100000000.0,gap_10
+23,"BucketsRangeLookupRMI<1000, 1>/1/2",3,2,"BucketsRangeLookupRMI<1000, 1>/1/2",iteration,1,0,1,1300462,448.6897831584867,448.3323049808583,ns,100000000.0,uniform
+24,"BucketsRangeLookupRMI<1000, 1>/1/3",3,3,"BucketsRangeLookupRMI<1000, 1>/1/3",iteration,1,0,1,842896,742.0833831522638,741.5690915604962,ns,200000000.0,fb
+25,"BucketsRangeLookupRMI<1000, 1>/1/5",3,4,"BucketsRangeLookupRMI<1000, 1>/1/5",iteration,1,0,1,1772081,375.5814209391853,375.2945875499286,ns,90437011.0,wiki
+26,"BucketsRangeLookupRMI<1000, 2>/1/0",4,0,"BucketsRangeLookupRMI<1000, 2>/1/0",iteration,1,0,1,2084633,316.43654856972023,316.181159945179,ns,100000000.0,seq
+27,"BucketsRangeLookupRMI<1000, 2>/1/1",4,1,"BucketsRangeLookupRMI<1000, 2>/1/1",iteration,1,0,1,2093246,322.980062636685,322.73161014045576,ns,100000000.0,gap_10
+28,"BucketsRangeLookupRMI<1000, 2>/1/2",4,2,"BucketsRangeLookupRMI<1000, 2>/1/2",iteration,1,0,1,1723580,393.740627432466,393.48154190698847,ns,100000000.0,uniform
+29,"BucketsRangeLookupRMI<1000, 2>/1/3",4,3,"BucketsRangeLookupRMI<1000, 2>/1/3",iteration,1,0,1,919833,683.1446348743889,682.558350265792,ns,200000000.0,fb
+30,"BucketsRangeLookupRMI<1000, 2>/1/5",4,4,"BucketsRangeLookupRMI<1000, 2>/1/5",iteration,1,0,1,2038825,338.60124525470684,338.36560813214237,ns,90437011.0,wiki
+31,"BucketsRangeLookupRMI<1000, 8>/1/0",5,0,"BucketsRangeLookupRMI<1000, 8>/1/0",iteration,1,0,1,1899985,362.1809524398431,361.9240183474837,ns,100000000.0,seq
+32,"BucketsRangeLookupRMI<1000, 8>/1/1",5,1,"BucketsRangeLookupRMI<1000, 8>/1/1",iteration,1,0,1,1820840,372.55587996951607,372.3169504184951,ns,100000000.0,gap_10
+33,"BucketsRangeLookupRMI<1000, 8>/1/2",5,2,"BucketsRangeLookupRMI<1000, 8>/1/2",iteration,1,0,1,1616713,424.19991736601213,423.8938710829019,ns,100000000.0,uniform
+34,"BucketsRangeLookupRMI<1000, 8>/1/3",5,3,"BucketsRangeLookupRMI<1000, 8>/1/3",iteration,1,0,1,986641,594.1000380284298,593.6802180326974,ns,200000000.0,fb
+35,"BucketsRangeLookupRMI<1000, 8>/1/5",5,4,"BucketsRangeLookupRMI<1000, 8>/1/5",iteration,1,0,1,1739560,384.20126382954936,383.941296074861,ns,90437011.0,wiki
+36,"BucketsRangeLookupRMI<1000000, 1>/1/0",6,0,"BucketsRangeLookupRMI<1000000, 1>/1/0",iteration,1,0,1,623232,1028.3627117024557,1027.6276202120735,ns,100000000.0,seq
+37,"BucketsRangeLookupRMI<1000000, 1>/1/1",6,1,"BucketsRangeLookupRMI<1000000, 1>/1/1",iteration,1,0,1,622816,1031.3388726623825,1030.568140510434,ns,100000000.0,gap_10
+38,"BucketsRangeLookupRMI<1000000, 1>/1/2",6,2,"BucketsRangeLookupRMI<1000000, 1>/1/2",iteration,1,0,1,609376,1053.9399574056463,1053.2011057211962,ns,100000000.0,uniform
+39,"BucketsRangeLookupRMI<1000000, 1>/1/3",6,3,"BucketsRangeLookupRMI<1000000, 1>/1/3",iteration,1,0,1,700334,926.1266653130017,925.3393423709424,ns,200000000.0,fb
+40,"BucketsRangeLookupRMI<1000000, 1>/1/5",6,4,"BucketsRangeLookupRMI<1000000, 1>/1/5",iteration,1,0,1,763048,821.1058435430215,820.5440404797262,ns,90437011.0,wiki
+41,"BucketsRangeLookupRMI<1000000, 2>/1/0",7,0,"BucketsRangeLookupRMI<1000000, 2>/1/0",iteration,1,0,1,629863,892.6227986830098,891.9816245755603,ns,100000000.0,seq
+42,"BucketsRangeLookupRMI<1000000, 2>/1/1",7,1,"BucketsRangeLookupRMI<1000000, 2>/1/1",iteration,1,0,1,715750,906.1165812379448,905.4492350680428,ns,100000000.0,gap_10
+43,"BucketsRangeLookupRMI<1000000, 2>/1/2",7,2,"BucketsRangeLookupRMI<1000000, 2>/1/2",iteration,1,0,1,702933,912.0306158066542,911.3641997174099,ns,100000000.0,uniform
+44,"BucketsRangeLookupRMI<1000000, 2>/1/3",7,3,"BucketsRangeLookupRMI<1000000, 2>/1/3",iteration,1,0,1,769511,839.4621007366668,838.8413498961901,ns,200000000.0,fb
+45,"BucketsRangeLookupRMI<1000000, 2>/1/5",7,4,"BucketsRangeLookupRMI<1000000, 2>/1/5",iteration,1,0,1,881841,712.7447610405301,712.1918520457373,ns,90437011.0,wiki
+46,"BucketsRangeLookupRMI<1000000, 8>/1/0",8,0,"BucketsRangeLookupRMI<1000000, 8>/1/0",iteration,1,0,1,754653,855.754329604033,855.1461254377152,ns,100000000.0,seq
+47,"BucketsRangeLookupRMI<1000000, 8>/1/1",8,1,"BucketsRangeLookupRMI<1000000, 8>/1/1",iteration,1,0,1,752849,869.0824956095512,868.4628790103878,ns,100000000.0,gap_10
+48,"BucketsRangeLookupRMI<1000000, 8>/1/2",8,2,"BucketsRangeLookupRMI<1000000, 8>/1/2",iteration,1,0,1,748658,865.7637527334934,865.1113205226985,ns,100000000.0,uniform
+49,"BucketsRangeLookupRMI<1000000, 8>/1/3",8,3,"BucketsRangeLookupRMI<1000000, 8>/1/3",iteration,1,0,1,868002,596.292709046715,595.8762733263518,ns,200000000.0,fb
+50,"BucketsRangeLookupRMI<1000000, 8>/1/5",8,4,"BucketsRangeLookupRMI<1000000, 8>/1/5",iteration,1,0,1,906525,700.7238854115568,700.1639612811749,ns,90437011.0,wiki
+51,SortedArrayRangeLookupRMI<10>/1/0,9,0,SortedArrayRangeLookupRMI<10>/1/0,iteration,1,0,1,787327,897.7121618760043,897.0160416192231,ns,100000000.0,seq
+52,SortedArrayRangeLookupRMI<10>/1/1,9,1,SortedArrayRangeLookupRMI<10>/1/1,iteration,1,0,1,626685,1043.6944211687874,1042.8586849852547,ns,100000000.0,gap_10
+53,SortedArrayRangeLookupRMI<10>/1/2,9,2,SortedArrayRangeLookupRMI<10>/1/2,iteration,1,0,1,886571,744.2739404803642,743.6619176581221,ns,100000000.0,uniform
+54,SortedArrayRangeLookupRMI<10>/1/3,9,3,SortedArrayRangeLookupRMI<10>/1/3,iteration,1,0,1,771441,835.6242529824146,834.9536659317929,ns,200000000.0,fb
+55,SortedArrayRangeLookupRMI<10>/1/5,9,4,SortedArrayRangeLookupRMI<10>/1/5,iteration,1,0,1,900237,734.6907798535351,734.0135097757719,ns,90437011.0,wiki
+56,SortedArrayRangeLookupRMI<1000>/1/0,10,0,SortedArrayRangeLookupRMI<1000>/1/0,iteration,1,0,1,757272,972.2783368665943,971.5333948698268,ns,100000000.0,seq
+57,SortedArrayRangeLookupRMI<1000>/1/1,10,1,SortedArrayRangeLookupRMI<1000>/1/1,iteration,1,0,1,616479,1132.8277244648027,1131.8838143719227,ns,100000000.0,gap_10
+58,SortedArrayRangeLookupRMI<1000>/1/2,10,2,SortedArrayRangeLookupRMI<1000>/1/2,iteration,1,0,1,875334,760.2225122450513,759.6220688326548,ns,100000000.0,uniform
+59,SortedArrayRangeLookupRMI<1000>/1/3,10,3,SortedArrayRangeLookupRMI<1000>/1/3,iteration,1,0,1,772174,852.430378673121,851.772495577415,ns,200000000.0,fb
+60,SortedArrayRangeLookupRMI<1000>/1/5,10,4,SortedArrayRangeLookupRMI<1000>/1/5,iteration,1,0,1,893577,743.4689121273249,742.886127328671,ns,90437011.0,wiki
+61,SortedArrayRangeLookupRMI<1000000>/1/0,11,0,SortedArrayRangeLookupRMI<1000000>/1/0,iteration,1,0,1,669073,1021.1501251507304,1020.3926372754232,ns,100000000.0,seq
+62,SortedArrayRangeLookupRMI<1000000>/1/1,11,1,SortedArrayRangeLookupRMI<1000000>/1/1,iteration,1,0,1,553257,1228.6296377482895,1227.6800185088596,ns,100000000.0,gap_10
+63,SortedArrayRangeLookupRMI<1000000>/1/2,11,2,SortedArrayRangeLookupRMI<1000000>/1/2,iteration,1,0,1,764981,883.9107291985447,883.1210134632125,ns,100000000.0,uniform
+64,SortedArrayRangeLookupRMI<1000000>/1/3,11,3,SortedArrayRangeLookupRMI<1000000>/1/3,iteration,1,0,1,688585,960.8494935357575,960.0435559881474,ns,200000000.0,fb
+65,SortedArrayRangeLookupRMI<1000000>/1/5,11,4,SortedArrayRangeLookupRMI<1000000>/1/5,iteration,1,0,1,782324,848.9815658876706,848.2934180720135,ns,90437011.0,wiki
