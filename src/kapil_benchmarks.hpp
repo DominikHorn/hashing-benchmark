@@ -211,8 +211,16 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   std::cout << "(3) inserting keys" << std::endl;
 
   // insert all keys exactly where model tells us to
+  size_t notify_at = dataset.size() / 100;
   typename Bucket<BucketSize>::Tape tape;
-  for (const auto& key : dataset) buckets[rmi(key)].insert(key, tape);
+  for (size_t i = 0; i < dataset.size(); i++) {
+    const auto key = dataset[i];
+    const auto ind = rmi(key);
+    buckets[ind].insert(key, tape);
+
+    if (i % notify_at == 0) std::cout << "." << std::flush;
+  }
+  std::cout << std::endl;
 
   std::cout << "(4) benchmarking" << std::endl;
   for (auto _ : state) {
