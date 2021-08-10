@@ -59,7 +59,7 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 }
 
 template <size_t SecondLevelModelCount>
-static void SortedArrayRangeLookupRMI(benchmark::State& state) {
+static void SortedArrayRangeLookupRMIBinary(benchmark::State& state) {
   const size_t interval_size = state.range(0);
   const auto did = static_cast<dataset::ID>(state.range(1));
 
@@ -108,16 +108,68 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
 
     std::vector<Payload> result;
 
-    // Interval is determined by max error
-    const auto pred_ind = rmi(lower);
-    const auto begin_iter =
-        dataset.begin() + (pred_ind > max_error) * (pred_ind - max_error);
-    const auto end_iter =
-        dataset.begin() + std::min(pred_ind + max_error, dataset.size() - 1);
-
-    for (auto iter = std::lower_bound(begin_iter, end_iter, lower);
+    const size_t pred_ind = rmi(lower);
+    for (auto iter = std::lower_bound(
+             dataset.begin() +
+                 (pred_ind > max_error ? pred_ind - max_error : 0),
+             dataset.begin() +
+                 std::min(pred_ind + max_error, dataset.size() - 1),
+             lower);
          iter < dataset.end() && *iter < upper; iter++)
       result.push_back(*iter - 1);
+
+    assert(result.size() <= interval_size);
+    benchmark::DoNotOptimize(result.data());
+  }
+  std::cout << "\t-> done" << std::endl;
+}
+
+template <size_t SecondLevelModelCount>
+static void SortedArrayRangeLookupRMISequential(benchmark::State& state) {
+  const size_t interval_size = state.range(0);
+  const auto did = static_cast<dataset::ID>(state.range(1));
+
+  std::cout << "(0) loading dataset" << std::endl;
+  auto dataset = dataset::load_cached(did, gen_dataset_size);
+
+  std::uniform_int_distribution<size_t> dist(0, dataset.size() - 1);
+
+  state.counters["dataset_size"] = dataset.size();
+  state.SetLabel(dataset::name(did));
+
+  if (dataset.empty()) {
+    // otherwise google benchmark produces an error ;(
+    for (auto _ : state) {
+    }
+    return;
+  }
+
+  //  std::cout << "(1) sampling data" << std::endl;
+  //  std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
+  //  for (size_t i = 0; i < sample.size(); i++) sample[i] = dataset[dist(rng)];
+  //  sample.push_back(*std::min_element(dataset.begin(), dataset.end()));
+  //  sample.push_back(*std::max_element(dataset.begin(), dataset.end()));
+  //  dataset::deduplicate_and_sort(sample);
+
+  std::cout << "(2) building rmi" << std::endl;
+  const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
+      dataset.begin(), dataset.end(), dataset.size());
+
+  std::cout << "(3) benchmarking" << std::endl;
+  for (auto _ : state) {
+    const auto lower = dataset[dist(rng)];
+    const auto upper = lower + interval_size;
+
+    std::vector<Payload> result;
+
+    // Find lower bound sequentially searching starting at pred_ind
+    const size_t pred_ind = rmi(lower);
+    size_t lb_index = pred_ind;
+    while (lb_index > 0 && dataset[lb_index] > lower) lb_index--;
+    while (lb_index < dataset.size() && dataset[lb_index] < lower) lb_index++;
+
+    for (size_t i = lb_index; i < dataset.size() && dataset[i] < upper; i++)
+      result.push_back(dataset[i] - 1);
 
     assert(result.size() <= interval_size);
     benchmark::DoNotOptimize(result.data());
@@ -282,17 +334,30 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 BENCHMARK(SortedArrayRangeLookupBinarySearch)
     ->ArgsProduct({intervals, datasets});
 
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 0)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMISequential, 0)
     ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMISequential, 10)
     ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMISequential, 1000)
     ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100000)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMISequential, 100000)
     ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000000)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMISequential, 1000000)
     ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10000000)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMISequential, 10000000)
+    ->ArgsProduct({intervals, datasets});
+
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMIBinary, 0)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMIBinary, 10)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMIBinary, 1000)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMIBinary, 100000)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMIBinary, 1000000)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMIBinary, 10000000)
     ->ArgsProduct({intervals, datasets});
 
 BENCHMARK_TWO_PARAM(BucketsRangeLookupRMI);
