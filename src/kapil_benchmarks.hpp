@@ -95,12 +95,9 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
   size_t notify_at = dataset.size() / 100;
   for (size_t i = 0; i < dataset.size(); i++) {
     const auto key = dataset[i];
-
     const auto pred = rmi(key);
-    const size_t ind = *std::lower_bound(dataset.begin(), dataset.end(), key);
 
-    max_error = std::max(
-        max_error, (pred > ind) * (pred - ind) + (pred < ind) * (ind - pred));
+    max_error = std::max(max_error, pred > i ? pred - i : i - pred);
 
     if (i % notify_at == 0) std::cout << "." << std::flush;
   }
