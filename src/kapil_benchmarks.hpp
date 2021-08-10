@@ -280,13 +280,13 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 // BENCHMARK(SortedArrayRangeLookupBinarySearch)
 //    ->ArgsProduct({intervals, datasets});
 
-BENCHMARK_TWO_PARAM(BucketsRangeLookupRMI);
-
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100000)
     ->ArgsProduct({intervals, datasets});
+
+BENCHMARK_TWO_PARAM(BucketsRangeLookupRMI);
 }  // namespace _
 
