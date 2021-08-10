@@ -107,7 +107,7 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
 
   std::cout << "(2) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
-      sample.begin(), sample.end(), dataset.size() - 1);
+      sample.begin(), sample.end(), dataset.size());
 
   std::cout << "(3) sorting dataset" << std::endl;
 
@@ -231,7 +231,7 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   std::sort(sample.begin(), sample.end());
   std::cout << "(1) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
-      sample.begin(), sample.end(), buckets.size() - 1);
+      sample.begin(), sample.end(), buckets.size());
   std::cout << "(2) inserting keys" << std::endl;
 
   // insert all keys exactly where model tells us to
