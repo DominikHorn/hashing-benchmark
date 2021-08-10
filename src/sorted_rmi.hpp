@@ -353,27 +353,30 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 
     std::vector<Payload> result;
 
-    bool upper_encountered = false;
+    bool search_finished = false;
     for (size_t bucket_ind = rmi(lower);
-         !upper_encountered && bucket_ind < buckets.size(); bucket_ind++) {
+         !search_finished && bucket_ind < buckets.size(); bucket_ind++) {
       for (auto* b = &buckets[bucket_ind]; b != nullptr; b = b->next) {
         for (size_t i = 0; i < BucketSize; i++) {
           const auto& current_key = b->keys[i];
+	  // assume bucket chain is done, i.e., no deletes
           if (current_key == Sentinel) {
             b = nullptr;
             break;
           }
-          if (current_key >= upper) {
-            upper_encountered = true;
-            continue;  // Don't assume data was inserted in sorted order
+          // assume data was inserted in sorted order, i.e., bucket 
+	  // does not have to be examined further
+          if (current_key >= upper || current_key < lower) {
+            search_finished = true;
+            break;  
           }
-          if (current_key < lower)
-            continue;  // Don't assume data was inserted in sorted order
 
           result.push_back(current_key - 1);
         }
 
-        if (b == nullptr) break;
+	// assume data was inserted in sorted order, i.e., bucket
+	// chain does not have to be traversed further
+        if (search_finished || b == nullptr) break;
       }
     }
 
