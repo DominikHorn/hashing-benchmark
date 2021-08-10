@@ -24,7 +24,7 @@ const std::vector<std::int64_t> intervals{
 const size_t gen_dataset_size = 100000000;
 const std::vector<std::int64_t> datasets{
     dataset::ID::SEQUENTIAL, dataset::ID::GAPPED_10, dataset::ID::UNIFORM,
-    dataset::ID::FB, /*dataset::ID::OSM,*/ dataset::ID::WIKI};
+    dataset::ID::FB,         dataset::ID::OSM,       dataset::ID::WIKI};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
@@ -275,20 +275,30 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 #define _BENCHMARK_TWO_PARAM(fun, model_size) \
   __BENCHMARK_TWO_PARAM(fun, model_size, 1)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 2)   \
-  __BENCHMARK_TWO_PARAM(fun, model_size, 8)
-#define BENCHMARK_TWO_PARAM(fun)  \
-  _BENCHMARK_TWO_PARAM(fun, 10)   \
-  _BENCHMARK_TWO_PARAM(fun, 1000) \
-  _BENCHMARK_TWO_PARAM(fun, 100000)
+  __BENCHMARK_TWO_PARAM(fun, model_size, 8)   \
+  __BENCHMARK_TWO_PARAM(fun, model_size, 16)
+#define BENCHMARK_TWO_PARAM(fun)     \
+  _BENCHMARK_TWO_PARAM(fun, 0)       \
+  _BENCHMARK_TWO_PARAM(fun, 10)      \
+  _BENCHMARK_TWO_PARAM(fun, 1000)    \
+  _BENCHMARK_TWO_PARAM(fun, 100000)  \
+  _BENCHMARK_TWO_PARAM(fun, 1000000) \
+  _BENCHMARK_TWO_PARAM(fun, 10000000)
 
-// BENCHMARK(SortedArrayRangeLookupBinarySearch)
-//    ->ArgsProduct({intervals, datasets});
+BENCHMARK(SortedArrayRangeLookupBinarySearch)
+    ->ArgsProduct({intervals, datasets});
 
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 0)
+    ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100000)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000000)
+    ->ArgsProduct({intervals, datasets});
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10000000)
     ->ArgsProduct({intervals, datasets});
 
 BENCHMARK_TWO_PARAM(BucketsRangeLookupRMI);
