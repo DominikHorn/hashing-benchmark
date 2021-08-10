@@ -120,17 +120,16 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
   size_t max_error = 0;
   for (const auto& key : dataset) {
     const auto pred_ind = rmi(key);
-    size_t actual_ind = pred_ind;
-    while (actual_ind > 0 && dataset[actual_ind] > key) actual_ind--;
-    while (actual_ind + 1 < dataset.size() && dataset[actual_ind] < key)
-      actual_ind++;
+    size_t ind = pred_ind;
+    while (ind > 0 && dataset[ind] > key) ind--;
+    while (ind + 1 < dataset.size() && dataset[ind] < key) ind++;
 
     max_error =
-        std::max(max_error, pred_ind > actual_ind ? pred_ind - actual_ind
-                                                  : actual_ind - pred_ind);
+        std::max(max_error, pred_ind > ind ? pred_ind - ind : ind - pred_ind);
   }
 
-  std::cout << "\t-> max_error: " << max_error << std::endl << "(5) benchmarking" << std::endl;
+  std::cout << "\t-> max_error: " << max_error << std::endl
+            << "(5) benchmarking" << std::endl;
 
   std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
@@ -286,9 +285,9 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   __BENCHMARK_TWO_PARAM(fun, model_size, 2)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 4)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 16)
-#define BENCHMARK_TWO_PARAM(fun)   \
-  _BENCHMARK_TWO_PARAM(fun, 0)    \
-  _BENCHMARK_TWO_PARAM(fun, 10)    \
+#define BENCHMARK_TWO_PARAM(fun)    \
+  _BENCHMARK_TWO_PARAM(fun, 0)      \
+  _BENCHMARK_TWO_PARAM(fun, 10)     \
   _BENCHMARK_TWO_PARAM(fun, 1000)   \
   _BENCHMARK_TWO_PARAM(fun, 100000) \
   _BENCHMARK_TWO_PARAM(fun, 10000000)
