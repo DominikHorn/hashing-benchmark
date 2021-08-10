@@ -44,7 +44,7 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
     return;
   }
 
-  std::uniform_int_distribution<size_t> dist(0, dataset.size());
+  std::uniform_int_distribution<size_t> dist(0, dataset.size() - 1);
   for (auto _ : state) {
     const auto lower = dataset[dist(rng)];
     const auto upper = lower + interval_size;
@@ -66,7 +66,7 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
   std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
-  std::uniform_int_distribution<size_t> dist(0, dataset.size());
+  std::uniform_int_distribution<size_t> dist(0, dataset.size() - 1);
 
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
@@ -190,7 +190,7 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
-  std::uniform_int_distribution<size_t> dist(0, dataset.size());
+  std::uniform_int_distribution<size_t> dist(0, dataset.size() - 1);
 
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
