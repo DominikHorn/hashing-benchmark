@@ -165,15 +165,22 @@ struct Bucket {
   }
 
   forceinline void insert(const Key& key, Tape& tape) {
-    for (size_t i = 0; i < BucketSize; i++) {
-      if (keys[i] == Sentinel) {
-        keys[i] = key;
-        return;
+    Bucket* previous = this;
+
+    for (Bucket* current = previous; current != nullptr;
+         current = current->next) {
+      for (size_t i = 0; i < BucketSize; i++) {
+        if (current->keys[i] == Sentinel) {
+          current->keys[i] = key;
+          return;
+        }
       }
+
+      previous = current;
     }
 
-    if (next == nullptr) next = tape.new_bucket();
-    next->insert(key, tape);
+    previous->next = tape.new_bucket();
+    previous->next->insert(key, tape);
   }
 } packit;
 
