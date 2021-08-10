@@ -1,0 +1,9 @@
+,name,family_index,per_family_instance_index,run_name,run_type,repetitions,repetition_index,threads,iterations,real_time,cpu_time,time_unit,dataset_size,label
+0,ShuffleArray,0,0,ShuffleArray,iteration,1,0,1,1,12145960230.380297,12136719731.0,ns,,
+1,ShuffleAndSortArray,1,0,ShuffleAndSortArray,iteration,1,0,1,1,20697958259.84329,20683527414.00001,ns,,
+2,SortedArrayRangeLookupBinarySearch/1/0,2,0,SortedArrayRangeLookupBinarySearch/1/0,iteration,1,0,1,908344,732.238412819226,731.6790819337078,ns,100000000.0,seq
+3,SortedArrayRangeLookupBinarySearch/1/1,2,1,SortedArrayRangeLookupBinarySearch/1/1,iteration,1,0,1,904041,742.0831619180412,741.5047315331567,ns,100000000.0,gap_10
+4,SortedArrayRangeLookupBinarySearch/1/2,2,2,SortedArrayRangeLookupBinarySearch/1/2,iteration,1,0,1,907960,742.3062033482237,741.7646944798803,ns,100000000.0,uniform
+5,SortedArrayRangeLookupBinarySearch/1/3,2,3,SortedArrayRangeLookupBinarySearch/1/3,iteration,1,0,1,804992,831.1575042495691,830.4309036611412,ns,200000000.0,fb
+6,SortedArrayRangeLookupBinarySearch/1/4,2,4,SortedArrayRangeLookupBinarySearch/1/4,iteration,1,0,1,795897,831.4119131726075,830.7818524255974,ns,200000000.0,osm
+7,SortedArrayRangeLookupBinarySearch/1/5,2,5,SortedArrayRangeLookupBinarySearch/1/5,iteration,1,0,1,925015,721.7239173911187,721.1590666096938,ns,90437011.0,wiki
