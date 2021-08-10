@@ -124,6 +124,7 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
          iter < dataset.end() && *iter < upper; iter++)
       result.push_back(*iter - 1);
 
+    assert(result.size() <= interval_size);
     benchmark::DoNotOptimize(result.data());
   }
 
