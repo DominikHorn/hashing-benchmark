@@ -165,9 +165,23 @@ static void SortedArrayRangeLookupRMIExponential(benchmark::State& state) {
     // Find lower bound exponentially searching, starting at pred_ind
     const size_t pred_ind = rmi(lower);
     size_t lb = pred_ind, ub = pred_ind;
-    for (size_t step = 1; lb > 0 && dataset[ub] > lower; step *= 2) ub += step;
-    for (size_t step = 1; ub < dataset.size() && dataset[ub] < lower; step *= 2)
-      ub += step;
+    for (size_t step = 1; lb > 0 && dataset[ub] > lower; step *= 2) {
+      if (likely(lb > step))
+        lb -= step;
+      else {
+        lb = 0;
+        break;
+      }
+    }
+    for (size_t step = 1; ub < dataset.size() && dataset[ub] < lower;
+         step *= 2) {
+      if (likely(dataset.size() - 1 - ub > step))
+        ub += step;
+      else {
+        ub = dataset.size() - 1;
+        break;
+      }
+    }
 
     for (auto iter = std::lower_bound(dataset.begin() + lb,
                                       dataset.begin() + ub, lower);
