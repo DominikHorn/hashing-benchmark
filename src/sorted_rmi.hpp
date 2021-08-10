@@ -78,35 +78,30 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
     return;
   }
 
-  std::cout << "(1) sampling data" << std::endl;
-
-  std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
-  for (size_t i = 0; i < sample.size(); i++) sample[i] = dataset[dist(rng)];
-  sample.push_back(*std::min_element(dataset.begin(), dataset.end()));
-  sample.push_back(*std::max_element(dataset.begin(), dataset.end()));
-  dataset::deduplicate_and_sort(sample);
+  //  std::cout << "(1) sampling data" << std::endl;
+  //  std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
+  //  for (size_t i = 0; i < sample.size(); i++) sample[i] = dataset[dist(rng)];
+  //  sample.push_back(*std::min_element(dataset.begin(), dataset.end()));
+  //  sample.push_back(*std::max_element(dataset.begin(), dataset.end()));
+  //  dataset::deduplicate_and_sort(sample);
 
   std::cout << "(2) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
-      sample.begin(), sample.end(), dataset.size());
-
-  std::cout << "(3) finding max error" << std::endl;
+      dataset.begin(), dataset.end(), dataset.size());
 
   // determine maximum model error
   size_t max_error = 0;
   size_t notify_at = dataset.size() / 100;
+  std::cout << "(3) finding max error" << std::endl;
   for (size_t i = 0; i < dataset.size(); i++) {
     const auto pred = rmi(dataset[i]);
-
     max_error = std::max(max_error, pred > i ? pred - i : i - pred);
-
     if (i % notify_at == 0) std::cout << "." << std::flush;
   }
   std::cout << std::endl;
 
   std::cout << "\t-> max_error: " << max_error << std::endl
             << "(4) benchmarking" << std::endl;
-
   for (auto _ : state) {
     const auto lower = dataset[dist(rng)];
     const auto upper = lower + interval_size;
@@ -127,7 +122,6 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
     assert(result.size() <= interval_size);
     benchmark::DoNotOptimize(result.data());
   }
-
   std::cout << "\t-> done" << std::endl;
 }
 
@@ -203,24 +197,24 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
     return;
   }
 
-  std::cout << "(1) sampling data" << std::endl;
-  std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
-  for (size_t i = 0; i < sample.size(); i++) sample[i] = dataset[dist(rng)];
-  sample.push_back(*std::min_element(dataset.begin(), dataset.end()));
-  sample.push_back(*std::max_element(dataset.begin(), dataset.end()));
-  dataset::deduplicate_and_sort(sample);
+  //  std::cout << "(1) sampling data" << std::endl;
+  //  std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
+  //  for (size_t i = 0; i < sample.size(); i++) sample[i] = dataset[dist(rng)];
+  //  sample.push_back(*std::min_element(dataset.begin(), dataset.end()));
+  //  sample.push_back(*std::max_element(dataset.begin(), dataset.end()));
+  //  dataset::deduplicate_and_sort(sample);
 
   std::vector<Bucket<BucketSize>> buckets(
       dataset.size());  // TODO: load factors?
 
   std::cout << "(2) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
-      sample.begin(), sample.end(), buckets.size());
-  std::cout << "(3) inserting keys" << std::endl;
+      dataset.begin(), dataset.end(), buckets.size());
 
   // insert all keys exactly where model tells us to
   size_t notify_at = dataset.size() / 100;
   typename Bucket<BucketSize>::Tape tape;
+  std::cout << "(3) inserting keys" << std::endl;
   for (size_t i = 0; i < dataset.size(); i++) {
     const auto key = dataset[i];
     const auto ind = rmi(key);
