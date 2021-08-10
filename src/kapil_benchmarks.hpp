@@ -82,6 +82,8 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
 
   std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
   for (size_t i = 0; i < sample.size(); i++) sample[i] = dataset[dist(rng)];
+  sample.push_back(*std::min_element(dataset.begin(), dataset.end()));
+  sample.push_back(*std::max_element(dataset.begin(), dataset.end()));
   dataset::deduplicate_and_sort(sample);
 
   std::cout << "(2) building rmi" << std::endl;
@@ -204,6 +206,8 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   std::cout << "(1) sampling data" << std::endl;
   std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
   for (size_t i = 0; i < sample.size(); i++) sample[i] = dataset[dist(rng)];
+  sample.push_back(*std::min_element(dataset.begin(), dataset.end()));
+  sample.push_back(*std::max_element(dataset.begin(), dataset.end()));
   dataset::deduplicate_and_sort(sample);
 
   std::vector<Bucket<BucketSize>> buckets(
