@@ -83,6 +83,8 @@ template <size_t SecondLevelModelCount>
 static void SortedArrayRangeLookupRMI(benchmark::State& state) {
   const size_t interval_size = state.range(0);
   const auto did = static_cast<dataset::ID>(state.range(1));
+
+  std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
   state.counters["dataset_size"] = dataset.size();
@@ -95,16 +97,24 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
     return;
   }
 
+  std::cout << "(1) sampling data" << std::endl;
+
   // build model based on data sample. assume data is random shuffled (which it
   // is) to compactify this code
   std::vector<decltype(dataset)::value_type> sample(
       dataset.begin(), dataset.begin() + dataset.size() / 100);
   std::sort(sample.begin(), sample.end());
+
+  std::cout << "(2) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
       sample.begin(), sample.end(), dataset.size() - 1);
 
+  std::cout << "(3) sorting dataset" << std::endl;
+
   // We must sort the entire array ;(
   std::sort(dataset.begin(), dataset.end());
+
+  std::cout << "(4) finding max error" << std::endl;
 
   // determine maximum model error
   size_t max_error = 0;
@@ -120,7 +130,7 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
                                                   : actual_ind - pred_ind);
   }
 
-  std::cout << "max_error: " << max_error << std::endl;
+  std::cout << "\t-> max_error: " << max_error << std::endl << "(5) benchmarking" << std::endl;
 
   std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
@@ -142,6 +152,8 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
 
     benchmark::DoNotOptimize(result.data());
   }
+
+  std::cout << "\t-> done" << std::endl;
 }
 
 const Key Sentinel = std::numeric_limits<Key>::max();
@@ -193,6 +205,8 @@ template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BucketsRangeLookupRMI(benchmark::State& state) {
   const size_t interval_size = state.range(0);
   const auto did = static_cast<dataset::ID>(state.range(1));
+
+  std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
   state.counters["dataset_size"] = dataset.size();
@@ -224,7 +238,7 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   typename Bucket<BucketSize>::Tape tape;
   for (const auto& key : dataset) buckets[rmi(key)].insert(key, tape);
 
-  std::cout << "(3) probing" << std::endl;
+  std::cout << "(3) benchmarking" << std::endl;
   std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
     const auto lower = dataset[dist(rng)];
@@ -260,6 +274,7 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 
     benchmark::DoNotOptimize(result.data());
   }
+  std::cout << "\t-> done" << std::endl;
 }
 
 #define __BENCHMARK_TWO_PARAM(fun, model_size, bucket_size) \
