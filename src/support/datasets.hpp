@@ -17,28 +17,10 @@ namespace dataset {
  * Deduplicates the dataset. Data will be sorted to make this work
  * @param dataset
  */
-static forceinline void deduplicate(std::vector<uint64_t>& dataset) {
+static forceinline void deduplicate_and_sort(std::vector<uint64_t>& dataset) {
   std::sort(dataset.begin(), dataset.end());
   dataset.erase(std::unique(dataset.begin(), dataset.end()), dataset.end());
   dataset.shrink_to_fit();
-}
-
-/**
- * Shuffles the given dataset
- * @param dataset
- * @param seed
- */
-static forceinline void shuffle(std::vector<uint64_t>& dataset,
-                                const uint64_t seed = std::random_device()()) {
-  if (dataset.empty()) return;
-
-  std::default_random_engine gen(seed);
-  std::uniform_int_distribution<uint64_t> dist(0);
-
-  // Fisher-Yates shuffle
-  for (size_t i = dataset.size() - 1; i > 0; i--) {
-    std::swap(dataset[i], dataset[dist(gen) % i]);
-  }
 }
 
 /**
@@ -109,8 +91,7 @@ std::vector<Key> load(std::string filepath) {
   }
 
   // remove duplicates from dataset and put it into random order
-  deduplicate(dataset);
-  shuffle(dataset);
+  deduplicate_and_sort(dataset);
 
   return dataset;
 }
@@ -148,9 +129,9 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
   static std::vector<std::uint64_t> ds_gapped_10;
   static std::vector<std::uint64_t> ds_sequential;
   static std::vector<std::uint64_t> ds_uniform;
-  static auto ds_fb = load<std::uint64_t>("data/fb_200M_uint64");
-  static auto ds_osm = load<std::uint64_t>("data/osm_cellids_200M_uint64");
-  static auto ds_wiki = load<std::uint64_t>("data/wiki_ts_200M_uint64");
+  static std::vector<std::uint64_t> ds_fb;
+  static std::vector<std::uint64_t> ds_osm;
+  static std::vector<std::uint64_t> ds_wiki;
 
   switch (id) {
     case ID::SEQUENTIAL:
@@ -159,8 +140,7 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
         std::uint64_t k = 20000;
         for (size_t i = 0; i < ds_sequential.size(); i++, k++)
           ds_sequential[i] = k;
-        deduplicate(ds_sequential);
-        shuffle(ds_sequential);
+        deduplicate_and_sort(ds_sequential);
       }
       return ds_sequential;
     case ID::GAPPED_10:
@@ -172,8 +152,7 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
           while (dist(rng) < 10000);
           ds_gapped_10[i] = num;
         }
-        deduplicate(ds_gapped_10);
-        shuffle(ds_gapped_10);
+        deduplicate_and_sort(ds_gapped_10);
       }
       return ds_gapped_10;
     case ID::UNIFORM:
@@ -184,15 +163,26 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
         // TODO: ensure there are no duplicates
         for (size_t i = 0; i < ds_uniform.size(); i++)
           ds_uniform[i] = dist(rng);
-        deduplicate(ds_uniform);
-        shuffle(ds_uniform);
+        deduplicate_and_sort(ds_uniform);
       }
       return ds_uniform;
     case ID::FB:
+      if (ds_fb.empty()) {
+        ds_fb = load<std::uint64_t>("data/fb_200M_uint64");
+        deduplicate_and_sort(ds_fb);
+      }
       return ds_fb;
     case ID::OSM:
+      if (ds_osm.empty()) {
+        ds_osm = load<std::uint64_t>("data/osm_cellids_200M_uint64");
+        deduplicate_and_sort(ds_osm);
+      }
       return ds_osm;
     case ID::WIKI:
+      if (ds_wiki.empty()) {
+        ds_wiki = load<std::uint64_t>("data/wiki_ts_200M_uint64");
+        deduplicate_and_sort(ds_wiki);
+      }
       return ds_wiki;
   }
 

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <learned_hashing.hpp>
 #include <limits>
+#include <ostream>
 #include <random>
 #include <stdexcept>
 #include <vector>
@@ -23,29 +24,10 @@ const std::vector<std::int64_t> intervals{
 const size_t gen_dataset_size = 100000000;
 const std::vector<std::int64_t> datasets{
     dataset::ID::SEQUENTIAL, dataset::ID::GAPPED_10, dataset::ID::UNIFORM,
-    dataset::ID::FB,         dataset::ID::OSM,       dataset::ID::WIKI};
+    dataset::ID::FB, /*dataset::ID::OSM,*/ dataset::ID::WIKI};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
-
-static void ShuffleArray(benchmark::State& state) {
-  auto dataset =
-      dataset::load_cached(dataset::ID::SEQUENTIAL, gen_dataset_size);
-  for (auto _ : state) {
-    dataset::shuffle(dataset);
-    benchmark::DoNotOptimize(dataset.data());
-  }
-}
-
-static void ShuffleAndSortArray(benchmark::State& state) {
-  auto dataset =
-      dataset::load_cached(dataset::ID::SEQUENTIAL, gen_dataset_size);
-  for (auto _ : state) {
-    dataset::shuffle(dataset);
-    std::sort(dataset.begin(), dataset.end());
-    benchmark::DoNotOptimize(dataset.data());
-  }
-}
 
 static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   const size_t interval_size = state.range(0);
@@ -61,9 +43,6 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
     }
     return;
   }
-
-  // We must sort the entire array ;(
-  std::sort(dataset.begin(), dataset.end());
 
   std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
@@ -87,6 +66,8 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
   std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
+  std::uniform_int_distribution<size_t> dist(0, dataset.size());
+
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
 
@@ -99,26 +80,21 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
 
   std::cout << "(1) sampling data" << std::endl;
 
-  // build model based on data sample. assume data is random shuffled (which it
-  // is) to compactify this code
-  std::vector<decltype(dataset)::value_type> sample(
-      dataset.begin(), dataset.begin() + dataset.size() / 100);
-  std::sort(sample.begin(), sample.end());
+  std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
+  for (size_t i = 0; i < sample.size(); i++) sample[i] = dist(rng);
+  dataset::deduplicate_and_sort(sample);
 
   std::cout << "(2) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
       sample.begin(), sample.end(), dataset.size());
 
-  std::cout << "(3) sorting dataset" << std::endl;
-
-  // We must sort the entire array ;(
-  std::sort(dataset.begin(), dataset.end());
-
-  std::cout << "(4) finding max error" << std::endl;
+  std::cout << "(3) finding max error" << std::endl;
 
   // determine maximum model error
   size_t max_error = 0;
-  for (const auto& key : dataset) {
+  size_t notify_at = dataset.size() / 100;
+  for (size_t i = 0; i < dataset.size(); i++) {
+    const auto key = dataset[i];
     const auto pred_ind = rmi(key);
     size_t ind = pred_ind;
     while (ind > 0 && dataset[ind] > key) ind--;
@@ -126,12 +102,14 @@ static void SortedArrayRangeLookupRMI(benchmark::State& state) {
 
     max_error =
         std::max(max_error, pred_ind > ind ? pred_ind - ind : ind - pred_ind);
+
+    if (i % notify_at == 0) std::cout << "." << std::flush;
   }
+  std::cout << std::endl;
 
   std::cout << "\t-> max_error: " << max_error << std::endl
             << "(5) benchmarking" << std::endl;
 
-  std::uniform_int_distribution<size_t> dist(0, dataset.size());
   for (auto _ : state) {
     const auto lower = dataset[dist(rng)];
     const auto upper = lower + interval_size;
@@ -208,6 +186,8 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
+  std::uniform_int_distribution<size_t> dist(0, dataset.size());
+
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
 
@@ -218,27 +198,24 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
     return;
   }
 
+  std::cout << "(1) sampling data" << std::endl;
+  std::vector<decltype(dataset)::value_type> sample(dataset.size() / 100);
+  for (size_t i = 0; i < sample.size(); i++) sample[i] = dist(rng);
+  dataset::deduplicate_and_sort(sample);
+
   std::vector<Bucket<BucketSize>> buckets(
       dataset.size());  // TODO: load factors?
 
-  // sample data. assume t is random shuffled (which it
-  // is) to compactify this code
-  std::vector<decltype(dataset)::value_type> sample(
-      dataset.begin(), dataset.begin() + dataset.size() / 100);
-
-  // build model (sorted input!)
-  std::sort(sample.begin(), sample.end());
-  std::cout << "(1) building rmi" << std::endl;
+  std::cout << "(2) building rmi" << std::endl;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
       sample.begin(), sample.end(), buckets.size());
-  std::cout << "(2) inserting keys" << std::endl;
+  std::cout << "(3) inserting keys" << std::endl;
 
   // insert all keys exactly where model tells us to
   typename Bucket<BucketSize>::Tape tape;
   for (const auto& key : dataset) buckets[rmi(key)].insert(key, tape);
 
-  std::cout << "(3) benchmarking" << std::endl;
-  std::uniform_int_distribution<size_t> dist(0, dataset.size());
+  std::cout << "(4) benchmarking" << std::endl;
   for (auto _ : state) {
     const auto lower = dataset[dist(rng)];
     const auto upper = lower + interval_size;
@@ -283,30 +260,20 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 #define _BENCHMARK_TWO_PARAM(fun, model_size) \
   __BENCHMARK_TWO_PARAM(fun, model_size, 1)   \
   __BENCHMARK_TWO_PARAM(fun, model_size, 2)   \
-  __BENCHMARK_TWO_PARAM(fun, model_size, 4)   \
-  __BENCHMARK_TWO_PARAM(fun, model_size, 16)
-#define BENCHMARK_TWO_PARAM(fun)    \
-  _BENCHMARK_TWO_PARAM(fun, 0)      \
-  _BENCHMARK_TWO_PARAM(fun, 10)     \
-  _BENCHMARK_TWO_PARAM(fun, 1000)   \
-  _BENCHMARK_TWO_PARAM(fun, 100000) \
-  _BENCHMARK_TWO_PARAM(fun, 10000000)
+  __BENCHMARK_TWO_PARAM(fun, model_size, 8)
+#define BENCHMARK_TWO_PARAM(fun)  \
+  _BENCHMARK_TWO_PARAM(fun, 10)   \
+  _BENCHMARK_TWO_PARAM(fun, 1000) \
+  _BENCHMARK_TWO_PARAM(fun, 100000)
 
-BENCHMARK(ShuffleArray);
-BENCHMARK(ShuffleAndSortArray);
+// BENCHMARK(SortedArrayRangeLookupBinarySearch)
+//    ->ArgsProduct({intervals, datasets});
 
-BENCHMARK(SortedArrayRangeLookupBinarySearch)
-    ->ArgsProduct({intervals, datasets});
-
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 0)
-    ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100)
+BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 1000)
     ->ArgsProduct({intervals, datasets});
 BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 100000)
-    ->ArgsProduct({intervals, datasets});
-BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMI, 10000000)
     ->ArgsProduct({intervals, datasets});
 
 BENCHMARK_TWO_PARAM(BucketsRangeLookupRMI);
