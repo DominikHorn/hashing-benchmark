@@ -21,7 +21,7 @@ using Payload = std::uint64_t;
 
 const std::vector<std::int64_t> intervals{
     1 /*, 2, 4, 8, 16, 32, 64, 128, 256*/};
-const size_t gen_dataset_size = 100000000;
+const size_t gen_dataset_size = 200000000;
 const std::vector<std::int64_t> datasets{
     dataset::ID::SEQUENTIAL, dataset::ID::GAPPED_10, dataset::ID::UNIFORM,
     dataset::ID::FB,         dataset::ID::OSM,       dataset::ID::WIKI};
