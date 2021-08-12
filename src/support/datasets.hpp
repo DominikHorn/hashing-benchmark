@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <fstream>
@@ -9,7 +10,6 @@
 #include <string>
 #include <vector>
 
-// TODO: where does this include come from lol?
 #include "include/convenience/builtins.hpp"
 
 namespace dataset {
@@ -184,6 +184,63 @@ static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
         deduplicate_and_sort(ds_wiki);
       }
       return ds_wiki;
+  }
+
+  throw std::runtime_error("invalid datastet id " + std::to_string(id));
+}
+
+static std::vector<std::uint64_t> load_cached_shuffled(ID id,
+                                                       size_t dataset_size) {
+  static std::random_device rd;
+  static std::default_random_engine rng(rd());
+
+  static std::vector<std::uint64_t> ds_sequential_shuffled;
+  static std::vector<std::uint64_t> ds_gapped_10_shuffled;
+  static std::vector<std::uint64_t> ds_uniform_shuffled;
+  static std::vector<std::uint64_t> ds_fb_shuffled;
+  static std::vector<std::uint64_t> ds_osm_shuffled;
+  static std::vector<std::uint64_t> ds_wiki_shuffled;
+
+  switch (id) {
+    case ID::SEQUENTIAL:
+      if (ds_sequential_shuffled.size() != dataset_size) {
+        ds_sequential_shuffled = load_cached(ID::SEQUENTIAL, dataset_size);
+        std::shuffle(ds_sequential_shuffled.begin(),
+                     ds_sequential_shuffled.end(), rng);
+      }
+      return ds_sequential_shuffled;
+    case ID::GAPPED_10:
+      if (ds_gapped_10_shuffled.size() != dataset_size) {
+        ds_gapped_10_shuffled = load_cached(ID::GAPPED_10, dataset_size);
+        std::shuffle(ds_gapped_10_shuffled.begin(), ds_gapped_10_shuffled.end(),
+                     rng);
+      }
+      return ds_gapped_10_shuffled;
+    case ID::UNIFORM:
+      if (ds_uniform_shuffled.size() != dataset_size) {
+        ds_uniform_shuffled = load_cached(ID::UNIFORM, dataset_size);
+        std::shuffle(ds_uniform_shuffled.begin(), ds_uniform_shuffled.end(),
+                     rng);
+      }
+      return ds_uniform_shuffled;
+    case ID::FB:
+      if (ds_fb_shuffled.empty()) {
+        ds_fb_shuffled = load_cached(ID::FB, dataset_size);
+        std::shuffle(ds_fb_shuffled.begin(), ds_fb_shuffled.end(), rng);
+      }
+      return ds_fb_shuffled;
+    case ID::OSM:
+      if (ds_osm_shuffled.empty()) {
+        ds_osm_shuffled = load_cached(ID::OSM, dataset_size);
+        std::shuffle(ds_osm_shuffled.begin(), ds_osm_shuffled.end(), rng);
+      }
+      return ds_osm_shuffled;
+    case ID::WIKI:
+      if (ds_wiki_shuffled.empty()) {
+        ds_wiki_shuffled = load_cached(ID::WIKI, dataset_size);
+        std::shuffle(ds_wiki_shuffled.begin(), ds_wiki_shuffled.end(), rng);
+      }
+      return ds_wiki_shuffled;
   }
 
   throw std::runtime_error("invalid datastet id " + std::to_string(id));
