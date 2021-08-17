@@ -394,9 +394,6 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 1000000) \
   _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 10000000)
 
-BENCHMARK(SortedArrayRangeLookupBinarySearch)
-    ->ArgsProduct({intervals, datasets});
-
 #define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                        \
   BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 1000, LookupMethod)    \
       ->ArgsProduct({intervals, datasets});                                    \
@@ -405,6 +402,9 @@ BENCHMARK(SortedArrayRangeLookupBinarySearch)
   BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 1000000, LookupMethod) \
       ->ArgsProduct({intervals, datasets});                                    \
   BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 10000000, LookupMethod)
+
+BENCHMARK(SortedArrayRangeLookupBinarySearch)
+    ->ArgsProduct({intervals, datasets});
 
 BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
 
