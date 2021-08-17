@@ -27,7 +27,7 @@ include(FetchContent)
 FetchContent_Declare(
   hashing
   GIT_REPOSITORY git@github.com:DominikHorn/hashing.git
-  GIT_TAG c30572f
+  GIT_TAG bd92466
   )
 FetchContent_Declare(
   learned-hashing

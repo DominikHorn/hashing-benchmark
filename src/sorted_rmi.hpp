@@ -5,6 +5,7 @@
 #include <hashing.hpp>
 #include <hashtable.hpp>
 #include <iostream>
+#include <iterator>
 #include <learned_hashing.hpp>
 #include <limits>
 #include <ostream>
@@ -108,17 +109,33 @@ struct ExponentialRangeLookup {
   forceinline std::vector<T> operator()(size_t pred_ind, size_t lower,
                                         size_t upper,
                                         const std::vector<T>& dataset) const {
-    size_t err = 0;
-    for (size_t step = 1; pred_ind >= err && dataset[pred_ind - err] > lower;
-         err += step, step *= 2) {
-    }
-    err = std::min(err, pred_ind);
-    assert(err <= pred_ind);
+    typename std::vector<T>::const_iterator interval_start, interval_end;
 
-    auto interval_start = dataset.begin() + (pred_ind > err) * (pred_ind - err);
-    // +1 since lower_bound searches up to *excluding*
-    auto interval_end =
-        dataset.begin() + std::min(pred_ind + err, dataset.size() - 1) + 1;
+    size_t next_err = 1;
+    if (dataset[pred_ind] < lower) {
+      size_t err = 0;
+      while (err + pred_ind < dataset.size() &&
+             dataset[pred_ind + err] < lower) {
+        err = next_err;
+        next_err *= 2;
+      }
+      err = std::min(err, dataset.size() - pred_ind);
+
+      interval_start = dataset.begin() + pred_ind;
+      // +1 since lower_bound searches up to *excluding*
+      interval_end = dataset.begin() + pred_ind + err;
+    } else {
+      size_t err = 0;
+      while (err < pred_ind && dataset[pred_ind - err] < lower) {
+        err = next_err;
+        next_err *= 2;
+      }
+      err = std::min(err, pred_ind);
+
+      interval_start = dataset.begin() + pred_ind - err;
+      // +1 since lower_bound searches up to *excluding*
+      interval_end = dataset.begin() + pred_ind;
+    }
 
     assert(interval_start >= dataset.begin());
     assert(interval_start < dataset.end());
