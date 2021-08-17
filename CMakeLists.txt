@@ -37,12 +37,12 @@ FetchContent_Declare(
 FetchContent_Declare(
   exotic-hashing
   GIT_REPOSITORY git@github.com:DominikHorn/exotic-hashing.git
-  GIT_TAG b87e924
+  GIT_TAG 21f59bc
   )
 FetchContent_Declare(
   hashtable
   GIT_REPOSITORY git@github.com:DominikHorn/hashtable.git
-  GIT_TAG 98c9509
+  GIT_TAG 65f74b4
   )
 
 FetchContent_MakeAvailable(hashing learned-hashing exotic-hashing hashtable)
