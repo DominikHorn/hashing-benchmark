@@ -63,6 +63,7 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
                                 ? payloads[std::distance(dataset.begin(), iter)]
                                 : std::numeric_limits<Payload>::max();
     benchmark::DoNotOptimize(payload);
+    full_mem_barrier;
   }
 }
 
@@ -220,6 +221,7 @@ static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
                                 ? payloads[payload_ind]
                                 : std::numeric_limits<Payload>::max();
     benchmark::DoNotOptimize(payload);
+    full_mem_barrier;
   }
 }
 
@@ -344,6 +346,7 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   search_finished:
 
     benchmark::DoNotOptimize(payload);
+    full_mem_barrier;
   }
 }
 
