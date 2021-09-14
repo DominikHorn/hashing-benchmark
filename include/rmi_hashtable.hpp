@@ -67,7 +67,11 @@ struct RMIHashtable {
   }
 
   forceinline void insert(const Key& key, const Payload& payload) {
-    buckets[rmi(key)].insert(key, payload);
+    const auto index = rmi(key);
+    assert(index >= 0);
+    assert(index < buckets.size());
+
+    buckets[index].insert(key, payload);
   }
 
   forceinline Payload lookup(const Key& key) const {
