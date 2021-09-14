@@ -56,8 +56,8 @@ struct RMIHashtable {
 
   RMIHashtable(const std::vector<Key>& dataset,
                const std::vector<Payload>& payloads)
-      : buckets(dataset.size() / BucketSize),
-        rmi(dataset.begin(), dataset.end(), dataset.size() / BucketSize) {
+      : buckets(bucket_cnt(dataset)),
+        rmi(dataset.begin(), dataset.end(), bucket_cnt(dataset)) {
     // insert all keys exactly where model tells us to
     for (size_t i = 0; i < dataset.size(); i++) {
       const auto& key = dataset[i];
@@ -135,4 +135,9 @@ struct RMIHashtable {
  private:
   std::vector<Bucket> buckets;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi;
+
+  template <class T>
+  static size_t bucket_cnt(const std::vector<T>& dataset) {
+    return 1 + dataset.size() / BucketSize;
+  }
 };
