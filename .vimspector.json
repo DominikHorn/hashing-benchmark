@@ -1,5 +1,23 @@
 {
   "configurations": {
+    "tests": {
+      "adapter": "CodeLLDB",
+      "breakpoints": {
+        "exception": {
+          "cpp_throw": "Y",
+          "cpp_catch": "Y"
+        }
+      },
+      "configuration": {
+        "request": "launch",
+        "program": "cmake-build-debug/mt_tests",
+        "args": [],
+        "cwd": "${workspaceRoot}",
+        "environment": [],
+        "externalConsole": true,
+        "MIMode": "lldb"
+      }
+    },
     "benchmarks": {
       "adapter": "CodeLLDB",
       "breakpoints": {

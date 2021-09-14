@@ -1,5 +1,7 @@
 #pragma once
 
+#include <immintrin.h>
+
 #include <array>
 #include <cstddef>
 #include <learned_hashing.hpp>
@@ -50,7 +52,7 @@ struct RMIHashtable {
       previous->next = new Bucket;
       previous->next->insert(key, payload);
     }
-  } packit;
+  };
 
   RMIHashtable(const std::vector<Key>& dataset,
                const std::vector<Payload>& payloads)
@@ -69,19 +71,42 @@ struct RMIHashtable {
   }
 
   forceinline Payload lookup(const Key& key) const {
-    const auto buckets_size = buckets.size();
+    // since BucketSize is a template arg and therefore compile-time static,
+    // compiler will hopefully recognize that all branches of this if/else but
+    // one can be eliminated during optimization, therefore allowing for 0 cost
+    // specialization/simdiization
+    if (BucketSize == 8) {
+      for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
+        __m512i vkey = _mm512_set1_epi64(key);
+        __m512i vbucket = _mm512_load_si512((const __m512i*)&bucket->keys);
+        auto mask = _mm512_cmpeq_epi64_mask(vkey, vbucket);
 
-    // all keys are placed exactly where model tells us
-    for (size_t bucket_ind = rmi(key); bucket_ind < buckets_size;
-         bucket_ind++) {
-      auto bucket = &buckets[bucket_ind];
-      // TODO: implement SOSD vectorized lookup! -> has to be specialized for
-      // each bucket size :(
-      for (size_t i = 0; i < BucketSize; i++) {
-        const auto& current_key = bucket->keys[i];
-        if (current_key == Sentinel) break;
-        if (current_key == key) {
-          return bucket->payloads[i];
+        if (mask != 0) {
+          int index = __builtin_ctz(mask);
+          assert(index >= 0);
+          assert(index < BucketSize);
+          return bucket->payloads[index];
+        }
+
+        bucket = bucket->next;
+      }
+    } else {
+      const auto buckets_size = buckets.size();
+
+      // all keys are placed exactly where model tells us
+      for (size_t bucket_ind = rmi(key); bucket_ind < buckets_size;
+           bucket_ind++) {
+        for (auto bucket = &buckets[bucket_ind]; bucket != nullptr;) {
+          // TODO: implement SOSD vectorized lookup! -> has to be specialized
+          // for each bucket size :(
+          for (size_t i = 0; i < BucketSize; i++) {
+            const auto& current_key = bucket->keys[i];
+            if (current_key == Sentinel) break;
+            if (current_key == key) {
+              return bucket->payloads[i];
+            }
+          }
+          bucket = bucket->next;
         }
       }
     }

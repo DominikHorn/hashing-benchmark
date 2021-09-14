@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./build.sh benchmarks DEBUG
+./build.sh mt_tests DEBUG

@@ -47,6 +47,20 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(hashing learned-hashing exotic-hashing hashtable)
 
+# ==== Test target ====
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/96f4ce02a3a78d63981c67acbd368945d11d7d70.zip
+  )
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+add_executable(mt_tests src/tests.cpp)
+target_link_libraries(mt_tests learned-hashing gtest_main)
+# enable ctest support (i.e., test discovery)
+include(GoogleTest)
+gtest_discover_tests(mt_tests)
+
 # ==== Benchmark executable ====
 add_executable(benchmarks src/benchmarks.cpp)
 target_link_libraries(benchmarks PRIVATE hashing learned-hashing exotic-hashing hashtable ${GOOGLEBENCHMARK_LIBRARY})
