@@ -20,19 +20,16 @@ namespace _ {
 using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
-const std::vector<std::int64_t> intervals{
-    1 /*, 2, 4, 8, 16, 32, 64, 128, 256*/};
 const size_t gen_dataset_size = 200000000;
 const std::vector<std::int64_t> datasets{
-    dataset::ID::SEQUENTIAL, dataset::ID::GAPPED_10, dataset::ID::UNIFORM,
-    dataset::ID::FB,         dataset::ID::OSM,       dataset::ID::WIKI};
+    dataset::ID::SEQUENTIAL, /*dataset::ID::GAPPED_10,*/ dataset::ID::UNIFORM,
+    dataset::ID::FB, dataset::ID::OSM, dataset::ID::WIKI};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
 
 static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
-  const size_t interval_size = state.range(0);
-  const auto did = static_cast<dataset::ID>(state.range(1));
+  const auto did = static_cast<dataset::ID>(state.range(0));
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
   state.counters["dataset_size"] = dataset.size();
@@ -49,20 +46,23 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
-  std::cout << "(1) benchmarking" << std::endl;
+  std::cout << "(1) generating payloads" << std::endl;
+  auto payloads = dataset;
+  std::shuffle(payloads.begin(), payloads.end(), rng);
+
+  std::cout << "(2) benchmarking" << std::endl;
   size_t i = 0;
   for (auto _ : state) {
     while (unlikely(i >= shuffled_dataset.size())) i -= shuffled_dataset.size();
 
-    const auto lower = shuffled_dataset[i++];
-    const auto upper = lower + interval_size;
+    const auto searched = shuffled_dataset[i++];
 
-    std::vector<Payload> result;
-    for (auto iter = std::lower_bound(dataset.begin(), dataset.end(), lower);
-         iter < dataset.end() && *iter < upper; iter++)
-      result.push_back(*iter - 1);
-
-    benchmark::DoNotOptimize(result.data());
+    const auto iter =
+        std::lower_bound(dataset.begin(), dataset.end(), searched);
+    const Payload payload = iter < dataset.end()
+                                ? payloads[std::distance(dataset.begin(), iter)]
+                                : std::numeric_limits<Payload>::max();
+    benchmark::DoNotOptimize(payload);
   }
 }
 
@@ -74,26 +74,18 @@ struct SequentialRangeLookup {
     UNUSED(predictor);
   }
 
-  template <class T>
-  forceinline std::vector<T> operator()(size_t pred_ind, size_t lower,
-                                        size_t upper,
-                                        const std::vector<T>& dataset) const {
+  forceinline size_t operator()(size_t pred_ind, Key searched,
+                                const std::vector<Key>& dataset) const {
+    const auto last_ind = dataset.size() - 1;
     size_t lb = pred_ind;
-    if (dataset[lb] > lower)
-      while (lb > 0 && dataset[lb] > lower) lb--;
-    if (dataset[lb] < lower) {
-      while (lb < dataset.size() && dataset[lb] < lower) lb++;
-      lb--;
-    }
+
+    while (lb > 0 && dataset[lb] > searched) lb--;
+    while (lb < last_ind && dataset[lb] < searched) lb++;
 
     assert(lb >= 0);
-    assert(lb < dataset.size());
+    assert(lb <= last_ind);
 
-    std::vector<T> result;
-    for (size_t i = lb; i < dataset.size() && dataset[i] < upper; i++)
-      result.push_back(dataset[i] - 1);
-
-    return result;
+    return lb;
   }
 };
 
@@ -105,28 +97,27 @@ struct ExponentialRangeLookup {
     UNUSED(predictor);
   }
 
-  template <class T>
-  forceinline std::vector<T> operator()(size_t pred_ind, size_t lower,
-                                        size_t upper,
-                                        const std::vector<T>& dataset) const {
-    typename std::vector<T>::const_iterator interval_start, interval_end;
+  forceinline size_t operator()(size_t pred_ind, Key searched,
+                                const std::vector<Key>& dataset) const {
+    typename std::vector<Key>::const_iterator interval_start, interval_end;
+    const auto dataset_size = dataset.size();
 
     size_t next_err = 1;
-    if (dataset[pred_ind] < lower) {
+    if (dataset[pred_ind] < searched) {
       size_t err = 0;
-      while (err + pred_ind < dataset.size() &&
-             dataset[pred_ind + err] < lower) {
+      while (err + pred_ind < dataset_size &&
+             dataset[err + pred_ind] < searched) {
         err = next_err;
         next_err *= 2;
       }
-      err = std::min(err, dataset.size() - pred_ind);
+      err = std::min(err, dataset_size - pred_ind);
 
       interval_start = dataset.begin() + pred_ind;
       // +1 since lower_bound searches up to *excluding*
       interval_end = dataset.begin() + pred_ind + err;
     } else {
       size_t err = 0;
-      while (err < pred_ind && dataset[pred_ind - err] < lower) {
+      while (err < pred_ind && dataset[pred_ind - err] < searched) {
         err = next_err;
         next_err *= 2;
       }
@@ -138,17 +129,12 @@ struct ExponentialRangeLookup {
     }
 
     assert(interval_start >= dataset.begin());
-    assert(interval_start < dataset.end());
-
-    assert(interval_end >= dataset.begin());
+    assert(interval_end >= interval_start);
     assert(interval_end < dataset.end());
 
-    std::vector<T> result;
-    for (auto iter = std::lower_bound(interval_start, interval_end, lower);
-         iter < dataset.end() && *iter < upper; iter++)
-      result.push_back(*iter - 1);
-
-    return result;
+    return std::distance(
+        dataset.begin(),
+        std::lower_bound(interval_start, interval_end, searched));
   }
 };
 
@@ -163,10 +149,8 @@ struct BinaryRangeLookup {
     }
   }
 
-  template <class T>
-  forceinline std::vector<T> operator()(size_t pred_ind, size_t lower,
-                                        size_t upper,
-                                        const std::vector<T>& dataset) const {
+  forceinline Payload operator()(size_t pred_ind, Key searched,
+                                 const std::vector<Key>& dataset) const {
     // compute interval bounds
     auto interval_start =
         dataset.begin() + (pred_ind > max_error) * (pred_ind - max_error);
@@ -175,24 +159,18 @@ struct BinaryRangeLookup {
                         std::min(pred_ind + max_error, dataset.size() - 1) + 1;
 
     assert(interval_start >= dataset.begin());
-    assert(interval_start < dataset.end());
-
-    assert(interval_end >= dataset.begin());
+    assert(interval_end >= interval_start);
     assert(interval_end < dataset.end());
 
-    std::vector<T> result;
-    for (auto iter = std::lower_bound(interval_start, interval_end, lower);
-         iter < dataset.end() && *iter < upper; iter++)
-      result.push_back(*iter - 1);
-
-    return result;
+    return std::distance(
+        dataset.begin(),
+        std::lower_bound(interval_start, interval_end, searched));
   }
 };
 
 template <size_t SecondLevelModelCount, class RangeLookup>
 static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
-  const size_t interval_size = state.range(0);
-  const auto did = static_cast<dataset::ID>(state.range(1));
+  const auto did = static_cast<dataset::ID>(state.range(0));
 
   std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
@@ -226,21 +204,22 @@ static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
   auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
+  std::cout << "(3) generating payloads" << std::endl;
+  auto payloads = dataset;
+  std::shuffle(payloads.begin(), payloads.end(), rng);
+
   size_t i = 0;
-  std::cout << "(3) benchmarking" << std::endl;
+  std::cout << "(4) benchmarking" << std::endl;
   for (auto _ : state) {
     while (unlikely(i >= shuffled_dataset.size())) i -= shuffled_dataset.size();
 
-    const auto lower = shuffled_dataset[i++];
-    const auto upper = lower + interval_size;
+    const auto searched = shuffled_dataset[i++];
 
-    // Find lower bound sequentially searching starting at pred_ind
-    const size_t pred_ind = rmi(lower);
-    std::vector<Payload> result = range_lookup(pred_ind, lower, upper, dataset);
-
-    assert(result.size() >= 1);
-    assert(result.size() <= interval_size);
-    benchmark::DoNotOptimize(result.data());
+    const size_t payload_ind = range_lookup(rmi(searched), searched, dataset);
+    const Payload payload = payload_ind < payloads.size()
+                                ? payloads[payload_ind]
+                                : std::numeric_limits<Payload>::max();
+    benchmark::DoNotOptimize(payload);
   }
 }
 
@@ -286,8 +265,7 @@ struct Bucket {
 
 template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BucketsRangeLookupRMI(benchmark::State& state) {
-  const size_t interval_size = state.range(0);
-  const auto did = static_cast<dataset::ID>(state.range(1));
+  const auto did = static_cast<dataset::ID>(state.range(0));
 
   std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
@@ -334,79 +312,63 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   std::cout << "(3) shuffling dataset for probing" << std::endl;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
+  std::cout << "(4) generating payloads" << std::endl;
+  auto payloads = dataset;
+  std::shuffle(payloads.begin(), payloads.end(), rng);
+
   size_t i = 0;
-  std::cout << "(4) benchmarking" << std::endl;
+  const auto buckets_size = buckets.size();
+  const auto dataset_size = dataset.size();
+  std::cout << "(5) benchmarking" << std::endl;
   for (auto _ : state) {
-    while (unlikely(i >= shuffled_dataset.size())) i -= shuffled_dataset.size();
+    while (unlikely(i >= dataset_size)) i -= dataset_size;
 
-    const auto lower = shuffled_dataset[i++];
-    const auto upper = lower + interval_size;
+    const auto searched = shuffled_dataset[i++];
+    auto payload = std::numeric_limits<Payload>::max();
 
-    std::vector<Payload> result;
-
-    bool search_finished = false;
-    for (size_t bucket_ind = rmi(lower);
-         !search_finished && bucket_ind < buckets.size(); bucket_ind++) {
-      for (auto* b = &buckets[bucket_ind]; b != nullptr; b = b->next) {
-        for (size_t i = 0; i < BucketSize; i++) {
-          const auto& current_key = b->keys[i];
-          // assume bucket chain is finisehd & break early
-          if (current_key == Sentinel) {
-            b = nullptr;
-            break;
-          }
-
-          // don't assume data was inserted in sorted order
-          if (current_key >= upper) {
-            search_finished = true;
-            continue;
-          }
-
-          // don't assume data was inserted in sorted order
-          if (current_key < lower) continue;
-
-          result.push_back(current_key - 1);
+    // all keys are placed exactly where model tells us
+    for (size_t bucket_ind = rmi(searched); bucket_ind < buckets_size;
+         bucket_ind++) {
+      auto bucket = &buckets[bucket_ind];
+      // TODO: implement SOSD vectorized lookup! -> has to be specialized for
+      // each bucket size :(
+      for (size_t i = 0; i < BucketSize; i++) {
+        const auto& current_key = bucket->keys[i];
+        if (current_key == Sentinel) break;
+        if (current_key == searched) {
+          payload = current_key - 1;
+          goto search_finished;
         }
-
-        // assume data was inserted in sorted order, i.e., bucket
-        // chain does not have to be traversed further
-        if (search_finished || b == nullptr) break;
       }
     }
+  search_finished:
 
-    assert(result.size() >= 1);
-    assert(result.size() <= interval_size);
-    benchmark::DoNotOptimize(result.data());
+    benchmark::DoNotOptimize(payload);
   }
 }
 
 #define __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, bucket_size) \
-  BENCHMARK_TEMPLATE(fun, model_size, bucket_size)                     \
-      ->ArgsProduct({intervals, datasets});
+  BENCHMARK_TEMPLATE(fun, model_size, bucket_size)->ArgsProduct({datasets});
 
 #define _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size) \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 1)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 2)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 8)
-#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun)     \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 1000)    \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 100000)  \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 1000000) \
+#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun)    \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 1000)   \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 100000) \
   _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 10000000)
 
-#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                        \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 1000, LookupMethod)    \
-      ->ArgsProduct({intervals, datasets});                                    \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 100000, LookupMethod)  \
-      ->ArgsProduct({intervals, datasets});                                    \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 1000000, LookupMethod) \
-      ->ArgsProduct({intervals, datasets});                                    \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 10000000,              \
-                     LookupMethod)                                             \
-      ->ArgsProduct({intervals, datasets});
+#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                       \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 1000, LookupMethod)   \
+      ->ArgsProduct({datasets});                                              \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 100000, LookupMethod) \
+      ->ArgsProduct({datasets});                                              \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 10000000,             \
+                     LookupMethod)                                            \
+      ->ArgsProduct({datasets});
 
-BENCHMARK(SortedArrayRangeLookupBinarySearch)
-    ->ArgsProduct({intervals, datasets});
+BENCHMARK(SortedArrayRangeLookupBinarySearch)->ArgsProduct({datasets});
 
 BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
 
