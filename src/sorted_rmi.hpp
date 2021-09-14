@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "../include/rmi_hashtable.hpp"
 #include "include/convenience/builtins.hpp"
 #include "support/datasets.hpp"
 
@@ -225,46 +226,6 @@ static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
   }
 }
 
-const Key Sentinel = std::numeric_limits<Key>::max();
-template <size_t BucketSize>
-struct Bucket {
-  std::array<Key, BucketSize> keys;
-  Bucket* next = nullptr;
-
-  Bucket() {
-    // Sentinel value in each slot per default
-    std::fill(keys.begin(), keys.end(), Sentinel);
-  }
-
-  ~Bucket() {
-    if (next != nullptr) delete next;
-  }
-
-  forceinline size_t byte_size() const {
-    if (next != nullptr) return sizeof(Bucket<BucketSize>) + next->byte_size();
-    return sizeof(Bucket<BucketSize>);
-  }
-
-  forceinline void insert(const Key& key) {
-    Bucket* previous = this;
-
-    for (Bucket* current = previous; current != nullptr;
-         current = current->next) {
-      for (size_t i = 0; i < BucketSize; i++) {
-        if (current->keys[i] == Sentinel) {
-          current->keys[i] = key;
-          return;
-        }
-      }
-
-      previous = current;
-    }
-
-    previous->next = new Bucket;
-    previous->next->insert(key);
-  }
-} packit;
-
 template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BucketsRangeLookupRMI(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
@@ -282,69 +243,33 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
 
-  // initialize directory
-  std::vector<Bucket<BucketSize>> buckets(dataset.size() / BucketSize);
-
-  std::cout << "(1) building rmi" << std::endl;
-  const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
-      dataset.begin(), dataset.end(), buckets.size());
-
-  // insert all keys exactly where model tells us to
-  size_t notify_at = dataset.size() / 100;
-  std::cout << "(2) shuffling dataset for insertion" << std::endl;
+  std::cout << "(1) shuffling dataset for insertion" << std::endl;
   auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
-  std::cout << "(3) inserting keys" << std::endl;
-  for (size_t i = 0; i < dataset.size(); i++) {
-    const auto key = dataset[i];
-    const auto ind = rmi(key);
-    buckets[ind].insert(key);
-    if (i % notify_at == 0) std::cout << "." << std::flush;
-  }
-  std::cout << std::endl;
 
-  // measure directories's byte size
-  size_t directory_bytesize = sizeof(buckets);
-  for (const auto& bucket : buckets) directory_bytesize += bucket.byte_size();
-  state.counters["directory_bytesize"] = directory_bytesize;
-
-  // measure rmi size in bytes
-  state.counters["rmi_bytesize"] = rmi.byte_size();
-
-  std::cout << "(3) shuffling dataset for probing" << std::endl;
-  std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
-
-  std::cout << "(4) generating payloads" << std::endl;
+  std::cout << "(2) generating payloads" << std::endl;
   auto payloads = dataset;
   std::shuffle(payloads.begin(), payloads.end(), rng);
 
+  std::cout << "(3) building RMIHashtable" << std::endl;
+  RMIHashtable<Key, Payload, BucketSize, SecondLevelModelCount> ht(
+      shuffled_dataset, payloads);
+
+  // measure byte sizes
+  state.counters["directory_bytesize"] = ht.directory_byte_size();
+  state.counters["rmi_bytesize"] = ht.rmi_byte_size();
+
+  std::cout << "(4) reshuffling dataset for probing" << std::endl;
+  std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
+
   size_t i = 0;
-  const auto buckets_size = buckets.size();
   const auto dataset_size = dataset.size();
   std::cout << "(5) benchmarking" << std::endl;
   for (auto _ : state) {
     while (unlikely(i >= dataset_size)) i -= dataset_size;
 
     const auto searched = shuffled_dataset[i++];
-    auto payload = std::numeric_limits<Payload>::max();
-
-    // all keys are placed exactly where model tells us
-    for (size_t bucket_ind = rmi(searched); bucket_ind < buckets_size;
-         bucket_ind++) {
-      auto bucket = &buckets[bucket_ind];
-      // TODO: implement SOSD vectorized lookup! -> has to be specialized for
-      // each bucket size :(
-      for (size_t i = 0; i < BucketSize; i++) {
-        const auto& current_key = bucket->keys[i];
-        if (current_key == Sentinel) break;
-        if (current_key == searched) {
-          payload = current_key - 1;
-          goto search_finished;
-        }
-      }
-    }
-  search_finished:
-
+    const auto payload = ht.lookup(searched);
     benchmark::DoNotOptimize(payload);
     full_mem_barrier;
   }
