@@ -243,28 +243,25 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
 
-  std::cout << "(1) shuffling dataset for insertion" << std::endl;
-  auto shuffled_dataset = dataset;
-  std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
-
-  std::cout << "(2) generating payloads" << std::endl;
+  std::cout << "(1) generating payloads" << std::endl;
   auto payloads = dataset;
   std::shuffle(payloads.begin(), payloads.end(), rng);
 
-  std::cout << "(3) building RMIHashtable" << std::endl;
-  RMIHashtable<Key, Payload, BucketSize, SecondLevelModelCount> ht(
-      shuffled_dataset, payloads);
+  std::cout << "(2) building RMIHashtable" << std::endl;
+  RMIHashtable<Key, Payload, BucketSize, SecondLevelModelCount> ht(dataset,
+                                                                   payloads);
 
   // measure byte sizes
   state.counters["directory_bytesize"] = ht.directory_byte_size();
   state.counters["rmi_bytesize"] = ht.rmi_byte_size();
 
-  std::cout << "(4) reshuffling dataset for probing" << std::endl;
+  std::cout << "(3) shuffling dataset for probing" << std::endl;
+  auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
   size_t i = 0;
   const auto dataset_size = dataset.size();
-  std::cout << "(5) benchmarking" << std::endl;
+  std::cout << "(4) benchmarking" << std::endl;
   for (auto _ : state) {
     while (unlikely(i >= dataset_size)) i -= dataset_size;
 
