@@ -26,10 +26,6 @@ struct RMIHashtable {
       std::fill(keys.begin(), keys.end(), Sentinel);
     }
 
-    ~Bucket() {
-      if (next != nullptr) delete next;
-    }
-
     forceinline size_t byte_size() const {
       return sizeof(Bucket) + (next != nullptr ? next->byte_size() : 0);
     }
@@ -65,7 +61,7 @@ struct RMIHashtable {
       for (auto begin : begins) delete[] begin;
     }
 
-    forceinline Bucket* new_bucket(size_t tape_size = 1000000) {
+    forceinline Bucket* new_bucket(size_t tape_size = 10000000) {
       if (unlikely(index == size || begins.size() == 0 ||
                    begins[begins.size() - 1] == nullptr)) {
         std::cout << "allocating " << tape_size << " more buckets" << std::endl;
