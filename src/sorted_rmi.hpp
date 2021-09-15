@@ -296,13 +296,13 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
                      LookupMethod)                                            \
       ->ArgsProduct({datasets});
 
-BENCHMARK(SortedArrayRangeLookupBinarySearch)->ArgsProduct({datasets});
-
 BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
 
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(BinaryRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(ExponentialRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(SequentialRangeLookup);
+
+BENCHMARK(SortedArrayRangeLookupBinarySearch)->ArgsProduct({datasets});
 
 }  // namespace _
 
