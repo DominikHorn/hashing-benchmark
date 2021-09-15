@@ -98,6 +98,7 @@ struct RMIHashtable {
     // compiler will hopefully recognize that all branches of this if/else but
     // one can be eliminated during optimization, therefore allowing for 0 cost
     // specialization/simdiization
+#ifdef __AVX512F__
     if (BucketSize == 8) {
       for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
         __m512i vkey = _mm512_set1_epi64(key);
@@ -113,6 +114,10 @@ struct RMIHashtable {
 
         bucket = bucket->next;
       }
+#else
+#warning "Missing AVX512 support for vectorized BucketSize=8 lookups"
+    if (false) {
+#endif
     } else {
       const auto buckets_size = buckets.size();
 
