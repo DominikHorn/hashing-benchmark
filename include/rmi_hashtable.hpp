@@ -77,12 +77,21 @@ struct RMIHashtable {
                const std::vector<Payload>& payloads)
       : buckets(bucket_cnt(dataset)),
         rmi(dataset.begin(), dataset.end(), bucket_cnt(dataset)) {
+    const size_t notify_at = dataset.size() / 100;
+    size_t notify = 0;
     // insert all keys exactly where model tells us to
     for (size_t i = 0; i < dataset.size(); i++) {
       const auto& key = dataset[i];
       const auto& payload = payloads[i];
       insert(key, payload);
+
+      notify++;
+      if (notify >= notify_at) {
+        std::cout << "." << std::flush;
+        notify -= notify_at;
+      }
     }
+    std::cout << " ";
   }
 
   forceinline void insert(const Key& key, const Payload& payload) {
