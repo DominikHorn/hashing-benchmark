@@ -30,8 +30,7 @@ struct RMIHashtable {
       return sizeof(Bucket) + (next != nullptr ? next->byte_size() : 0);
     }
 
-    forceinline void insert(const Key& key, const Payload& payload,
-                            Tape& tape) {
+    void insert(const Key& key, const Payload& payload, Tape& tape) {
       Bucket* previous = this;
 
       for (Bucket* current = previous; current != nullptr;
