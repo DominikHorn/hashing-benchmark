@@ -14,6 +14,8 @@ template <class Key, class Payload, size_t BucketSize,
           size_t SecondLevelModelCount,
           Key Sentinel = std::numeric_limits<Key>::max()>
 struct RMIHashtable {
+  struct Tape;
+
   struct Bucket {
     std::array<Key, BucketSize> keys;
     std::array<Payload, BucketSize> payloads;
@@ -32,7 +34,8 @@ struct RMIHashtable {
       return sizeof(Bucket) + (next != nullptr ? next->byte_size() : 0);
     }
 
-    forceinline void insert(const Key& key, const Payload& payload) {
+    forceinline void insert(const Key& key, const Payload& payload,
+                            Tape& tape) {
       Bucket* previous = this;
 
       for (Bucket* current = previous; current != nullptr;
@@ -48,9 +51,30 @@ struct RMIHashtable {
         previous = current;
       }
 
-      // TODO: reintroduce taped bucket allocation
-      previous->next = new Bucket;
-      previous->next->insert(key, payload);
+      previous->next = tape.new_bucket();
+      previous->next->insert(key, payload, tape);
+    }
+  };
+
+  struct Tape {
+    std::vector<Bucket*> begins;
+    size_t index;
+    size_t size;
+
+    ~Tape() {
+      for (auto begin : begins) delete[] begin;
+    }
+
+    forceinline Bucket* new_bucket(size_t tape_size = 1000000) {
+      if (unlikely(index == size || begins.size() == 0 ||
+                   begins[begins.size() - 1] == nullptr)) {
+        std::cout << "allocating " << tape_size << " more buckets" << std::endl;
+        begins.push_back(new Bucket[tape_size]);
+        index = 0;
+        size = tape_size;
+      }
+
+      return &begins[begins.size() - 1][index++];
     }
   };
 
@@ -71,7 +95,7 @@ struct RMIHashtable {
     assert(index >= 0);
     assert(index < buckets.size());
 
-    buckets[index].insert(key, payload);
+    buckets[index].insert(key, payload, tape);
   }
 
   forceinline Payload lookup(const Key& key) const {
@@ -134,6 +158,7 @@ struct RMIHashtable {
 
  private:
   std::vector<Bucket> buckets;
+  Tape tape;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi;
 
   template <class T>
