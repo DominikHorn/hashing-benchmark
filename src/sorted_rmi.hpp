@@ -43,15 +43,15 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
     return;
   }
 
-  std::cout << "(0) shuffling dataset for probing" << std::endl;
-  auto shuffled_dataset = dataset;
-  std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
-
-  std::cout << "(1) generating payloads" << std::endl;
+  // generate payloads
   auto payloads = dataset;
   std::shuffle(payloads.begin(), payloads.end(), rng);
 
-  std::cout << "(2) benchmarking" << std::endl;
+  // shuffle for probing
+  auto shuffled_dataset = dataset;
+  std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
+
+  // benchmark
   size_t i = 0;
   for (auto _ : state) {
     while (unlikely(i >= shuffled_dataset.size())) i -= shuffled_dataset.size();
@@ -173,8 +173,6 @@ struct BinaryRangeLookup {
 template <size_t SecondLevelModelCount, class RangeLookup>
 static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-
-  std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
   if (dataset.empty()) {
@@ -188,30 +186,28 @@ static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
 
-  std::cout << "(1) building rmi" << std::endl;
+  // build RMI
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi(
       dataset.begin(), dataset.end(), dataset.size());
 
-  // measure bytesize
+  // measure bytes
   state.counters["sorted_array_bytesize"] =
       sizeof(dataset) + dataset.size() * sizeof(decltype(dataset)::value_type);
-
-  // measure rmi size in bytes
   state.counters["rmi_bytesize"] = rmi.byte_size();
 
   // construct range lookup method
   const RangeLookup range_lookup(dataset, rmi);
 
-  std::cout << "(2) shuffling dataset for probing" << std::endl;
-  auto shuffled_dataset = dataset;
-  std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
-
-  std::cout << "(3) generating payloads" << std::endl;
+  // generate payloads
   auto payloads = dataset;
   std::shuffle(payloads.begin(), payloads.end(), rng);
 
+  // shuffle data for loading
+  auto shuffled_dataset = dataset;
+  std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
+
+  // benchmark
   size_t i = 0;
-  std::cout << "(4) benchmarking" << std::endl;
   for (auto _ : state) {
     while (unlikely(i >= shuffled_dataset.size())) i -= shuffled_dataset.size();
 
@@ -229,8 +225,6 @@ static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
 template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BucketsRangeLookupRMI(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-
-  std::cout << "(0) loading dataset" << std::endl;
   auto dataset = dataset::load_cached(did, gen_dataset_size);
 
   if (dataset.empty()) {
@@ -243,25 +237,27 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
 
-  std::cout << "(1) generating payloads" << std::endl;
+  // generate payloads
   auto payloads = dataset;
   std::shuffle(payloads.begin(), payloads.end(), rng);
 
-  std::cout << "(2) building RMIHashtable" << std::endl;
+  // build hashtable
+  std::cout << "building RMIHashtable... " << std::flush;
   RMIHashtable<Key, Payload, BucketSize, SecondLevelModelCount> ht(dataset,
                                                                    payloads);
+  std::cout << "done" << std::endl;
 
   // measure byte sizes
   state.counters["directory_bytesize"] = ht.directory_byte_size();
   state.counters["rmi_bytesize"] = ht.rmi_byte_size();
 
-  std::cout << "(3) shuffling dataset for probing" << std::endl;
+  // shuffle data for probing
   auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
+  // benchmark
   size_t i = 0;
   const auto dataset_size = dataset.size();
-  std::cout << "(4) benchmarking" << std::endl;
   for (auto _ : state) {
     while (unlikely(i >= dataset_size)) i -= dataset_size;
 

@@ -64,7 +64,6 @@ struct RMIHashtable {
     forceinline Bucket* new_bucket(size_t tape_size = 10000000) {
       if (unlikely(index == size || begins.size() == 0 ||
                    begins[begins.size() - 1] == nullptr)) {
-        std::cout << "allocating " << tape_size << " more buckets" << std::endl;
         begins.push_back(new Bucket[tape_size]);
         index = 0;
         size = tape_size;
