@@ -109,6 +109,10 @@ struct RMIHashtable {
 #ifdef __AVX512F__
     if (BucketSize == 8) {
       for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
+        // prefetch the next bucket before examining keys to hide latency
+        // of traversing the bucket chain
+        prefetchit(bucket->next, 0, 0);
+
         __m512i vkey = _mm512_set1_epi64(key);
         __m512i vbucket = _mm512_load_si512((const __m512i*)&bucket->keys);
         auto mask = _mm512_cmpeq_epi64_mask(vkey, vbucket);
@@ -133,8 +137,9 @@ struct RMIHashtable {
       for (size_t bucket_ind = rmi(key); bucket_ind < buckets_size;
            bucket_ind++) {
         for (auto bucket = &buckets[bucket_ind]; bucket != nullptr;) {
-          // TODO: implement SOSD vectorized lookup! -> has to be specialized
-          // for each bucket size :(
+          // prefetch the next bucket before examining keys to hide latency
+          // of traversing the bucket chain
+          prefetchit(bucket->next, 0, 0);
           for (size_t i = 0; i < BucketSize; i++) {
             const auto& current_key = bucket->keys[i];
             if (current_key == Sentinel) break;
