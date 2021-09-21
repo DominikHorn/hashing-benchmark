@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "../include/rmi_hashtable.hpp"
+#include "../thirdparty/perfevent/PerfEvent.hpp"
 #include "include/convenience/builtins.hpp"
 #include "support/datasets.hpp"
 
@@ -253,8 +254,11 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
+  PerfEvent e;
+
   // benchmark
   size_t i = 0;
+  e.startCounters();
   const auto dataset_size = dataset.size();
   for (auto _ : state) {
     while (unlikely(i >= dataset_size)) i -= dataset_size;
@@ -264,6 +268,8 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
     benchmark::DoNotOptimize(payload);
     full_mem_barrier;
   }
+  e.stopCounters();
+  e.printReport(std::cout, state.iterations());
 }
 
 #define __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, bucket_size) \
