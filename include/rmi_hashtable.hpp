@@ -111,7 +111,7 @@ struct RMIHashtable {
       for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
         // prefetch the next bucket before examining keys to hide latency
         // of traversing the bucket chain
-        prefetchit(bucket->next, 0, 0);
+        prefetchit(bucket->next, 0, 3);
 
         __m512i vkey = _mm512_set1_epi64(key);
         __m512i vbucket = _mm512_load_si512((const __m512i*)&bucket->keys);
@@ -139,7 +139,8 @@ struct RMIHashtable {
         for (auto bucket = &buckets[bucket_ind]; bucket != nullptr;) {
           // prefetch the next bucket before examining keys to hide latency
           // of traversing the bucket chain
-          prefetchit(bucket->next, 0, 0);
+          prefetchit(bucket->next, 0, 3);
+
           for (size_t i = 0; i < BucketSize; i++) {
             const auto& current_key = bucket->keys[i];
             if (current_key == Sentinel) break;
