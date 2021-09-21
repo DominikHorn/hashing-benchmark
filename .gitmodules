@@ -1,0 +1,3 @@
+[submodule "thirdparty/perfevent"]
+	path = thirdparty/perfevent
+	url = https://github.com/viktorleis/perfevent
