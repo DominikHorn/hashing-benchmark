@@ -22,9 +22,7 @@ using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
 const size_t gen_dataset_size = 200000000;
-const std::vector<std::int64_t> datasets{
-    dataset::ID::SEQUENTIAL, /*dataset::ID::GAPPED_10,*/ dataset::ID::UNIFORM,
-    dataset::ID::FB, dataset::ID::OSM, dataset::ID::WIKI};
+const std::vector<std::int64_t> datasets{dataset::ID::UNIFORM};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
@@ -275,18 +273,11 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 1)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 2)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 8)
-#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun)    \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 10000)  \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 100000) \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 10000000)
+#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun) \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 0)
 
-#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                       \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 10000, LookupMethod)  \
-      ->ArgsProduct({datasets});                                              \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 100000, LookupMethod) \
-      ->ArgsProduct({datasets});                                              \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 10000000,             \
-                     LookupMethod)                                            \
+#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                  \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 0, LookupMethod) \
       ->ArgsProduct({datasets});
 
 BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
@@ -294,8 +285,6 @@ BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(BinaryRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(ExponentialRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(SequentialRangeLookup);
-
-BENCHMARK(SortedArrayRangeLookupBinarySearch)->ArgsProduct({datasets});
 
 }  // namespace _
 
