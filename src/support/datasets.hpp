@@ -8,6 +8,7 @@
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "include/convenience/builtins.hpp"
@@ -17,7 +18,8 @@ namespace dataset {
  * Deduplicates the dataset. Data will be sorted to make this work
  * @param dataset
  */
-static forceinline void deduplicate_and_sort(std::vector<uint64_t>& dataset) {
+template <class T>
+static forceinline void deduplicate_and_sort(std::vector<T>& dataset) {
   std::sort(dataset.begin(), dataset.end());
   dataset.erase(std::unique(dataset.begin(), dataset.end()), dataset.end());
   dataset.shrink_to_fit();
@@ -59,7 +61,7 @@ std::vector<Key> load(std::string filepath) {
   }
 
   const auto max_num_elements = (size - sizeof(std::uint64_t)) / sizeof(Key);
-  std::vector<uint64_t> dataset(max_num_elements, 0);
+  std::vector<Key> dataset(max_num_elements, 0);
   {
     std::vector<unsigned char> buffer(size);
     if (!input.read(reinterpret_cast<char*>(buffer.data()), size))
@@ -105,7 +107,7 @@ enum ID {
   WIKI = 5
 };
 
-static std::string name(ID id) {
+inline std::string name(ID id) {
   switch (id) {
     case ID::SEQUENTIAL:
       return "seq";
@@ -120,72 +122,100 @@ static std::string name(ID id) {
     case ID::WIKI:
       return "wiki";
   }
+  return "unnamed";
 };
 
-static std::vector<std::uint64_t> load_cached(ID id, size_t dataset_size) {
+template <class Data = std::uint64_t>
+std::vector<Data> load_cached(ID id, size_t dataset_size) {
   static std::random_device rd;
   static std::default_random_engine rng(rd());
 
-  static std::vector<std::uint64_t> ds_gapped_10;
-  static std::vector<std::uint64_t> ds_sequential;
-  static std::vector<std::uint64_t> ds_uniform;
-  static std::vector<std::uint64_t> ds_fb;
-  static std::vector<std::uint64_t> ds_osm;
-  static std::vector<std::uint64_t> ds_wiki;
+  // cache generated & sampled datasets to speed up repeated benchmarks
+  static std::unordered_map<ID, std::unordered_map<size_t, std::vector<Data>>>
+      datasets;
 
-  switch (id) {
-    case ID::SEQUENTIAL:
-      if (ds_sequential.size() != dataset_size) {
-        ds_sequential.resize(dataset_size);
-        std::uint64_t k = 20000;
-        for (size_t i = 0; i < ds_sequential.size(); i++, k++)
-          ds_sequential[i] = k;
-        deduplicate_and_sort(ds_sequential);
-      }
-      return ds_sequential;
-    case ID::GAPPED_10:
-      if (ds_gapped_10.size() != dataset_size) {
-        ds_gapped_10.resize(dataset_size);
-        std::uniform_int_distribution<size_t> dist(0, 99999);
-        for (size_t i = 0, num = 0; i < ds_gapped_10.size(); i++) {
-          do num++;
-          while (dist(rng) < 10000);
-          ds_gapped_10[i] = num;
-        }
-        deduplicate_and_sort(ds_gapped_10);
-      }
-      return ds_gapped_10;
-    case ID::UNIFORM:
-      if (ds_uniform.size() != dataset_size) {
-        ds_uniform.resize(dataset_size);
-        std::uniform_int_distribution<std::uint64_t> dist(
-            0, std::numeric_limits<std::uint64_t>::max() - 1);
-        // TODO: ensure there are no duplicates
-        for (size_t i = 0; i < ds_uniform.size(); i++)
-          ds_uniform[i] = dist(rng);
-        deduplicate_and_sort(ds_uniform);
-      }
-      return ds_uniform;
-    case ID::FB:
-      if (ds_fb.empty()) {
-        ds_fb = load<std::uint64_t>("data/fb_200M_uint64");
-        deduplicate_and_sort(ds_fb);
-      }
-      return ds_fb;
-    case ID::OSM:
-      if (ds_osm.empty()) {
-        ds_osm = load<std::uint64_t>("data/osm_cellids_200M_uint64");
-        deduplicate_and_sort(ds_osm);
-      }
-      return ds_osm;
-    case ID::WIKI:
-      if (ds_wiki.empty()) {
-        ds_wiki = load<std::uint64_t>("data/wiki_ts_200M_uint64");
-        deduplicate_and_sort(ds_wiki);
-      }
-      return ds_wiki;
+  // cache sosd dataset files to avoid expensive load operations
+  static std::vector<Data> ds_fb, ds_osm, ds_wiki;
+
+  // return cached (if available)
+  const auto id_it = datasets.find(id);
+  if (id_it != datasets.end()) {
+    const auto ds_it = id_it->second.find(dataset_size);
+    if (ds_it != id_it->second.end()) return ds_it->second;
   }
 
-  throw std::runtime_error("invalid datastet id " + std::to_string(id));
+  // generate (or random sample) in appropriate size
+  std::vector<Data> ds(dataset_size, 0);
+  switch (id) {
+    case ID::SEQUENTIAL: {
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = i + 20000;
+      break;
+    }
+    case ID::GAPPED_10: {
+      std::uniform_int_distribution<size_t> dist(0, 99999);
+      for (size_t i = 0, num = 0; i < ds.size(); i++) {
+        do num++;
+        while (dist(rng) < 10000);
+        ds[i] = num;
+      }
+      break;
+    }
+    case ID::UNIFORM: {
+      std::uniform_int_distribution<Data> dist(
+          0, std::numeric_limits<Data>::max() - 1);
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
+      break;
+    }
+    case ID::FB: {
+      if (ds_fb.empty()) {
+        ds_fb = load<Data>("data/fb_200M_uint64");
+        std::shuffle(ds_fb.begin(), ds_fb.end(), rng);
+      }
+
+      // sampling this way is only valid since ds_fb is shuffled!
+      for (size_t i = 0; i < ds_fb.size() && i < ds.size(); i++)
+        ds[i] = ds_fb[i];
+      break;
+    }
+    case ID::OSM: {
+      if (ds_osm.empty()) {
+        ds_osm = load<Data>("data/osm_cellids_200M_uint64");
+        std::shuffle(ds_osm.begin(), ds_osm.end(), rng);
+      }
+
+      // sampling this way is only valid since ds_osm is shuffled!
+      for (size_t i = 0; i < ds_osm.size() && i < ds.size(); i++)
+        ds[i] = ds_osm[i];
+      break;
+    }
+    case ID::WIKI: {
+      if (ds_wiki.empty()) {
+        ds_wiki = load<Data>("data/wiki_ts_200M_uint64");
+        std::shuffle(ds_wiki.begin(), ds_wiki.end(), rng);
+      }
+
+      // sampling this way is only valid since ds_wiki is shuffled!
+      for (size_t i = 0; i < ds_wiki.size() && i < ds.size(); i++)
+        ds[i] = ds_wiki[i];
+      break;
+    }
+    default:
+      throw std::runtime_error("invalid datastet id " + std::to_string(id));
+  }
+
+  // deduplicate, sort before caching to avoid additional work in the future
+  deduplicate_and_sort(ds);
+
+  // cache dataset for future use
+  const auto it = datasets.find(id);
+  if (it == datasets.end()) {
+    std::unordered_map<size_t, std::vector<Data>> map;
+    map.insert({dataset_size, ds});
+    datasets.insert({id, map});
+  } else {
+    it->second.insert({dataset_size, ds});
+  }
+
+  return ds;
 }
 };  // namespace dataset
