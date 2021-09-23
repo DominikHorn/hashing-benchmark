@@ -7,7 +7,6 @@
 #include <learned_hashing.hpp>
 #include <limits>
 
-// TODO: this include is fishy/magic
 #include "include/convenience/builtins.hpp"
 
 template <class Key, class Payload, size_t BucketSize,
@@ -103,18 +102,14 @@ struct RMIHashtable {
 
   forceinline Payload lookup(const Key& key) const {
     // since BucketSize is a template arg and therefore compile-time static,
-    // compiler will hopefully recognize that all branches of this if/else but
-    // one can be eliminated during optimization, therefore allowing for 0 cost
-    // specialization/simdiization
+    // compiler will recognize that all branches of this if/else but one can be
+    // eliminated during optimization, therefore making this a 0 runtime cost
+    // specialization
 #ifdef __AVX512F__
-    if (BucketSize == 8) {
+    if (BucketSize == 8 && sizeof(Key) == 8) {
       for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
-        // prefetch the next bucket before examining keys to hide latency
-        // of traversing the bucket chain
-        prefetchit(bucket->next, 0, 3);
-
-        __m512i vkey = _mm512_set1_epi64(key);
-        __m512i vbucket = _mm512_load_si512((const __m512i*)&bucket->keys);
+        auto vkey = _mm512_set1_epi64(key);
+        auto vbucket = _mm512_loadu_si512((const __m512i*)&bucket->keys);
         auto mask = _mm512_cmpeq_epi64_mask(vkey, vbucket);
 
         if (mask != 0) {
@@ -126,31 +121,54 @@ struct RMIHashtable {
 
         bucket = bucket->next;
       }
-#else
-#warning "Missing AVX512 support for vectorized BucketSize=8 lookups"
-    if (false) {
+
+      return std::numeric_limits<Payload>::max();
+    }
 #endif
-    } else {
-      const auto buckets_size = buckets.size();
-
-      // all keys are placed exactly where model tells us
-      for (size_t bucket_ind = rmi(key); bucket_ind < buckets_size;
-           bucket_ind++) {
-        for (auto bucket = &buckets[bucket_ind]; bucket != nullptr;) {
-          // prefetch the next bucket before examining keys to hide latency
-          // of traversing the bucket chain
-          prefetchit(bucket->next, 0, 3);
-
-          for (size_t i = 0; i < BucketSize; i++) {
-            const auto& current_key = bucket->keys[i];
-            if (current_key == Sentinel) break;
-            if (current_key == key) {
-              return bucket->payloads[i];
-            }
-          }
-          bucket = bucket->next;
+#ifdef __AVX2__
+    if (BucketSize == 8 && sizeof(Key) == 4) {
+      for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
+        auto vkey = _mm256_set1_epi32(key);
+        auto vbucket = _mm256_loadu_si256((const __m256i*)&bucket->keys);
+        auto cmp = _mm256_cmpeq_epi32(vkey, vbucket);
+        int mask = _mm256_movemask_epi8(cmp);
+        if (mask != 0) {
+          int index = __builtin_ctz(mask) >> 2;
+          assert(index >= 0);
+          assert(index < BucketSize);
+          return bucket->payloads[index];
         }
+
+        bucket = bucket->next;
       }
+      return std::numeric_limits<Payload>::max();
+    }
+    if (BucketSize == 4 && sizeof(Key) == 8) {
+      for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
+        auto vkey = _mm256_set1_epi64x(key);
+        auto vbucket = _mm256_loadu_si256((const __m256i*)&bucket->keys);
+        auto cmp = _mm256_cmpeq_epi64(vkey, vbucket);
+        int mask = _mm256_movemask_epi8(cmp);
+        if (mask != 0) {
+          int index = __builtin_ctz(mask) >> 3;
+          assert(index >= 0);
+          assert(index < BucketSize);
+          return bucket->payloads[index];
+        }
+
+        bucket = bucket->next;
+      }
+      return std::numeric_limits<Payload>::max();
+    }
+#endif
+
+    for (auto bucket = &buckets[rmi(key)]; bucket != nullptr;) {
+      for (size_t i = 0; i < BucketSize; i++) {
+        const auto& current_key = bucket->keys[i];
+        if (current_key == Sentinel) break;
+        if (current_key == key) return bucket->payloads[i];
+      }
+      bucket = bucket->next;
     }
 
     return std::numeric_limits<Payload>::max();
@@ -159,7 +177,7 @@ struct RMIHashtable {
   forceinline size_t size() const { return buckets.size(); }
 
   forceinline size_t directory_byte_size() const {
-    size_t directory_bytesize = sizeof(buckets);
+    size_t directory_bytesize = sizeof(decltype(buckets));
     for (const auto& bucket : buckets) directory_bytesize += bucket.byte_size();
     return directory_bytesize;
   }
@@ -173,6 +191,35 @@ struct RMIHashtable {
  private:
   std::vector<Bucket> buckets;
   Tape tape;
+  // struct Murmur {
+  //   template <class It>
+  //   Murmur(It, It, size_t n) : n(n) {}
+
+  //   // Finalization step of Murmur3 hash
+  //   forceinline uint32_t hash32(uint32_t value) const {
+  //     value ^= value >> 16;
+  //     value *= 0x85ebca6b;
+  //     value ^= value >> 13;
+  //     value *= 0xc2b2ae35;
+  //     value ^= value >> 16;
+  //     return value;
+  //   }
+
+  //   // Fast alternative to modulo from Daniel Lemire
+  //   forceinline uint32_t alt_mod(uint32_t x, uint32_t n) const {
+  //     return ((uint64_t)x * (uint64_t)n) >> 32;
+  //   }
+
+  //   forceinline size_t operator()(const Key& key) const {
+  //     return alt_mod(key, n);
+  //   }
+
+  //   forceinline size_t byte_size() const { return sizeof(Murmur); }
+
+  //  private:
+  //   size_t n;
+  // };
+  // const Murmur rmi;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi;
 
   template <class T>

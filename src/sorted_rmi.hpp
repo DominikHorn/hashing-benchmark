@@ -23,14 +23,16 @@ using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
 const size_t gen_dataset_size = 200000000;
-const std::vector<std::int64_t> datasets{dataset::ID::UNIFORM};
+const std::vector<std::int64_t> datasets{
+    dataset::ID::SEQUENTIAL, dataset::ID::UNIFORM, dataset::ID::WIKI,
+    dataset::ID::OSM, dataset::ID::FB};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
 
 static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-  auto dataset = dataset::load_cached(did, gen_dataset_size);
+  auto dataset = dataset::load_cached<Key>(did, gen_dataset_size);
 
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
@@ -68,8 +70,8 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 }
 
 struct SequentialRangeLookup {
-  template <class T, class Predictor>
-  SequentialRangeLookup(const std::vector<T>& dataset,
+  template <class Predictor>
+  SequentialRangeLookup(const std::vector<Key>& dataset,
                         const Predictor& predictor) {
     UNUSED(dataset);
     UNUSED(predictor);
@@ -91,8 +93,8 @@ struct SequentialRangeLookup {
 };
 
 struct ExponentialRangeLookup {
-  template <class T, class Predictor>
-  ExponentialRangeLookup(const std::vector<T>& dataset,
+  template <class Predictor>
+  ExponentialRangeLookup(const std::vector<Key>& dataset,
                          const Predictor& predictor) {
     UNUSED(dataset);
     UNUSED(predictor);
@@ -142,8 +144,9 @@ struct ExponentialRangeLookup {
 struct BinaryRangeLookup {
   size_t max_error = 0;
 
-  template <class T, class Predictor>
-  BinaryRangeLookup(const std::vector<T>& dataset, const Predictor& predictor) {
+  template <class Predictor>
+  BinaryRangeLookup(const std::vector<Key>& dataset,
+                    const Predictor& predictor) {
     for (size_t i = 0; i < dataset.size(); i++) {
       const size_t pred = predictor(dataset[i]);
       max_error = std::max(max_error, pred >= i ? pred - i : i - pred);
@@ -172,7 +175,7 @@ struct BinaryRangeLookup {
 template <size_t SecondLevelModelCount, class RangeLookup>
 static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-  auto dataset = dataset::load_cached(did, gen_dataset_size);
+  auto dataset = dataset::load_cached<Key>(did, gen_dataset_size);
 
   if (dataset.empty()) {
     // otherwise google benchmark produces an error ;(
@@ -224,7 +227,7 @@ static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
 template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BucketsRangeLookupRMI(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-  auto dataset = dataset::load_cached(did, gen_dataset_size);
+  auto dataset = dataset::load_cached<Key>(did, gen_dataset_size);
 
   if (dataset.empty()) {
     // otherwise google benchmark produces an error ;(
@@ -254,11 +257,8 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
-  PerfEvent e;
-
   // benchmark
   size_t i = 0;
-  e.startCounters();
   const auto dataset_size = dataset.size();
   for (auto _ : state) {
     while (unlikely(i >= dataset_size)) i -= dataset_size;
@@ -268,8 +268,6 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
     benchmark::DoNotOptimize(payload);
     full_mem_barrier;
   }
-  e.stopCounters();
-  e.printReport(std::cout, state.iterations());
 }
 
 #define __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, bucket_size) \
@@ -278,12 +276,19 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 #define _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size) \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 1)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 2)   \
+  __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 4)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 8)
-#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun) \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 0)
+#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun)   \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 100)   \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 10000) \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 1000000)
 
-#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                  \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 0, LookupMethod) \
+#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                        \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 100, LookupMethod)     \
+      ->ArgsProduct({datasets});                                               \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 10000, LookupMethod)   \
+      ->ArgsProduct({datasets});                                               \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 1000000, LookupMethod) \
       ->ArgsProduct({datasets});
 
 BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
@@ -291,6 +296,8 @@ BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(BinaryRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(ExponentialRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(SequentialRangeLookup);
+
+BENCHMARK(SortedArrayRangeLookupBinarySearch);
 
 }  // namespace _
 
