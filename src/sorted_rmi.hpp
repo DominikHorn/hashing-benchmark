@@ -23,7 +23,9 @@ using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
 const size_t gen_dataset_size = 200000000;
-const std::vector<std::int64_t> datasets{dataset::ID::UNIFORM};
+const std::vector<std::int64_t> datasets{
+    dataset::ID::SEQUENTIAL, dataset::ID::UNIFORM, dataset::ID::WIKI,
+    dataset::ID::OSM, dataset::ID::FB};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
@@ -255,11 +257,8 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   auto shuffled_dataset = dataset;
   std::shuffle(shuffled_dataset.begin(), shuffled_dataset.end(), rng);
 
-  PerfEvent e;
-
   // benchmark
   size_t i = 0;
-  e.startCounters();
   const auto dataset_size = dataset.size();
   for (auto _ : state) {
     while (unlikely(i >= dataset_size)) i -= dataset_size;
@@ -269,8 +268,6 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
     benchmark::DoNotOptimize(payload);
     full_mem_barrier;
   }
-  e.stopCounters();
-  e.printReport(std::cout, state.iterations());
 }
 
 #define __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, bucket_size) \
@@ -281,11 +278,17 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 2)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 4)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 8)
-#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun) \
-  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 0)
+#define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun)   \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 100)   \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 10000) \
+  _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 1000000)
 
-#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                  \
-  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 0, LookupMethod) \
+#define BENCHMARK_SORTED_RANGE_LOOKUP_RMI(LookupMethod)                        \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 100, LookupMethod)     \
+      ->ArgsProduct({datasets});                                               \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 10000, LookupMethod)   \
+      ->ArgsProduct({datasets});                                               \
+  BENCHMARK_TEMPLATE(SortedArrayRangeLookupRMITemplate, 1000000, LookupMethod) \
       ->ArgsProduct({datasets});
 
 BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
@@ -293,6 +296,8 @@ BENCHMARK_BUCKETS_RANGE_LOOKUP(BucketsRangeLookupRMI);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(BinaryRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(ExponentialRangeLookup);
 BENCHMARK_SORTED_RANGE_LOOKUP_RMI(SequentialRangeLookup);
+
+BENCHMARK(SortedArrayRangeLookupBinarySearch);
 
 }  // namespace _
 
