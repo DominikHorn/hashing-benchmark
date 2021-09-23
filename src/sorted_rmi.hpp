@@ -30,7 +30,7 @@ std::default_random_engine rng(rd());
 
 static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-  auto dataset = dataset::load_cached(did, gen_dataset_size);
+  auto dataset = dataset::load_cached<Key>(did, gen_dataset_size);
 
   state.counters["dataset_size"] = dataset.size();
   state.SetLabel(dataset::name(did));
@@ -68,8 +68,8 @@ static void SortedArrayRangeLookupBinarySearch(benchmark::State& state) {
 }
 
 struct SequentialRangeLookup {
-  template <class T, class Predictor>
-  SequentialRangeLookup(const std::vector<T>& dataset,
+  template <class Predictor>
+  SequentialRangeLookup(const std::vector<Key>& dataset,
                         const Predictor& predictor) {
     UNUSED(dataset);
     UNUSED(predictor);
@@ -91,8 +91,8 @@ struct SequentialRangeLookup {
 };
 
 struct ExponentialRangeLookup {
-  template <class T, class Predictor>
-  ExponentialRangeLookup(const std::vector<T>& dataset,
+  template <class Predictor>
+  ExponentialRangeLookup(const std::vector<Key>& dataset,
                          const Predictor& predictor) {
     UNUSED(dataset);
     UNUSED(predictor);
@@ -142,8 +142,9 @@ struct ExponentialRangeLookup {
 struct BinaryRangeLookup {
   size_t max_error = 0;
 
-  template <class T, class Predictor>
-  BinaryRangeLookup(const std::vector<T>& dataset, const Predictor& predictor) {
+  template <class Predictor>
+  BinaryRangeLookup(const std::vector<Key>& dataset,
+                    const Predictor& predictor) {
     for (size_t i = 0; i < dataset.size(); i++) {
       const size_t pred = predictor(dataset[i]);
       max_error = std::max(max_error, pred >= i ? pred - i : i - pred);
@@ -172,7 +173,7 @@ struct BinaryRangeLookup {
 template <size_t SecondLevelModelCount, class RangeLookup>
 static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-  auto dataset = dataset::load_cached(did, gen_dataset_size);
+  auto dataset = dataset::load_cached<Key>(did, gen_dataset_size);
 
   if (dataset.empty()) {
     // otherwise google benchmark produces an error ;(
@@ -224,7 +225,7 @@ static void SortedArrayRangeLookupRMITemplate(benchmark::State& state) {
 template <size_t SecondLevelModelCount, size_t BucketSize>
 static void BucketsRangeLookupRMI(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(0));
-  auto dataset = dataset::load_cached(did, gen_dataset_size);
+  auto dataset = dataset::load_cached<Key>(did, gen_dataset_size);
 
   if (dataset.empty()) {
     // otherwise google benchmark produces an error ;(
@@ -278,6 +279,7 @@ static void BucketsRangeLookupRMI(benchmark::State& state) {
 #define _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size) \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 1)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 2)   \
+  __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 4)   \
   __BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, model_size, 8)
 #define BENCHMARK_BUCKETS_RANGE_LOOKUP(fun) \
   _BENCHMARK_BUCKETS_RANGE_LOOKUP(fun, 0)
