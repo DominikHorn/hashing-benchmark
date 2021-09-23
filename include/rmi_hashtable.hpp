@@ -173,6 +173,35 @@ struct RMIHashtable {
  private:
   std::vector<Bucket> buckets;
   Tape tape;
+  // struct Murmur {
+  //   template <class It>
+  //   Murmur(It, It, size_t n) : n(n) {}
+
+  //   // Finalization step of Murmur3 hash
+  //   forceinline uint32_t hash32(uint32_t value) const {
+  //     value ^= value >> 16;
+  //     value *= 0x85ebca6b;
+  //     value ^= value >> 13;
+  //     value *= 0xc2b2ae35;
+  //     value ^= value >> 16;
+  //     return value;
+  //   }
+
+  //   // Fast alternative to modulo from Daniel Lemire
+  //   forceinline uint32_t alt_mod(uint32_t x, uint32_t n) const {
+  //     return ((uint64_t)x * (uint64_t)n) >> 32;
+  //   }
+
+  //   forceinline size_t operator()(const Key& key) const {
+  //     return alt_mod(key, n);
+  //   }
+
+  //   forceinline size_t byte_size() const { return sizeof(Murmur); }
+
+  //  private:
+  //   size_t n;
+  // };
+  // const Murmur rmi;
   const learned_hashing::RMIHash<Key, SecondLevelModelCount> rmi;
 
   template <class T>
