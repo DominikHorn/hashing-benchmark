@@ -26,7 +26,7 @@ include(${PROJECT_SOURCE_DIR}/thirdparty/hashtable.cmake)
 add_executable(mt_tests tests.cpp)
 
 include(${PROJECT_SOURCE_DIR}/thirdparty/googletest.cmake)
-target_link_libraries(mt_tests PRIVATE ${HASHING_LIBRARY} ${LEARNED_HASHING_LIBRARY} ${EXOTIC_HASHING_LIBRARY} ${HASHTABLE_LIBRARY} ${GOOGLETEST_LIBRARY})
+target_link_libraries(mt_tests PRIVATE ${PROJECT_NAME} ${HASHING_LIBRARY} ${LEARNED_HASHING_LIBRARY} ${EXOTIC_HASHING_LIBRARY} ${HASHTABLE_LIBRARY} ${GOOGLETEST_LIBRARY})
 
 # enable ctest support (i.e., test discovery)
 include(GoogleTest)
@@ -36,4 +36,4 @@ gtest_discover_tests(mt_tests)
 add_executable(benchmarks benchmarks.cpp)
 
 include(${PROJECT_SOURCE_DIR}/thirdparty/googlebenchmark.cmake)
-target_link_libraries(benchmarks PRIVATE ${HASHING_LIBRARY} ${LEARNED_HASHING_LIBRARY} ${EXOTIC_HASHING_LIBRARY} ${HASHTABLE_LIBRARY} ${GOOGLEBENCHMARK_LIBRARY})
+target_link_libraries(benchmarks PRIVATE ${PROJECT_NAME} ${HASHING_LIBRARY} ${LEARNED_HASHING_LIBRARY} ${EXOTIC_HASHING_LIBRARY} ${HASHTABLE_LIBRARY} ${GOOGLEBENCHMARK_LIBRARY})

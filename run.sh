@@ -14,4 +14,4 @@ BUILD_DIR="cmake-build-$(echo "${BUILD_TYPE}" | awk '{print tolower($0)}')"
 ./build.sh ${TARGET} ${BUILD_TYPE}
 
 # Execute the target
-${BUILD_DIR}/${TARGET} --benchmark_out=benchmark_results.json --benchmark_out_format=json
+${BUILD_DIR}/src/${TARGET} --benchmark_out=benchmark_results.json --benchmark_out_format=json
