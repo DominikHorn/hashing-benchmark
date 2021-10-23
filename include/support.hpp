@@ -40,11 +40,10 @@ class Tape {
    *
    * @param next_tape_segment_size size of the next tape segment
    *  should a new allocation be neccessary. Defaults to a value such
-   *  that <= 4MB are allocated
+   *  that a <= 4MB is allocated
    */
-  forceinline T* alloc(size_t next_tape_segment_size = (4LLU * 1024LLU *
-                                                        1024LLU * 1024LLU) /
-                                                       sizeof(T)) {
+  forceinline T* alloc(
+      size_t next_tape_segment_size = (4LLU * 1024LLU * 1024LLU) / sizeof(T)) {
     if (unlikely(index == size || begins.size() == 0 ||
                  begins[begins.size() - 1] == nullptr)) {
       begins.push_back(new T[next_tape_segment_size]);
