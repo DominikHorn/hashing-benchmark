@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./run.sh mt_tests
+./run.sh src/mt_tests
