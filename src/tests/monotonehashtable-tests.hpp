@@ -7,16 +7,21 @@
 namespace _ {
 template <class Key, class Payload, class Hashtable>
 static void LookupTest() {
-  const std::vector<Key> keys{0, 1, 5, 8, 9, 10};
+  const std::vector<std::pair<Key, Payload>> data{{0, 3},  {1, 7},  {5, 13},
+                                                  {8, 42}, {9, 69}, {10, 1337}};
   const std::vector<Key> non_keys{2, 3, 4, 6, 7};
-  const std::vector<Payload> payloads{3, 7, 13, 42, 69, 1337};
 
-  const Hashtable ht(keys, payloads);
-  for (size_t i = 0; i < keys.size(); i++)
-    EXPECT_EQ(ht.lookup(keys[i]), payloads[i]);
+  const Hashtable ht(data);
+  for (const auto& d : data) {
+    const auto it = ht[d.first];
+    EXPECT_TRUE(it != ht.end());
+
+    const Payload payload = *it;
+    EXPECT_EQ(payload, d.second);
+  }
 
   for (size_t i = 0; i < non_keys.size(); i++)
-    EXPECT_EQ(ht.lookup(non_keys[i]), std::numeric_limits<Payload>::max());
+    EXPECT_TRUE(ht[non_keys[i]] == ht.end());
 }
 };  // namespace _
 

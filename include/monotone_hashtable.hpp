@@ -2,11 +2,14 @@
 
 #include <immintrin.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <learned_hashing.hpp>
 #include <limits>
 #include <string>
+#include <utility>
 
 #include "include/convenience/builtins.hpp"
 #include "include/support.hpp"
@@ -53,25 +56,20 @@ class MonotoneHashtable {
       return sizeof(Bucket) + (next != nullptr ? next->byte_size() : 0);
     }
   };
+
   /// directory of buckets
   std::vector<Bucket> buckets;
 
   /// model for predicting the correct index
-  const Model model;
+  Model model;
 
- public:
   /**
-   * Constructs a MonotoneHashtable given a *sorted* list of keys
-   * together with their corresponding payloads
+   * Inserts a given (key,payload) tuple into the hashtable.
+   *
+   * Note that this function has to be private for now since
+   * model retraining will be necessary if this is used as a
+   * construction interface.
    */
-  MonotoneHashtable(const std::vector<Key>& keys,
-                    const std::vector<Payload>& payloads)
-      : buckets(1 + keys.size() / BucketSize),
-        model(keys.begin(), keys.end(), buckets.size()) {
-    // insert all keys according to model
-    for (size_t i = 0; i < keys.size(); i++) insert(keys[i], payloads[i]);
-  }
-
   forceinline void insert(const Key& key, const Payload& payload) {
     const auto index = model(key);
     assert(index >= 0);
@@ -79,7 +77,95 @@ class MonotoneHashtable {
     buckets[index].insert(key, payload);
   }
 
-  forceinline Payload lookup(const Key& key) const {
+ public:
+  /**
+   * Constructs a MonotoneHashtable given a *sorted* list of keys
+   * together with their corresponding payloads
+   *
+   * TODO(dominik): come up with better interface for construction
+   */
+  MonotoneHashtable(std::vector<std::pair<Key, Payload>> data)
+      : buckets(1 + data.size() / BucketSize) {
+    // ensure data is sorted
+    std::sort(data.begin(), data.end(),
+              [](const auto& a, const auto& b) { return a.first < b.first; });
+
+    // obtain list of keys -> necessary for model training
+    std::vector<Key> keys;
+    keys.reserve(data.size());
+    std::transform(data.begin(), data.end(), std::back_inserter(keys),
+                   [](const auto& p) { return p.first; });
+
+    // train model on sorted data
+    model.train(keys.begin(), keys.end(), buckets.size());
+
+    // insert all keys according to model prediction.
+    // since we sorted above, this will permit further
+    // optimizations during lookup etc & enable implementing
+    // efficient iterators in the first place.
+    for (const auto& d : data) insert(d.first, d.second);
+  }
+
+  class Iterator {
+    size_t directory_ind, bucket_ind;
+    Bucket const* current_bucket;
+    const MonotoneHashtable& hashtable;
+
+    Iterator(size_t directory_ind, size_t bucket_ind, Bucket const* bucket,
+             const MonotoneHashtable& hashtable)
+        : directory_ind(directory_ind),
+          bucket_ind(bucket_ind),
+          current_bucket(bucket),
+          hashtable(hashtable) {}
+
+   public:
+    forceinline const Payload& operator*() const {
+      return current_bucket->payloads[bucket_ind];
+    }
+
+    forceinline void operator++() {
+      assert(current_bucket != nullptr);
+
+      // since data was inserted in sorted order,
+      // simply advancing to next slot does the trick
+      bucket_ind++;
+
+      // switch to next bucket
+      if (bucket_ind >= BucketSize) {
+        bucket_ind = 0;
+        current_bucket = current_bucket->next();
+
+        // switch to next bucket chain in directory
+        if (current_bucket == nullptr &&
+            ++directory_ind < hashtable.buckets.size())
+          current_bucket = hashtable.buckets[directory_ind];
+      }
+    }
+
+    forceinline bool operator==(const Iterator& other) const {
+      return directory_ind == other.directory_ind &&
+             bucket_ind == other.bucket_ind &&
+             current_bucket == other.current_bucket &&
+             &hashtable == &other.hashtable;
+    }
+
+    friend class MonotoneHashtable;
+  };
+
+  /**
+   * Past the end iterator, use like usual in stl
+   */
+  forceinline Iterator end() const {
+    return {buckets.size(), 0, nullptr, *this};
+  }
+
+  /**
+   * Returns an iterator pointing to the payload for a given key
+   * or end() if no such key could be found
+   *
+   * @param key the key to search
+   */
+  forceinline Iterator operator[](const Key& key) const {
     const size_t directory_ind = model(key);
 
     // since BucketSize is a template arg and therefore compile-time static,
@@ -94,16 +180,16 @@ class MonotoneHashtable {
         auto mask = _mm512_cmpeq_epi64_mask(vkey, vbucket);
 
         if (mask != 0) {
-          int index = __builtin_ctz(mask);
+          size_t index = __builtin_ctz(mask);
           assert(index >= 0);
           assert(index < BucketSize);
-          return bucket->payloads[index];
+          return {directory_ind, index, bucket, *this};
         }
 
         bucket = bucket->next;
       }
 
-      return std::numeric_limits<Payload>::max();
+      return end();
     }
 #endif
 #ifdef __AVX2__
@@ -114,15 +200,15 @@ class MonotoneHashtable {
         auto cmp = _mm256_cmpeq_epi32(vkey, vbucket);
         int mask = _mm256_movemask_epi8(cmp);
         if (mask != 0) {
-          int index = __builtin_ctz(mask) >> 2;
+          size_t index = __builtin_ctz(mask) >> 2;
           assert(index >= 0);
           assert(index < BucketSize);
-          return bucket->payloads[index];
+          return {directory_ind, index, bucket, *this};
         }
 
         bucket = bucket->next;
       }
-      return std::numeric_limits<Payload>::max();
+      return end();
     }
     if constexpr (BucketSize == 4 && sizeof(Key) == 8) {
       for (auto bucket = &buckets[directory_ind]; bucket != nullptr;) {
@@ -131,15 +217,15 @@ class MonotoneHashtable {
         auto cmp = _mm256_cmpeq_epi64(vkey, vbucket);
         int mask = _mm256_movemask_epi8(cmp);
         if (mask != 0) {
-          int index = __builtin_ctz(mask) >> 3;
+          size_t index = __builtin_ctz(mask) >> 3;
           assert(index >= 0);
           assert(index < BucketSize);
-          return bucket->payloads[index];
+          return {directory_ind, index, bucket, *this};
         }
 
         bucket = bucket->next;
       }
-      return std::numeric_limits<Payload>::max();
+      return end();
     }
 #endif
 
@@ -149,12 +235,12 @@ class MonotoneHashtable {
       for (size_t i = 0; i < BucketSize; i++) {
         const auto& current_key = bucket->keys[i];
         if (current_key == Sentinel) break;
-        if (current_key == key) return bucket->payloads[i];
+        if (current_key == key) return {directory_ind, i, bucket, *this};
       }
       bucket = bucket->next;
     }
 
-    return std::numeric_limits<Payload>::max();
+    return end();
   }
 
   std::string name() {
