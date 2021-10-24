@@ -120,6 +120,7 @@ class MonotoneHashtable {
 
    public:
     forceinline const Payload& operator*() const {
+      assert(current_bucket != nullptr);
       return current_bucket->payloads[bucket_ind];
     }
 

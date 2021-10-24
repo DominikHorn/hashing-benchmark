@@ -3,6 +3,9 @@
 #include <exotic_hashing.hpp>
 #include <learned_hashing.hpp>
 
+// Order is important
+#include "include/convenience/builtins.hpp"
+
 namespace masters_thesis {
 
 template <class Key, class Payload,
