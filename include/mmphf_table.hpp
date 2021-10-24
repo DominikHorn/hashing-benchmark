@@ -91,7 +91,7 @@ class MMPHFTable {
   size_t mmphf_byte_size() const { return mmphf.byte_size(); }
 
   size_t directory_byte_size() const {
-    return payloads.size() * sizeof(decltype(payloads)::value_type) +
+    return payloads.size() * sizeof(typename decltype(payloads)::value_type) +
            sizeof(decltype(payloads));
   }
 
