@@ -103,32 +103,55 @@ static void TableProbe(benchmark::State& state) {
       }
     }
   }
+
+  // set counters (don't do this in inner loop to avoid tainting results)
+  state.counters["table_bytes"] = table.byte_size();
+  state.counters["table_directory_bytes"] = table.directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
+  state.counters["data_elem_count"] = data.size();
+  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
+                 dataset::name(probing_dist));
 }
 
 using namespace masters_thesis;
 
-#define BM(Table)                                                    \
+#define BM_LB(Table)                                                 \
   BENCHMARK_TEMPLATE(TableProbe, Table, 0)                           \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
   BENCHMARK_TEMPLATE(TableProbe, Table, 1)                           \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions});
+
+#define BM_RANGE(Table)                                              \
   BENCHMARK_TEMPLATE(TableProbe, Table, 10)                          \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
   BENCHMARK_TEMPLATE(TableProbe, Table, 20)                          \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions});
 
-#define BenchmarkMonotone(BucketSize)              \
-  using MonotoneHashtable##BucketSize =            \
-      MonotoneHashtable<Key, Payload, BucketSize>; \
-  BM(MonotoneHashtable##BucketSize);
+#define BM(Table) \
+  BM_LB(Table)    \
+  BM_RANGE(Table)
+
+#define BenchmarkMonotone(BucketSize, Model)              \
+  using MonotoneHashtable##BucketSize##Model =            \
+      MonotoneHashtable<Key, Payload, BucketSize, Model>; \
+  BM_LB(MonotoneHashtable##BucketSize##Model);
+
+#define BenchmarkNonMonotoneLB(BucketSize, Model)         \
+  using MonotoneHashtable##BucketSize##Model =            \
+      MonotoneHashtable<Key, Payload, BucketSize, Model>; \
+  BM(MonotoneHashtable##BucketSize##Model);
 
 #define BenchmarkMMPHFTable(MMPHF)                           \
   using MMPHFTable##MMPHF = MMPHFTable<Key, Payload, MMPHF>; \
   BM(MMPHFTable##MMPHF);
 
-BenchmarkMonotone(1);
-BenchmarkMonotone(2);
-BenchmarkMonotone(4);
+using RMI = learned_hashing::RMIHash<Key, 1000000>;
+BenchmarkNonMonotoneLB(1, RMI);
+BenchmarkNonMonotoneLB(4, RMI);
+
+using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
+BenchmarkMonotone(1, MonotoneRMI);
+BenchmarkMonotone(4, MonotoneRMI);
 
 using RankHash = exotic_hashing::RankHash<Key>;
 BenchmarkMMPHFTable(RankHash);
