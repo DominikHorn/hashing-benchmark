@@ -66,3 +66,22 @@ TEST(MonotoneHashtable, Lookup) {
       std::uint64_t, std::uint64_t,
       masters_thesis::MonotoneHashtable<std::uint64_t, std::uint64_t, 8>>();
 }
+
+TEST(MonotoneHashtable, Iterate) {
+  using Key = std::uint32_t;
+  using Payload = std::uint32_t;
+  const std::vector<std::pair<Key, Payload>> data{{0, 3},  {1, 7},  {5, 13},
+                                                  {8, 42}, {9, 69}, {10, 1337}};
+
+  const masters_thesis::MonotoneHashtable<Key, Payload, 8> ht(data);
+  for (size_t i = 0; i < data.size(); i++) {
+    auto it = ht[data[i].first];
+    for (size_t j = i; it != ht.end(); ++it, j++) {
+      EXPECT_TRUE(it != ht.end());
+      EXPECT_LT(j, data.size());
+
+      const Payload payload = *it;
+      EXPECT_EQ(payload, data[j].second);
+    }
+  }
+}

@@ -123,7 +123,7 @@ class MonotoneHashtable {
       return current_bucket->payloads[bucket_ind];
     }
 
-    forceinline void operator++() {
+    forceinline Iterator& operator++() {
       assert(current_bucket != nullptr);
 
       // since data was inserted in sorted order,
@@ -131,16 +131,26 @@ class MonotoneHashtable {
       bucket_ind++;
 
       // switch to next bucket
-      if (bucket_ind >= BucketSize) {
+      if (bucket_ind >= BucketSize ||
+          current_bucket->keys[bucket_ind] == Sentinel) {
         bucket_ind = 0;
-        current_bucket = current_bucket->next();
+        current_bucket = current_bucket->next;
 
         // switch to next bucket chain in directory
         if (current_bucket == nullptr &&
             ++directory_ind < hashtable.buckets.size())
-          current_bucket = hashtable.buckets[directory_ind];
+          current_bucket = &hashtable.buckets[directory_ind];
       }
+
+      return *this;
     }
+
+    // // TODO(dominik): support postfix increment
+    // forceinline Iterator operator++(int) {
+    //   Iterator old = *this;
+    //   ++this;
+    //   return old;
+    // }
 
     forceinline bool operator==(const Iterator& other) const {
       return directory_ind == other.directory_ind &&
