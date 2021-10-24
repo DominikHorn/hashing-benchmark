@@ -79,7 +79,7 @@ class MonotoneHashtable {
 
  public:
   /**
-   * Constructs a MonotoneHashtable given a *sorted* list of keys
+   * Constructs a MonotoneHashtable given a list of keys
    * together with their corresponding payloads
    *
    * TODO(dominik): come up with better interface for construction
