@@ -168,9 +168,9 @@ using MonotoneRMICompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
     Key, learned_hashing::MonotoneRMIHash<Key, 1000000>>;
 BenchmarkMMPHFTable(MonotoneRMICompressedLearnedRank);
 
-using RaxisSplineCompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
+using RadixSplineCompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
     Key, learned_hashing::RadixSplineHash<Key>>;
-BenchmarkMMPHFTable(RaxisSplineCompressedLearnedRank);
+BenchmarkMMPHFTable(RadixSplineCompressedLearnedRank);
 
 // TODO(dominik): Investigate segfault for 100 Mio elements, fb, range size 1
 // using RMI = learned_hashing::RMIHash<Key, 1000000>;
