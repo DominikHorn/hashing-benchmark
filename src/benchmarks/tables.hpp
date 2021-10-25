@@ -145,10 +145,6 @@ using namespace masters_thesis;
   using MMPHFTable##MMPHF = MMPHFTable<Key, Payload, MMPHF>; \
   BM(MMPHFTable##MMPHF);
 
-using RMI = learned_hashing::RMIHash<Key, 1000000>;
-BenchmarkNonMonotoneLB(1, RMI);
-BenchmarkNonMonotoneLB(4, RMI);
-
 using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
 BenchmarkMonotone(1, MonotoneRMI);
 BenchmarkMonotone(4, MonotoneRMI);
@@ -175,5 +171,11 @@ BenchmarkMMPHFTable(MonotoneRMICompressedLearnedRank);
 using RaxisSplineCompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
     Key, learned_hashing::RadixSplineHash<Key>>;
 BenchmarkMMPHFTable(RaxisSplineCompressedLearnedRank);
+
+// TODO(dominik): Investigate segfault for 100 Mio elements, fb, range size 1
+// using RMI = learned_hashing::RMIHash<Key, 1000000>;
+// BenchmarkNonMonotoneLB(1, RMI);
+// BenchmarkNonMonotoneLB(4, RMI);
+
 }  // namespace _
 
