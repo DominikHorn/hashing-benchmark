@@ -161,7 +161,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
     }
     case ID::UNIFORM: {
       std::uniform_int_distribution<Data> dist(
-          0, std::numeric_limits<Data>::max() - 1);
+          0, (0x1LLU << 50) - 1);
       for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
       break;
     }
