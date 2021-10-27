@@ -27,21 +27,22 @@ namespace _ {
 using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
-const std::vector<std::int64_t> dataset_sizes{
-    100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
+const std::vector<std::int64_t> dataset_sizes{100000000};
 const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI)};
 const std::vector<std::int64_t> probe_distributions{
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
         dataset::ProbingDistribution::UNIFORM),
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
-        dataset::ProbingDistribution::EXPONENTIAL)};
+        dataset::ProbingDistribution::EXPONENTIAL_RANDOM),
+    static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
+        dataset::ProbingDistribution::EXPONENTIAL_SORTED)};
 
 template <class Table, size_t RangeSize>
 static void TableProbe(benchmark::State& state) {
@@ -178,4 +179,3 @@ BenchmarkMMPHFTable(RadixSplineCompressedLearnedRank);
 // BenchmarkNonMonotoneLB(4, RMI);
 
 }  // namespace _
-
