@@ -146,6 +146,12 @@ using namespace masters_thesis;
   using MMPHFTable##MMPHF = MMPHFTable<Key, Payload, MMPHF>; \
   BM(MMPHFTable##MMPHF);
 
+using MWHC = exotic_hashing::MWHC<Key>;
+BenchmarkMMPHFTable(MWHC);
+
+using CompressedMWHC = exotic_hashing::CompressedMWHC<Key>;
+BenchmarkMMPHFTable(CompressedMWHC);
+
 using RankHash = exotic_hashing::RankHash<Key>;
 BenchmarkMMPHFTable(RankHash);
 
