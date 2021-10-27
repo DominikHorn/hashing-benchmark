@@ -27,7 +27,7 @@ namespace _ {
 using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
-const std::vector<std::int64_t> dataset_sizes{100000000};
+const std::vector<std::int64_t> dataset_sizes{1000000, 10000000, 100000000};
 const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
@@ -146,10 +146,6 @@ using namespace masters_thesis;
   using MMPHFTable##MMPHF = MMPHFTable<Key, Payload, MMPHF>; \
   BM(MMPHFTable##MMPHF);
 
-using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
-BenchmarkMonotone(1, MonotoneRMI);
-BenchmarkMonotone(4, MonotoneRMI);
-
 using RankHash = exotic_hashing::RankHash<Key>;
 BenchmarkMMPHFTable(RankHash);
 
@@ -162,6 +158,14 @@ using RadixSplineLearnedRank =
     exotic_hashing::LearnedRank<Key, learned_hashing::RadixSplineHash<Key>>;
 BenchmarkMMPHFTable(RadixSplineLearnedRank);
 
+using RMI = learned_hashing::RMIHash<Key, 1000000>;
+BenchmarkNonMonotoneLB(1, RMI);
+BenchmarkNonMonotoneLB(4, RMI);
+
+using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
+BenchmarkMonotone(1, MonotoneRMI);
+BenchmarkMonotone(4, MonotoneRMI);
+
 using CompressedRankHash = exotic_hashing::CompressedRankHash<Key>;
 BenchmarkMMPHFTable(CompressedRankHash);
 
@@ -172,10 +176,4 @@ BenchmarkMMPHFTable(MonotoneRMICompressedLearnedRank);
 using RadixSplineCompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
     Key, learned_hashing::RadixSplineHash<Key>>;
 BenchmarkMMPHFTable(RadixSplineCompressedLearnedRank);
-
-// TODO(dominik): Investigate segfault for 100 Mio elements, fb, range size 1
-// using RMI = learned_hashing::RMIHash<Key, 1000000>;
-// BenchmarkNonMonotoneLB(1, RMI);
-// BenchmarkNonMonotoneLB(4, RMI);
-
 }  // namespace _
