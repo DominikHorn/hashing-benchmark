@@ -22,8 +22,15 @@ namespace _ {
 using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
-const size_t gen_dataset_size = 200000000;
-const std::vector<std::int64_t> datasets{dataset::ID::SEQUENTIAL};
+const size_t gen_dataset_size = 100000000;
+const std::vector<std::int64_t> datasets{
+  dataset::ID::SEQUENTIAL,
+  dataset::ID::GAPPED_10,
+  dataset::ID::UNIFORM,
+  dataset::ID::FB,
+  dataset::ID::OSM,
+  dataset::ID::WIKI
+};
 
 std::random_device rd;
 std::default_random_engine rng(rd());
