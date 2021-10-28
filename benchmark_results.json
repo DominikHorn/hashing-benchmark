@@ -11645,3 +11645,5 @@
       "table_directory_bytes": 3.9542529600000000e+08,
       "label": "MonotoneHashtable<8, 8, 1, rmi_hash_1000000>:normal:exponential_random"
     }
+  ]
+}
