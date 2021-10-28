@@ -160,8 +160,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
       break;
     }
     case ID::UNIFORM: {
-      std::uniform_int_distribution<Data> dist(
-          0, (0x1LLU << 50) - 1);
+      std::uniform_int_distribution<Data> dist(0, (0x1LLU << 50) - 1);
       for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
       break;
     }
@@ -174,8 +173,8 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
         const auto rand_val = std::max(mean - 3 * std_dev,
                                        std::min(mean + 3 * std_dev, dist(rng)));
 
-        assert(randval >= mean - 3 * std_dev);
-        assert(randval <= mean + 3 * std_dev);
+        assert(rand_val >= mean - 3 * std_dev);
+        assert(rand_val <= mean + 3 * std_dev);
 
         // rescale to [0, 2^50)
         const auto rescaled =
