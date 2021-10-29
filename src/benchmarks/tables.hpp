@@ -32,9 +32,9 @@ const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
-    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
-    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI)};
 const std::vector<std::int64_t> probe_distributions{
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
