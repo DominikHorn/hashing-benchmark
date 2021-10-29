@@ -29,7 +29,8 @@ class MonotoneHashtable {
       std::fill(keys.begin(), keys.end(), Sentinel);
     }
 
-    void insert(const Key& key, const Payload& payload) {
+    void insert(const Key& key, const Payload& payload,
+                support::Tape<Bucket>& tape) {
       Bucket* previous = this;
 
       for (Bucket* current = previous; current != nullptr;
@@ -46,10 +47,8 @@ class MonotoneHashtable {
       }
 
       // static var will be shared by all instances
-      static support::Tape<Bucket> tape{};
-
       previous->next = tape.alloc();
-      previous->next->insert(key, payload);
+      previous->next->insert(key, payload, tape);
     }
 
     size_t byte_size() const {
@@ -63,6 +62,9 @@ class MonotoneHashtable {
   /// model for predicting the correct index
   Model model;
 
+  /// allocator for buckets
+  support::Tape<Bucket> tape;
+
   /**
    * Inserts a given (key,payload) tuple into the hashtable.
    *
@@ -74,7 +76,7 @@ class MonotoneHashtable {
     const auto index = model(key);
     assert(index >= 0);
     assert(index < buckets.size());
-    buckets[index].insert(key, payload);
+    buckets[index].insert(key, payload, tape);
   }
 
  public:
