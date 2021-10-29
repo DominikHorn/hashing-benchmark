@@ -172,6 +172,9 @@ using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
 BenchmarkMonotone(1, MonotoneRMI);
 BenchmarkMonotone(4, MonotoneRMI);
 
+using CompressedMWHC = exotic_hashing::CompressedMWHC<Key>;
+BenchmarkMMPHFTable(CompressedMWHC);
+
 using CompressedRankHash = exotic_hashing::CompressedRankHash<Key>;
 BenchmarkMMPHFTable(CompressedRankHash);
 
