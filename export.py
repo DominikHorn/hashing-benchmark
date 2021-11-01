@@ -23,7 +23,7 @@ plot_labels = dict(
     table_bits_per_key='total bits per key')
 
 
-file = "benchmark_results.json" if len(sys.argv) < 2 else sys.argv[1]
+file = "cleaned_results.json" if len(sys.argv) < 2 else sys.argv[1]
 with open(file) as data_file:
     data = json.load(data_file)
 
