@@ -36,14 +36,6 @@ with open(file) as data_file:
     df["probe_distribution"] = df["label"].apply(lambda x : x.split(":")[2] if len(x.split(":")) > 2 else "-")
     df["probe_size"] = df["name"].apply(lambda x : int(x.split(",")[1].split(">")[0]))
 
-    # order data (important for legend & colors)
-    def order(x):
-        x = x.lower()
-        # TODO
-        return 0
-    df["order"] = df.apply(lambda x : order(x["method"]), axis=1)
-    df = df.sort_values(by=["order", "data_elem_count"])
-
     # prepare datasets for plotting & augment dataset specific columns
     lt_df = df.copy(deep=True)
     su_df = df.copy(deep=True)
