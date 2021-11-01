@@ -172,6 +172,10 @@ using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
 BenchmarkMonotone(1, MonotoneRMI);
 BenchmarkMonotone(4, MonotoneRMI);
 
+using MonotoneRadixSpline = learned_hashing::RadixSplineHash<Key>;
+BenchmarkMonotone(1, MonotoneRadixSpline);
+BenchmarkMonotone(4, MonotoneRadixSpline);
+
 using CompressedMWHC = exotic_hashing::CompressedMWHC<Key>;
 BenchmarkMMPHFTable(CompressedMWHC);
 
