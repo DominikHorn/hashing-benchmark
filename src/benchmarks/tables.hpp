@@ -135,11 +135,6 @@ using namespace masters_thesis;
 #define BenchmarkMonotone(BucketSize, Model)              \
   using MonotoneHashtable##BucketSize##Model =            \
       MonotoneHashtable<Key, Payload, BucketSize, Model>; \
-  BM_LB(MonotoneHashtable##BucketSize##Model);
-
-#define BenchmarkNonMonotoneLB(BucketSize, Model)         \
-  using MonotoneHashtable##BucketSize##Model =            \
-      MonotoneHashtable<Key, Payload, BucketSize, Model>; \
   BM(MonotoneHashtable##BucketSize##Model);
 
 #define BenchmarkMMPHFTable(MMPHF)                           \
@@ -165,8 +160,8 @@ using RadixSplineLearnedRank =
 BenchmarkMMPHFTable(RadixSplineLearnedRank);
 
 using RMI = learned_hashing::RMIHash<Key, 1000000>;
-BenchmarkNonMonotoneLB(1, RMI);
-BenchmarkNonMonotoneLB(4, RMI);
+BenchmarkMonotone(1, RMI);
+BenchmarkMonotone(4, RMI);
 
 using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
 BenchmarkMonotone(1, MonotoneRMI);
