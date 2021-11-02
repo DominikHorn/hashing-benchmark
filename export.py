@@ -94,7 +94,7 @@ with open(file) as data_file:
               <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
           </head>
 
-          <body style="display: grid; grid-template-columns: repeat(auto-fit, minmax(1200px, 1fr))">
+          <body>
             {convert_to_html(plot_lookup_times(0))}
             {convert_to_html(plot_lookup_times(1))}
             {convert_to_html(plot_lookup_times(10))}
