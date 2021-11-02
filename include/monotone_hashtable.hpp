@@ -179,6 +179,7 @@ class MonotoneHashtable {
    * @param key the key to search
    */
   forceinline Iterator operator[](const Key& key) const {
+    assert(key != Sentinel);
     const size_t directory_ind = model(key);
 
     // since BucketSize is a template arg and therefore compile-time static,

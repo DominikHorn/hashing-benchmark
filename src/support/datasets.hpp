@@ -223,6 +223,12 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
           std::to_string(static_cast<std::underlying_type<ID>::type>(id)));
   }
 
+  // since std::numeric_limits<Data> is special (e.g., used as Sentinel),
+  // systematically remove this from datasets with minimal impact on the
+  // underlying distribution.
+  for (auto& key : ds)
+    if (key == std::numeric_limits<Data>::max()) key--;
+
   // deduplicate, sort before caching to avoid additional work in the future
   deduplicate_and_sort(ds);
 
