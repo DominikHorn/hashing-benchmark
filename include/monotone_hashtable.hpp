@@ -17,6 +17,7 @@
 namespace masters_thesis {
 template <class Key, class Payload, size_t BucketSize,
           class Model = learned_hashing::MonotoneRMIHash<Key, 1000000>,
+          bool ManualPrefetch = false,
           Key Sentinel = std::numeric_limits<Key>::max()>
 class MonotoneHashtable {
   struct Bucket {
@@ -180,15 +181,27 @@ class MonotoneHashtable {
    */
   forceinline Iterator operator[](const Key& key) const {
     assert(key != Sentinel);
+
+    // will become NOOP at compile time if ManualPrefetch == false
+    const auto prefetch_next = [](const auto& bucket) {
+      if constexpr (ManualPrefetch)
+        // manually prefetch next if != nullptr;
+        if (bucket->next != nullptr) prefetch(bucket->next, 0, 0);
+    };
+
+    // obtain directory bucket
     const size_t directory_ind = model(key);
+    auto bucket = &buckets[directory_ind];
+
+    prefetch_next(bucket);
 
     // since BucketSize is a template arg and therefore compile-time static,
-    // compiler will recognize that all branches of this if/else but one can be
-    // eliminated during optimization, therefore making this a 0 runtime cost
-    // specialization
+    // compiler will recognize that all branches of this if/else but one can
+    // be eliminated during optimization, therefore making this a 0 runtime
+    // cost specialization
 #ifdef __AVX512F__
     if constexpr (BucketSize == 8 && sizeof(Key) == 8) {
-      for (auto bucket = &buckets[directory_ind]; bucket != nullptr;) {
+      while (bucket != nullptr) {
         auto vkey = _mm512_set1_epi64(key);
         auto vbucket = _mm512_loadu_si512((const __m512i*)&bucket->keys);
         auto mask = _mm512_cmpeq_epi64_mask(vkey, vbucket);
@@ -201,6 +214,7 @@ class MonotoneHashtable {
         }
 
         bucket = bucket->next;
+        prefetch_next(bucket);
       }
 
       return end();
@@ -208,7 +222,7 @@ class MonotoneHashtable {
 #endif
 #ifdef __AVX2__
     if constexpr (BucketSize == 8 && sizeof(Key) == 4) {
-      for (auto bucket = &buckets[directory_ind]; bucket != nullptr;) {
+      while (bucket != nullptr) {
         auto vkey = _mm256_set1_epi32(key);
         auto vbucket = _mm256_loadu_si256((const __m256i*)&bucket->keys);
         auto cmp = _mm256_cmpeq_epi32(vkey, vbucket);
@@ -221,11 +235,12 @@ class MonotoneHashtable {
         }
 
         bucket = bucket->next;
+        prefetch_next(bucket);
       }
       return end();
     }
     if constexpr (BucketSize == 4 && sizeof(Key) == 8) {
-      for (auto bucket = &buckets[directory_ind]; bucket != nullptr;) {
+      while (bucket != nullptr) {
         auto vkey = _mm256_set1_epi64x(key);
         auto vbucket = _mm256_loadu_si256((const __m256i*)&bucket->keys);
         auto cmp = _mm256_cmpeq_epi64(vkey, vbucket);
@@ -238,6 +253,7 @@ class MonotoneHashtable {
         }
 
         bucket = bucket->next;
+        prefetch_next(bucket);
       }
       return end();
     }
@@ -245,13 +261,15 @@ class MonotoneHashtable {
 
     // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
     // this nested loop construction anyways.
-    for (auto bucket = &buckets[directory_ind]; bucket != nullptr;) {
+    while (bucket != nullptr) {
       for (size_t i = 0; i < BucketSize; i++) {
         const auto& current_key = bucket->keys[i];
         if (current_key == Sentinel) break;
         if (current_key == key) return {directory_ind, i, bucket, *this};
       }
+
       bucket = bucket->next;
+      prefetch_next(bucket);
     }
 
     return end();

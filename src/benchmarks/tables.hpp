@@ -116,26 +116,23 @@ static void TableProbe(benchmark::State& state) {
 
 using namespace masters_thesis;
 
-#define BM_LB(Table)                                                 \
+#define BM(Table)                                                    \
   BENCHMARK_TEMPLATE(TableProbe, Table, 0)                           \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
   BENCHMARK_TEMPLATE(TableProbe, Table, 1)                           \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions});
-
-#define BM_RANGE(Table)                                              \
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
   BENCHMARK_TEMPLATE(TableProbe, Table, 10)                          \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
   BENCHMARK_TEMPLATE(TableProbe, Table, 20)                          \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions});
 
-#define BM(Table) \
-  BM_LB(Table)    \
-  BM_RANGE(Table)
-
-#define BenchmarkMonotone(BucketSize, Model)              \
-  using MonotoneHashtable##BucketSize##Model =            \
-      MonotoneHashtable<Key, Payload, BucketSize, Model>; \
-  BM(MonotoneHashtable##BucketSize##Model);
+#define BenchmarkMonotone(BucketSize, Model)                    \
+  using MonotoneHashtable##BucketSize##Model =                  \
+      MonotoneHashtable<Key, Payload, BucketSize, Model>;       \
+  BM(MonotoneHashtable##BucketSize##Model);                     \
+  using PrefetchedMonotoneHashtable##BucketSize##Model =        \
+      MonotoneHashtable<Key, Payload, BucketSize, Model, true>; \
+  BM(PrefetchedMonotoneHashtable##BucketSize##Model);
 
 #define BenchmarkMMPHFTable(MMPHF)                           \
   using MMPHFTable##MMPHF = MMPHFTable<Key, Payload, MMPHF>; \
