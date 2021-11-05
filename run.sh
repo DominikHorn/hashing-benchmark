@@ -17,4 +17,4 @@ BUILD_DIR="cmake-build-$(echo "${BUILD_TYPE}" | awk '{print tolower($0)}')"
 NEW_REGEX=$(python only_new.py)
 
 # Execute the target
-${BUILD_DIR}/src/${TARGET} --benchmark_out=benchmark_results.json --benchmark_out_format=json --benchmark_filter="${NEW_REGEX}" $@
+${BUILD_DIR}/src/${TARGET} --benchmark_out=benchmark_results.json --benchmark_out_format=json --benchmark_filter="${NEW_REGEX}"
