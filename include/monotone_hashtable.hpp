@@ -276,7 +276,8 @@ class MonotoneHashtable {
   }
 
   std::string name() {
-    return "MonotoneHashtable<" + std::to_string(sizeof(Key)) + ", " +
+    std::string prefix = (ManualPrefetch ? "Prefetched" : "");
+    return prefix + "MonotoneHashtable<" + std::to_string(sizeof(Key)) + ", " +
            std::to_string(sizeof(Payload)) + ", " + std::to_string(BucketSize) +
            ", " + model.name() + ">";
   }
