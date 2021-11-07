@@ -66,6 +66,11 @@ with open(file) as data_file:
             height=1000,
             title=f"Probe (size: {probe_size}) - ns per key"
             )
+
+        # hide prefetched results by default
+        fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
+                   if trace.name.startswith("Prefetched") else ())
+
         return fig
 
     def plot_space_usage():
@@ -83,6 +88,11 @@ with open(file) as data_file:
             height=500,
             title=f"Total space usage - bits per key"
             )
+
+        # hide prefetched results by default
+        fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
+                   if trace.name.startswith("Prefetched") else ())
+
         return fig
 
 
