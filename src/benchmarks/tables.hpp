@@ -44,6 +44,52 @@ const std::vector<std::int64_t> probe_distributions{
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
         dataset::ProbingDistribution::EXPONENTIAL_SORTED)};
 
+template <class Table>
+static void Construction(benchmark::State& state) {
+  std::random_device rd;
+  std::default_random_engine rng(rd());
+
+  // Extract variables
+  const auto dataset_size = static_cast<size_t>(state.range(0));
+  const auto did = static_cast<dataset::ID>(state.range(1));
+
+  // Generate data (keys & payloads) & probing set
+  std::vector<std::pair<Key, Payload>> data;
+  data.reserve(dataset_size);
+  {
+    auto keys = dataset::load_cached<Key>(did, dataset_size);
+
+    std::transform(keys.begin(), keys.end(), std::back_inserter(data),
+                   [](const Key& key) { return std::make_pair(key, key - 5); });
+  }
+
+  if (data.empty()) {
+    // otherwise google benchmark produces an error ;(
+    for (auto _ : state) {
+    }
+    return;
+  }
+
+  // build table
+  size_t total_bytes, directory_bytes;
+  std::string name;
+  for (auto _ : state) {
+    Table table(data);
+
+    total_bytes = table.byte_size();
+    directory_bytes = table.directory_byte_size();
+    name = table.name();
+  }
+
+  // set counters (don't do this in inner loop to avoid tainting results)
+  state.counters["table_bytes"] = total_bytes;
+  state.counters["table_directory_bytes"] = directory_bytes;
+  state.counters["table_model_bytes"] = total_bytes - directory_bytes;
+  state.counters["table_bits_per_key"] = 8. * total_bytes / data.size();
+  state.counters["data_elem_count"] = data.size();
+  state.SetLabel(name + ":" + dataset::name(did));
+}
+
 template <class Table, size_t RangeSize>
 static void TableProbe(benchmark::State& state) {
   std::random_device rd;
@@ -117,6 +163,8 @@ static void TableProbe(benchmark::State& state) {
 using namespace masters_thesis;
 
 #define BM(Table)                                                    \
+  BENCHMARK_TEMPLATE(Construction, Table)                            \
+      ->ArgsProduct({dataset_sizes, datasets});                      \
   BENCHMARK_TEMPLATE(TableProbe, Table, 0)                           \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
   BENCHMARK_TEMPLATE(TableProbe, Table, 1)                           \
