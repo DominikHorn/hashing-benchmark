@@ -130,6 +130,13 @@ class MonotoneHashtable {
     forceinline Iterator& operator++() {
       assert(current_bucket != nullptr);
 
+      // prefetch next bucket during iteration. If there is no
+      // next bucket, then prefetch the next directory slot
+      if (current_bucket->next != nullptr)
+        prefetch(current_bucket->next, 0, 0);
+      else if (directory_ind + 1 < hashtable.buckets.size())
+        prefetch(&hashtable.buckets[directory_ind + 1], 0, 0);
+
       // since data was inserted in sorted order,
       // simply advancing to next slot does the trick
       bucket_ind++;
