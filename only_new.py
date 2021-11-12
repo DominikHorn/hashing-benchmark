@@ -1,7 +1,7 @@
 import json
 import os
 
-with open('benchmark_results.json') as results_file:
+with open('results.json') as results_file:
     data = json.load(results_file)
     existing_dp = [dp['name']for dp in data['benchmarks']]
 

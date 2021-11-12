@@ -1,7 +1,7 @@
 import json
 import sys
 
-in_file_path = "benchmark_results.json" if len(sys.argv) < 2 else sys.argv[1]
+in_file_path = "results.json" if len(sys.argv) < 2 else sys.argv[1]
 out_file_path = "cleaned_results.json" if len(sys.argv) < 3 else sys.argv[2]
 
 with open(in_file_path, 'r', encoding='utf-8') as in_file:
