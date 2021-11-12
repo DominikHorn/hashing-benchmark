@@ -203,6 +203,11 @@ using RadixSplineLearnedRank =
     exotic_hashing::LearnedRank<Key, learned_hashing::RadixSplineHash<Key>>;
 BenchmarkMMPHFTable(RadixSplineLearnedRank);
 
+using RadixSplineUnoptimizedLearnedRank =
+    exotic_hashing::UnoptimizedLearnedRank<
+        Key, learned_hashing::RadixSplineHash<Key>>;
+BenchmarkMMPHFTable(RadixSplineUnoptimizedLearnedRank);
+
 using RMI = learned_hashing::RMIHash<Key, 1000000>;
 BenchmarkMonotone(1, RMI);
 BenchmarkMonotone(4, RMI);
