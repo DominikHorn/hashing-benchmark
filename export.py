@@ -22,7 +22,6 @@ plot_labels = dict(
     data_elem_count='dataset size',
     table_bits_per_key='total bits per key')
 
-
 file = "results.json" if len(sys.argv) < 2 else sys.argv[1]
 with open(file) as data_file:
     data = json.load(data_file)
@@ -31,16 +30,29 @@ with open(file) as data_file:
     df = pd.json_normalize(data, 'benchmarks')
 
     # augment additional computed columns
+    # augment plotting datasets
+    def magnitude(x):
+        l = math.log(x, 10)
+        rem = round(x/pow(10, l), 2)
+        exp = int(round(l, 0))
+        #return f'${rem} \cdot 10^{{{exp}}}$'
+        return f'{rem}e-{exp}'
     df["method"] = df["label"].apply(lambda x : x.split(":")[0])
     df["dataset"] = df["label"].apply(lambda x : x.split(":")[1])
-    df["probe_distribution"] = df["label"].apply(lambda x : x.split(":")[2] if len(x.split(":")) > 2 else "-")
-    df["probe_size"] = df["name"].apply(lambda x : int(x.split(",")[1].split(">")[0]))
+    df["elem_magnitude"] = df.apply(lambda x : magnitude(x["data_elem_count"]), axis=1)
 
     # prepare datasets for plotting & augment dataset specific columns
-    lt_df = df.copy(deep=True)
-    su_df = df.copy(deep=True)
+    lt_df = df[df["name"].str.lower().str.contains("probe")].copy(deep=True)
+    ct_df = df[df["name"].str.lower().str.contains("construction")].copy(deep=True)
+    su_df = ct_df.copy(deep=True)
 
-    su_df = su_df[(su_df["probe_size"] == 0) & (su_df["probe_distribution"].str.match("uniform"))]
+    # subset specific filtering & augmentation
+    lt_df["probe_distribution"] = lt_df["label"].apply(lambda x : x.split(":")[2] if len(x.split(":")) > 2 else "-")
+    lt_df["probe_size"] = lt_df["name"].apply(lambda x : int(x.split(",")[1].split(">")[0]))
+
+    ct_df["cpu_time_per_key"] = ct_df.apply(lambda x : x["cpu_time"] / x["data_elem_count"], axis=1)
+    ct_df["throughput"] = ct_df.apply(lambda x : 10**9/x["cpu_time_per_key"], axis=1)
+    ct_df = ct_df[ct_df["data_elem_count"] > 9 * 10**7]
 
     # ensure export output folder exists
     results_path = "docs" if len(sys.argv) < 3 else sys.argv[2]
@@ -68,7 +80,28 @@ with open(file) as data_file:
             )
 
         # hide prefetched results by default
-        fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
+        fig.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                   if trace.name.startswith("Prefetched") else ())
+
+        return fig
+
+    def plot_construction_times():
+        fig = px.bar(
+            ct_df,
+            x="elem_magnitude",
+            y="throughput",
+            color="method",
+            barmode="group",
+            facet_col="dataset",
+            category_orders={"dataset": ["seq", "gap_10", "uniform", "normal", "wiki", "osm", "fb"]},
+            labels=plot_labels,
+            color_discrete_sequence=color_sequence,
+            height=500,
+            title=f"Construction time - keys per second"
+            )
+
+        # hide prefetched results by default
+        fig.for_each_trace(lambda trace: trace.update(visible="legendonly")
                    if trace.name.startswith("Prefetched") else ())
 
         return fig
@@ -90,7 +123,7 @@ with open(file) as data_file:
             )
 
         # hide prefetched results by default
-        fig.for_each_trace(lambda trace: trace.update(visible="legendonly") 
+        fig.for_each_trace(lambda trace: trace.update(visible="legendonly")
                    if trace.name.startswith("Prefetched") else ())
 
         return fig
@@ -109,6 +142,8 @@ with open(file) as data_file:
             {convert_to_html(plot_lookup_times(1))}
             {convert_to_html(plot_lookup_times(10))}
             {convert_to_html(plot_lookup_times(20))}
+
+            {convert_to_html(plot_construction_times())}
 
             {convert_to_html(plot_space_usage())}
           </body>
