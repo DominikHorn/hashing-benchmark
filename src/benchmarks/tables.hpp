@@ -137,18 +137,17 @@ static void TableProbe(benchmark::State& state) {
     // RangeSize  > 1 -> lb key + multiple payload lookups
     if constexpr (RangeSize == 0) {
       benchmark::DoNotOptimize(it);
-      full_mem_barrier;
     } else if constexpr (RangeSize == 1) {
       const auto payload = *it;
       benchmark::DoNotOptimize(payload);
-      full_mem_barrier;
     } else if constexpr (RangeSize > 1) {
+      Payload total = 0;
       for (size_t i = 0; it != table.end() && i < RangeSize; i++, ++it) {
-        const auto payload = *it;
-        benchmark::DoNotOptimize(payload);
-        full_mem_barrier;
+        total += *it;
       }
+      benchmark::DoNotOptimize(total);
     }
+    full_mem_barrier;
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
