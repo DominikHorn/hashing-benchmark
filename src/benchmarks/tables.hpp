@@ -159,18 +159,93 @@ static void TableProbe(benchmark::State& state) {
                  dataset::name(probing_dist));
 }
 
+template <class Table>
+static void TableMixedLookup(benchmark::State& state) {
+  std::random_device rd;
+  std::default_random_engine rng(rd());
+
+  // Extract variables
+  const auto dataset_size = static_cast<size_t>(state.range(0));
+  const auto did = static_cast<dataset::ID>(state.range(1));
+  const auto probing_dist =
+      static_cast<dataset::ProbingDistribution>(state.range(2));
+  const auto percentage_of_point_queries = static_cast<size_t>(state.range(3));
+
+  // Generate data (keys & payloads) & probing set
+  std::vector<std::pair<Key, Payload>> data;
+  data.reserve(dataset_size);
+  std::vector<Key> probing_set;
+  {
+    auto keys = dataset::load_cached<Key>(did, dataset_size);
+
+    std::transform(keys.begin(), keys.end(), std::back_inserter(data),
+                   [](const Key& key) { return std::make_pair(key, key - 5); });
+
+    probing_set = dataset::generate_probing_set(keys, probing_dist);
+  }
+
+  if (data.empty()) {
+    // otherwise google benchmark produces an error ;(
+    for (auto _ : state) {
+    }
+    return;
+  }
+
+  // build table
+  Table table(data);
+
+  // distribution
+  std::uniform_int_distribution<size_t> point_query_dist(1, 100);
+
+  size_t i = 0;
+  for (auto _ : state) {
+    while (unlikely(i >= probing_set.size())) i -= probing_set.size();
+    const auto searched = probing_set[i++];
+
+    // Lower bound lookup
+    auto it = table[searched];
+    const auto lb_payload = *it;
+    benchmark::DoNotOptimize(lb_payload);
+
+    // Chance based perform full range scan
+    if (point_query_dist(rng) > percentage_of_point_queries) {
+      ++it;
+      Payload total = 0;
+      for (size_t i = 1; it != table.end() && i < 10; i++, ++it) {
+        total += *it;
+      }
+      benchmark::DoNotOptimize(total);
+    }
+
+    full_mem_barrier;
+  }
+
+  // set counters (don't do this in inner loop to avoid tainting results)
+  state.counters["table_bytes"] = table.byte_size();
+  state.counters["point_lookup_percent"] =
+      static_cast<double>(percentage_of_point_queries) / 100.0;
+  state.counters["table_directory_bytes"] = table.directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
+  state.counters["data_elem_count"] = data.size();
+  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
+                 dataset::name(probing_dist));
+}
+
 using namespace masters_thesis;
 
-#define BM(Table)                                                    \
-  BENCHMARK_TEMPLATE(Construction, Table)                            \
-      ->ArgsProduct({dataset_sizes, datasets});                      \
-  BENCHMARK_TEMPLATE(TableProbe, Table, 0)                           \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
-  BENCHMARK_TEMPLATE(TableProbe, Table, 1)                           \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
-  BENCHMARK_TEMPLATE(TableProbe, Table, 10)                          \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions}); \
-  BENCHMARK_TEMPLATE(TableProbe, Table, 20)                          \
+#define BM(Table)                                                              \
+  BENCHMARK_TEMPLATE(Construction, Table)                                      \
+      ->ArgsProduct({dataset_sizes, datasets});                                \
+  BENCHMARK_TEMPLATE(TableMixedLookup, Table)                                  \
+      ->ArgsProduct(                                                           \
+          {{100000000}, datasets, probe_distributions, {0, 25, 50, 75, 100}}); \
+  BENCHMARK_TEMPLATE(TableProbe, Table, 0)                                     \
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions});           \
+  BENCHMARK_TEMPLATE(TableProbe, Table, 1)                                     \
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions});           \
+  BENCHMARK_TEMPLATE(TableProbe, Table, 10)                                    \
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions});           \
+  BENCHMARK_TEMPLATE(TableProbe, Table, 20)                                    \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions});
 
 #define BenchmarkMonotone(BucketSize, Model)                    \
