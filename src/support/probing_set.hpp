@@ -7,6 +7,7 @@ namespace dataset {
 enum class ProbingDistribution {
   /// every key has the same probability to be queried
   UNIFORM,
+
   /// probing skewed according to exponential distribution, i.e.,
   /// some keys k are way more likely to be picked than others.
   /// rank(k) directly correlates to the k' probability of being picked
