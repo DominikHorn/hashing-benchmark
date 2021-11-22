@@ -20,7 +20,8 @@ color_sequence = ["#BBB", "#777", "#111", pal[9], pal[4], pal[6], pal[1], pal[0]
 plot_labels = dict(
     cpu_time='ns per key',
     data_elem_count='dataset size',
-    table_bits_per_key='total bits per key')
+    table_bits_per_key='total bits per key',
+    point_lookup_percent='percentage of range queries')
 
 file = "results.json" if len(sys.argv) < 2 else sys.argv[1]
 with open(file) as data_file:
@@ -44,6 +45,7 @@ with open(file) as data_file:
     # prepare datasets for plotting & augment dataset specific columns
     lt_df = df[df["name"].str.lower().str.contains("probe")].copy(deep=True)
     ct_df = df[df["name"].str.lower().str.contains("construction")].copy(deep=True)
+    mw_df = df[df["name"].str.lower().str.contains("mixed")].copy(deep=True)
     su_df = ct_df.copy(deep=True)
 
     # subset specific filtering & augmentation
@@ -53,6 +55,8 @@ with open(file) as data_file:
     ct_df["cpu_time_per_key"] = ct_df.apply(lambda x : x["cpu_time"] / x["data_elem_count"], axis=1)
     ct_df["throughput"] = ct_df.apply(lambda x : 10**9/x["cpu_time_per_key"], axis=1)
     ct_df = ct_df[ct_df["data_elem_count"] > 9 * 10**7]
+
+    mw_df["probe_distribution"] = mw_df["label"].apply(lambda x : x.split(":")[2] if len(x.split(":")) > 2 else "-")
 
     # ensure export output folder exists
     results_path = "docs" if len(sys.argv) < 3 else sys.argv[2]
@@ -84,6 +88,31 @@ with open(file) as data_file:
                    if trace.name.startswith("Prefetched") else ())
 
         return fig
+
+    def plot_mixed():
+        data = mw_df[mw_df["data_elem_count"] == 10**8]
+        fig = px.line(
+             data,
+             x="point_lookup_percent",
+             y="cpu_time",
+             color="method",
+             facet_row="probe_distribution",
+             facet_col="dataset",
+             category_orders={"dataset": ["seq", "gap_10", "uniform", "normal", "wiki", "osm", "fb"]},
+             markers=True,
+             log_x=False,
+             labels=plot_labels,
+             color_discrete_sequence=color_sequence,
+             height=1000,
+             title=f"Mixed workload - ns per key"
+        )
+
+        # hide prefetched results by default
+        fig.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                   if trace.name.startswith("Prefetched") else ())
+
+        return fig
+
 
     def plot_construction_times():
         fig = px.bar(
@@ -128,7 +157,6 @@ with open(file) as data_file:
 
         return fig
 
-
     with open(f'{results_path}/index.html', 'w') as readme:
         readme.write(cleandoc(f"""
         <!doctype html>
@@ -146,6 +174,8 @@ with open(file) as data_file:
             {convert_to_html(plot_construction_times())}
 
             {convert_to_html(plot_space_usage())}
+
+            {convert_to_html(plot_mixed())}
           </body>
         </html>
         """))
