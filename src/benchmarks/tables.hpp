@@ -269,10 +269,11 @@ BenchmarkMMPHFTable(CompressedMWHC);
 using RankHash = exotic_hashing::RankHash<Key>;
 BenchmarkMMPHFTable(RankHash);
 
-using MonotoneRMILearnedRank =
-    exotic_hashing::LearnedRank<Key,
-                                learned_hashing::MonotoneRMIHash<Key, 1000000>>;
-BenchmarkMMPHFTable(MonotoneRMILearnedRank);
+// using MonotoneRMILearnedRank =
+//     exotic_hashing::LearnedRank<Key,
+//                                 learned_hashing::MonotoneRMIHash<Key,
+//                                 1000000>>;
+// BenchmarkMMPHFTable(MonotoneRMILearnedRank);
 
 using RadixSplineLearnedRank =
     exotic_hashing::LearnedRank<Key, learned_hashing::RadixSplineHash<Key>>;
@@ -287,9 +288,9 @@ using RMI = learned_hashing::RMIHash<Key, 1000000>;
 BenchmarkMonotone(1, RMI);
 BenchmarkMonotone(4, RMI);
 
-using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
-BenchmarkMonotone(1, MonotoneRMI);
-BenchmarkMonotone(4, MonotoneRMI);
+// using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
+// BenchmarkMonotone(1, MonotoneRMI);
+// BenchmarkMonotone(4, MonotoneRMI);
 
 using MonotoneRadixSpline = learned_hashing::RadixSplineHash<Key>;
 BenchmarkMonotone(1, MonotoneRadixSpline);
@@ -301,9 +302,10 @@ BenchmarkMMPHFTable(CompressedMWHC);
 using CompressedRankHash = exotic_hashing::CompressedRankHash<Key>;
 BenchmarkMMPHFTable(CompressedRankHash);
 
-using MonotoneRMICompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
-    Key, learned_hashing::MonotoneRMIHash<Key, 1000000>>;
-BenchmarkMMPHFTable(MonotoneRMICompressedLearnedRank);
+// using MonotoneRMICompressedLearnedRank =
+// exotic_hashing::CompressedLearnedRank<
+//     Key, learned_hashing::MonotoneRMIHash<Key, 1000000>>;
+// BenchmarkMMPHFTable(MonotoneRMICompressedLearnedRank);
 
 using RadixSplineCompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
     Key, learned_hashing::RadixSplineHash<Key>>;
