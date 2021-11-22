@@ -269,6 +269,9 @@ BenchmarkMMPHFTable(CompressedMWHC);
 using RankHash = exotic_hashing::RankHash<Key>;
 BenchmarkMMPHFTable(RankHash);
 
+using FST = exotic_hashing::FastSuccinctTrie<Key>;
+BenchmarkMMPHFTable(FST);
+
 // using MonotoneRMILearnedRank =
 //     exotic_hashing::LearnedRank<Key,
 //                                 learned_hashing::MonotoneRMIHash<Key,
