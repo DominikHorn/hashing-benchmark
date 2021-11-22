@@ -183,12 +183,15 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
         // round
         ds[i] = std::floor(rescaled);
       }
+      break;
     }
     case ID::FB: {
       if (ds_fb.empty()) {
         ds_fb = load<Data>("data/fb_200M_uint64");
         std::shuffle(ds_fb.begin(), ds_fb.end(), rng);
       }
+      // ds file does not exist
+      if (ds_fb.empty()) return {};
 
       // sampling this way is only valid since ds_fb is shuffled!
       for (size_t i = 0; i < ds_fb.size() && i < ds.size(); i++)
@@ -200,6 +203,8 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
         ds_osm = load<Data>("data/osm_cellids_200M_uint64");
         std::shuffle(ds_osm.begin(), ds_osm.end(), rng);
       }
+      // ds file does not exist
+      if (ds_osm.empty()) return {};
 
       // sampling this way is only valid since ds_osm is shuffled!
       for (size_t i = 0; i < ds_osm.size() && i < ds.size(); i++)
@@ -211,6 +216,8 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
         ds_wiki = load<Data>("data/wiki_ts_200M_uint64");
         std::shuffle(ds_wiki.begin(), ds_wiki.end(), rng);
       }
+      // ds file does not exist
+      if (ds_wiki.empty()) return {};
 
       // sampling this way is only valid since ds_wiki is shuffled!
       for (size_t i = 0; i < ds_wiki.size() && i < ds.size(); i++)
