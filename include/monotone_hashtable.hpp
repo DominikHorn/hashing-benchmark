@@ -64,7 +64,7 @@ class MonotoneHashtable {
   Model model;
 
   /// allocator for buckets
-  support::Tape<Bucket> tape;
+  std::unique_ptr<support::Tape<Bucket>> tape;
 
   /**
    * Inserts a given (key,payload) tuple into the hashtable.
@@ -77,7 +77,7 @@ class MonotoneHashtable {
     const auto index = model(key);
     assert(index >= 0);
     assert(index < buckets.size());
-    buckets[index].insert(key, payload, tape);
+    buckets[index].insert(key, payload, *tape);
   }
 
  public:
@@ -86,11 +86,10 @@ class MonotoneHashtable {
   /**
    * Constructs a MonotoneHashtable given a list of keys
    * together with their corresponding payloads
-   *
-   * TODO(dominik): come up with better interface for construction
    */
   MonotoneHashtable(std::vector<std::pair<Key, Payload>> data)
-      : buckets(1 + data.size() / BucketSize) {
+      : buckets(1 + data.size() / BucketSize),
+        tape(std::make_unique<support::Tape<Bucket>>()) {
     // ensure data is sorted
     std::sort(data.begin(), data.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
