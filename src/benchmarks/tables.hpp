@@ -12,6 +12,7 @@
 #include <ostream>
 #include <random>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -92,37 +93,56 @@ static void Construction(benchmark::State& state) {
 
 template <class Table, size_t RangeSize>
 static void TableProbe(benchmark::State& state) {
-  std::random_device rd;
-  std::default_random_engine rng(rd());
-
   // Extract variables
   const auto dataset_size = static_cast<size_t>(state.range(0));
   const auto did = static_cast<dataset::ID>(state.range(1));
   const auto probing_dist =
       static_cast<dataset::ProbingDistribution>(state.range(2));
 
-  // Generate data (keys & payloads) & probing set
-  std::vector<std::pair<Key, Payload>> data;
-  data.reserve(dataset_size);
-  std::vector<Key> probing_set;
-  {
-    auto keys = dataset::load_cached<Key>(did, dataset_size);
+  static std::vector<std::pair<Key, Payload>> data{};
+  static std::vector<Key> probing_set{};
 
-    std::transform(keys.begin(), keys.end(), std::back_inserter(data),
-                   [](const Key& key) { return std::make_pair(key, key - 5); });
+  static std::unique_ptr<Table> table{};
+  static std::string previous_signature = "";
 
-    probing_set = dataset::generate_probing_set(keys, probing_dist);
-  }
+  // google benchmark will run a benchmark function multiple times
+  // to determine, amongst other things, the iteration count for
+  // the benchmark loop. Technically, BM functions must be pure. However,
+  // since this setup logic is very expensive, we cache setup based on
+  // a unique signature containing all parameters.
+  // NOTE: google benchmark's fixtures suffer from the same
+  // 'execute setup multiple times' issue:
+  // https://github.com/google/benchmark/issues/952
+  std::string signature =
+      std::string(typeid(Table).name()) + "_" + std::to_string(RangeSize) +
+      "_" + std::to_string(dataset_size) + "_" + dataset::name(did) + "_" +
+      dataset::name(probing_dist);
+  if (previous_signature != signature) {
+    std::cout << "\tperforming setup" << std::endl;
+    // Generate data (keys & payloads) & probing set
+    data.clear();
+    data.reserve(dataset_size);
+    {
+      auto keys = dataset::load_cached<Key>(did, dataset_size);
 
-  if (data.empty()) {
-    // otherwise google benchmark produces an error ;(
-    for (auto _ : state) {
+      std::transform(
+          keys.begin(), keys.end(), std::back_inserter(data),
+          [](const Key& key) { return std::make_pair(key, key - 5); });
+
+      probing_set = dataset::generate_probing_set(keys, probing_dist);
     }
-    return;
-  }
 
-  // build table
-  Table table(data);
+    if (data.empty()) {
+      // otherwise google benchmark produces an error ;(
+      for (auto _ : state) {
+      }
+      return;
+    }
+
+    // build table
+    table = std::make_unique<Table>(data);
+  }
+  previous_signature = signature;
 
   size_t i = 0;
   for (auto _ : state) {
@@ -130,7 +150,7 @@ static void TableProbe(benchmark::State& state) {
     const auto searched = probing_set[i++];
 
     // Lower bound lookup
-    auto it = table[searched];
+    auto it = table->operator[](searched);
 
     // RangeSize == 0 -> only key lookup
     // RangeSize == 1 -> key + payload lookup
@@ -142,7 +162,7 @@ static void TableProbe(benchmark::State& state) {
       benchmark::DoNotOptimize(payload);
     } else if constexpr (RangeSize > 1) {
       Payload total = 0;
-      for (size_t i = 0; it != table.end() && i < RangeSize; i++, ++it) {
+      for (size_t i = 0; it != table->end() && i < RangeSize; i++, ++it) {
         total += *it;
       }
       benchmark::DoNotOptimize(total);
@@ -151,11 +171,11 @@ static void TableProbe(benchmark::State& state) {
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
-  state.counters["table_bytes"] = table.byte_size();
-  state.counters["table_directory_bytes"] = table.directory_byte_size();
-  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
+  state.counters["table_bytes"] = table->byte_size();
+  state.counters["table_directory_bytes"] = table->directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table->byte_size() / data.size();
   state.counters["data_elem_count"] = data.size();
-  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
+  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
                  dataset::name(probing_dist));
 }
 
@@ -171,28 +191,51 @@ static void TableMixedLookup(benchmark::State& state) {
       static_cast<dataset::ProbingDistribution>(state.range(2));
   const auto percentage_of_point_queries = static_cast<size_t>(state.range(3));
 
-  // Generate data (keys & payloads) & probing set
-  std::vector<std::pair<Key, Payload>> data;
-  data.reserve(dataset_size);
-  std::vector<Key> probing_set;
-  {
-    auto keys = dataset::load_cached<Key>(did, dataset_size);
+  static std::vector<std::pair<Key, Payload>> data{};
+  static std::vector<Key> probing_set{};
 
-    std::transform(keys.begin(), keys.end(), std::back_inserter(data),
-                   [](const Key& key) { return std::make_pair(key, key - 5); });
+  static std::unique_ptr<Table> table{};
+  static std::string previous_signature = "";
 
-    probing_set = dataset::generate_probing_set(keys, probing_dist);
-  }
+  // google benchmark will run a benchmark function multiple times
+  // to determine, amongst other things, the iteration count for
+  // the benchmark loop. Technically, BM functions must be pure. However,
+  // since this setup logic is very expensive, we cache setup based on
+  // a unique signature containing all parameters.
+  // NOTE: google benchmark's fixtures suffer from the same
+  // 'execute setup multiple times' issue:
+  // https://github.com/google/benchmark/issues/952
+  std::string signature = std::string(typeid(Table).name()) + "_" +
+                          std::to_string(percentage_of_point_queries) + "_" +
+                          std::to_string(dataset_size) + "_" +
+                          dataset::name(did) + "_" +
+                          dataset::name(probing_dist);
+  if (previous_signature != signature) {
+    std::cout << "\tperforming setup" << std::endl;
+    // Generate data (keys & payloads) & probing set
+    data.clear();
+    data.reserve(dataset_size);
+    {
+      auto keys = dataset::load_cached<Key>(did, dataset_size);
 
-  if (data.empty()) {
-    // otherwise google benchmark produces an error ;(
-    for (auto _ : state) {
+      std::transform(
+          keys.begin(), keys.end(), std::back_inserter(data),
+          [](const Key& key) { return std::make_pair(key, key - 5); });
+
+      probing_set = dataset::generate_probing_set(keys, probing_dist);
     }
-    return;
-  }
 
-  // build table
-  Table table(data);
+    if (data.empty()) {
+      // otherwise google benchmark produces an error ;(
+      for (auto _ : state) {
+      }
+      return;
+    }
+
+    // build table
+    table = std::make_unique<Table>(data);
+  }
+  previous_signature = signature;
 
   // distribution
   std::uniform_int_distribution<size_t> point_query_dist(1, 100);
@@ -203,7 +246,7 @@ static void TableMixedLookup(benchmark::State& state) {
     const auto searched = probing_set[i++];
 
     // Lower bound lookup
-    auto it = table[searched];
+    auto it = table->operator[](searched);
     const auto lb_payload = *it;
     benchmark::DoNotOptimize(lb_payload);
 
@@ -211,7 +254,7 @@ static void TableMixedLookup(benchmark::State& state) {
     if (point_query_dist(rng) > percentage_of_point_queries) {
       ++it;
       Payload total = 0;
-      for (size_t i = 1; it != table.end() && i < 10; i++, ++it) {
+      for (size_t i = 1; it != table->end() && i < 10; i++, ++it) {
         total += *it;
       }
       benchmark::DoNotOptimize(total);
@@ -221,13 +264,13 @@ static void TableMixedLookup(benchmark::State& state) {
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
-  state.counters["table_bytes"] = table.byte_size();
+  state.counters["table_bytes"] = table->byte_size();
   state.counters["point_lookup_percent"] =
       static_cast<double>(percentage_of_point_queries) / 100.0;
-  state.counters["table_directory_bytes"] = table.directory_byte_size();
-  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
+  state.counters["table_directory_bytes"] = table->directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table->byte_size() / data.size();
   state.counters["data_elem_count"] = data.size();
-  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
+  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
                  dataset::name(probing_dist));
 }
 
