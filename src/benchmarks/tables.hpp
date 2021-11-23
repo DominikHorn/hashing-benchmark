@@ -1,7 +1,9 @@
 #include <benchmark/benchmark.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
+#include <ctime>
 #include <hashing.hpp>
 #include <hashtable.hpp>
 #include <iostream>
@@ -118,7 +120,8 @@ static void TableProbe(benchmark::State& state) {
       "_" + std::to_string(dataset_size) + "_" + dataset::name(did) + "_" +
       dataset::name(probing_dist);
   if (previous_signature != signature) {
-    std::cout << "\tperforming setup" << std::endl;
+    std::cout << "performing setup... ";
+    auto start = std::chrono::steady_clock::now();
     // Generate data (keys & payloads) & probing set
     data.clear();
     data.reserve(dataset_size);
@@ -136,11 +139,17 @@ static void TableProbe(benchmark::State& state) {
       // otherwise google benchmark produces an error ;(
       for (auto _ : state) {
       }
+      std::cout << "failed" << std::endl;
       return;
     }
 
     // build table
     table = std::make_unique<Table>(data);
+
+    // measure time elapsed
+    const auto delta = std::chrono::steady_clock::now() - start;
+    std::cout << "succeeded in " << std::setw(9) << delta.count() << " seconds"
+              << std::endl;
   }
   previous_signature = signature;
 
@@ -211,7 +220,9 @@ static void TableMixedLookup(benchmark::State& state) {
                           dataset::name(did) + "_" +
                           dataset::name(probing_dist);
   if (previous_signature != signature) {
-    std::cout << "\tperforming setup" << std::endl;
+    std::cout << "performing setup... ";
+    auto start = std::chrono::steady_clock::now();
+
     // Generate data (keys & payloads) & probing set
     data.clear();
     data.reserve(dataset_size);
@@ -234,6 +245,11 @@ static void TableMixedLookup(benchmark::State& state) {
 
     // build table
     table = std::make_unique<Table>(data);
+
+    // measure time elapsed
+    const auto delta = std::chrono::steady_clock::now() - start;
+    std::cout << "succeeded in " << std::setw(9) << delta.count() << " seconds"
+              << std::endl;
   }
   previous_signature = signature;
 
