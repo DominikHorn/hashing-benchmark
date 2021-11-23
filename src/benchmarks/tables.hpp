@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <ctime>
 #include <hashing.hpp>
 #include <hashtable.hpp>
@@ -93,6 +94,11 @@ static void Construction(benchmark::State& state) {
   state.SetLabel(name + ":" + dataset::name(did));
 }
 
+std::string previous_signature = "";
+std::vector<Key> probing_set{};
+void* prev_table = nullptr;
+std::function<void()> free_lambda = []() {};
+
 template <class Table, size_t RangeSize>
 static void TableProbe(benchmark::State& state) {
   // Extract variables
@@ -100,12 +106,6 @@ static void TableProbe(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(1));
   const auto probing_dist =
       static_cast<dataset::ProbingDistribution>(state.range(2));
-
-  static std::vector<std::pair<Key, Payload>> data{};
-  static std::vector<Key> probing_set{};
-
-  static Table table{};
-  static std::string previous_signature = "";
 
   // google benchmark will run a benchmark function multiple times
   // to determine, amongst other things, the iteration count for
@@ -122,8 +122,9 @@ static void TableProbe(benchmark::State& state) {
   if (previous_signature != signature) {
     std::cout << "performing setup... ";
     auto start = std::chrono::steady_clock::now();
+
     // Generate data (keys & payloads) & probing set
-    data.clear();
+    std::vector<std::pair<Key, Payload>> data{};
     data.reserve(dataset_size);
     {
       auto keys = dataset::load_cached<Key>(did, dataset_size);
@@ -144,7 +145,9 @@ static void TableProbe(benchmark::State& state) {
     }
 
     // build table
-    table = Table(data);
+    if (prev_table != nullptr) free_lambda();
+    prev_table = new Table(data);
+    free_lambda = []() { delete ((Table*)prev_table); };
 
     // measure time elapsed
     const auto end = std::chrono::steady_clock::now();
@@ -154,13 +157,18 @@ static void TableProbe(benchmark::State& state) {
   }
   previous_signature = signature;
 
+  assert(prev_table != nullptr);
+  Table* table = (Table*)prev_table;
+
   size_t i = 0;
   for (auto _ : state) {
     while (unlikely(i >= probing_set.size())) i -= probing_set.size();
     const auto searched = probing_set[i++];
 
     // Lower bound lookup
-    auto it = table[searched];
+    auto it = table->operator[](
+        searched);  // TODO: does this generate a 'call' op? =>
+                    // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     // RangeSize == 0 -> only key lookup
     // RangeSize == 1 -> key + payload lookup
@@ -172,7 +180,7 @@ static void TableProbe(benchmark::State& state) {
       benchmark::DoNotOptimize(payload);
     } else if constexpr (RangeSize > 1) {
       Payload total = 0;
-      for (size_t i = 0; it != table.end() && i < RangeSize; i++, ++it) {
+      for (size_t i = 0; it != table->end() && i < RangeSize; i++, ++it) {
         total += *it;
       }
       benchmark::DoNotOptimize(total);
@@ -181,11 +189,11 @@ static void TableProbe(benchmark::State& state) {
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
-  state.counters["table_bytes"] = table.byte_size();
-  state.counters["table_directory_bytes"] = table.directory_byte_size();
-  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
-  state.counters["data_elem_count"] = data.size();
-  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
+  state.counters["table_bytes"] = table->byte_size();
+  state.counters["table_directory_bytes"] = table->directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table->byte_size() / dataset_size;
+  state.counters["data_elem_count"] = dataset_size;
+  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
                  dataset::name(probing_dist));
 }
 
@@ -200,12 +208,6 @@ static void TableMixedLookup(benchmark::State& state) {
   const auto probing_dist =
       static_cast<dataset::ProbingDistribution>(state.range(2));
   const auto percentage_of_point_queries = static_cast<size_t>(state.range(3));
-
-  static std::vector<std::pair<Key, Payload>> data{};
-  static std::vector<Key> probing_set{};
-
-  static Table table{};
-  static std::string previous_signature = "";
 
   // google benchmark will run a benchmark function multiple times
   // to determine, amongst other things, the iteration count for
@@ -225,7 +227,7 @@ static void TableMixedLookup(benchmark::State& state) {
     auto start = std::chrono::steady_clock::now();
 
     // Generate data (keys & payloads) & probing set
-    data.clear();
+    std::vector<std::pair<Key, Payload>> data{};
     data.reserve(dataset_size);
     {
       auto keys = dataset::load_cached<Key>(did, dataset_size);
@@ -245,7 +247,9 @@ static void TableMixedLookup(benchmark::State& state) {
     }
 
     // build table
-    table = Table(data);
+    if (prev_table != nullptr) free_lambda();
+    prev_table = new Table(data);
+    free_lambda = []() { delete ((Table*)prev_table); };
 
     // measure time elapsed
     const auto end = std::chrono::steady_clock::now();
@@ -254,6 +258,9 @@ static void TableMixedLookup(benchmark::State& state) {
               << std::endl;
   }
   previous_signature = signature;
+
+  assert(prev_table != nullptr);
+  Table* table = (Table*)prev_table;
 
   // distribution
   std::uniform_int_distribution<size_t> point_query_dist(1, 100);
@@ -264,7 +271,7 @@ static void TableMixedLookup(benchmark::State& state) {
     const auto searched = probing_set[i++];
 
     // Lower bound lookup
-    auto it = table[searched];
+    auto it = table->operator[](searched);
     const auto lb_payload = *it;
     benchmark::DoNotOptimize(lb_payload);
 
@@ -272,7 +279,7 @@ static void TableMixedLookup(benchmark::State& state) {
     if (point_query_dist(rng) > percentage_of_point_queries) {
       ++it;
       Payload total = 0;
-      for (size_t i = 1; it != table.end() && i < 10; i++, ++it) {
+      for (size_t i = 1; it != table->end() && i < 10; i++, ++it) {
         total += *it;
       }
       benchmark::DoNotOptimize(total);
@@ -282,13 +289,13 @@ static void TableMixedLookup(benchmark::State& state) {
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
-  state.counters["table_bytes"] = table.byte_size();
+  state.counters["table_bytes"] = table->byte_size();
   state.counters["point_lookup_percent"] =
       static_cast<double>(percentage_of_point_queries) / 100.0;
-  state.counters["table_directory_bytes"] = table.directory_byte_size();
-  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
-  state.counters["data_elem_count"] = data.size();
-  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
+  state.counters["table_directory_bytes"] = table->directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table->byte_size() / dataset_size;
+  state.counters["data_elem_count"] = dataset_size;
+  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
                  dataset::name(probing_dist));
 }
 
