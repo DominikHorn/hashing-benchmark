@@ -104,7 +104,7 @@ static void TableProbe(benchmark::State& state) {
   static std::vector<std::pair<Key, Payload>> data{};
   static std::vector<Key> probing_set{};
 
-  static std::unique_ptr<Table> table{};
+  static Table table{};
   static std::string previous_signature = "";
 
   // google benchmark will run a benchmark function multiple times
@@ -144,7 +144,7 @@ static void TableProbe(benchmark::State& state) {
     }
 
     // build table
-    table = std::make_unique<Table>(data);
+    table = Table(data);
 
     // measure time elapsed
     const auto delta = std::chrono::steady_clock::now() - start;
@@ -159,7 +159,7 @@ static void TableProbe(benchmark::State& state) {
     const auto searched = probing_set[i++];
 
     // Lower bound lookup
-    auto it = table->operator[](searched);
+    auto it = table[searched];
 
     // RangeSize == 0 -> only key lookup
     // RangeSize == 1 -> key + payload lookup
@@ -171,7 +171,7 @@ static void TableProbe(benchmark::State& state) {
       benchmark::DoNotOptimize(payload);
     } else if constexpr (RangeSize > 1) {
       Payload total = 0;
-      for (size_t i = 0; it != table->end() && i < RangeSize; i++, ++it) {
+      for (size_t i = 0; it != table.end() && i < RangeSize; i++, ++it) {
         total += *it;
       }
       benchmark::DoNotOptimize(total);
@@ -180,11 +180,11 @@ static void TableProbe(benchmark::State& state) {
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
-  state.counters["table_bytes"] = table->byte_size();
-  state.counters["table_directory_bytes"] = table->directory_byte_size();
-  state.counters["table_bits_per_key"] = 8. * table->byte_size() / data.size();
+  state.counters["table_bytes"] = table.byte_size();
+  state.counters["table_directory_bytes"] = table.directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
   state.counters["data_elem_count"] = data.size();
-  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
+  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
                  dataset::name(probing_dist));
 }
 
@@ -203,7 +203,7 @@ static void TableMixedLookup(benchmark::State& state) {
   static std::vector<std::pair<Key, Payload>> data{};
   static std::vector<Key> probing_set{};
 
-  static std::unique_ptr<Table> table{};
+  static Table table{};
   static std::string previous_signature = "";
 
   // google benchmark will run a benchmark function multiple times
@@ -244,7 +244,7 @@ static void TableMixedLookup(benchmark::State& state) {
     }
 
     // build table
-    table = std::make_unique<Table>(data);
+    table = Table(data);
 
     // measure time elapsed
     const auto delta = std::chrono::steady_clock::now() - start;
@@ -262,7 +262,7 @@ static void TableMixedLookup(benchmark::State& state) {
     const auto searched = probing_set[i++];
 
     // Lower bound lookup
-    auto it = table->operator[](searched);
+    auto it = table[searched];
     const auto lb_payload = *it;
     benchmark::DoNotOptimize(lb_payload);
 
@@ -270,7 +270,7 @@ static void TableMixedLookup(benchmark::State& state) {
     if (point_query_dist(rng) > percentage_of_point_queries) {
       ++it;
       Payload total = 0;
-      for (size_t i = 1; it != table->end() && i < 10; i++, ++it) {
+      for (size_t i = 1; it != table.end() && i < 10; i++, ++it) {
         total += *it;
       }
       benchmark::DoNotOptimize(total);
@@ -280,13 +280,13 @@ static void TableMixedLookup(benchmark::State& state) {
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
-  state.counters["table_bytes"] = table->byte_size();
+  state.counters["table_bytes"] = table.byte_size();
   state.counters["point_lookup_percent"] =
       static_cast<double>(percentage_of_point_queries) / 100.0;
-  state.counters["table_directory_bytes"] = table->directory_byte_size();
-  state.counters["table_bits_per_key"] = 8. * table->byte_size() / data.size();
+  state.counters["table_directory_bytes"] = table.directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table.byte_size() / data.size();
   state.counters["data_elem_count"] = data.size();
-  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
+  state.SetLabel(table.name() + ":" + dataset::name(did) + ":" +
                  dataset::name(probing_dist));
 }
 

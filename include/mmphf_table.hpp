@@ -16,6 +16,8 @@ class MMPHFTable {
   MMPHF mmphf;
 
  public:
+  MMPHFTable() noexcept = default;
+
   /**
    * Constructs a MMPHFtable given a list of keys
    * together with their corresponding payloads

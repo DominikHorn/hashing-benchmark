@@ -81,6 +81,8 @@ class MonotoneHashtable {
   }
 
  public:
+  MonotoneHashtable() = default;
+
   /**
    * Constructs a MonotoneHashtable given a list of keys
    * together with their corresponding payloads
