@@ -147,8 +147,9 @@ static void TableProbe(benchmark::State& state) {
     table = Table(data);
 
     // measure time elapsed
-    const auto delta = std::chrono::steady_clock::now() - start;
-    std::cout << "succeeded in " << std::setw(9) << delta.count() << " seconds"
+    const auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "succeeded in " << std::setw(9) << diff.count() << " seconds"
               << std::endl;
   }
   previous_signature = signature;
@@ -247,8 +248,9 @@ static void TableMixedLookup(benchmark::State& state) {
     table = Table(data);
 
     // measure time elapsed
-    const auto delta = std::chrono::steady_clock::now() - start;
-    std::cout << "succeeded in " << std::setw(9) << delta.count() << " seconds"
+    const auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "succeeded in " << std::setw(9) << diff.count() << " seconds"
               << std::endl;
   }
   previous_signature = signature;
