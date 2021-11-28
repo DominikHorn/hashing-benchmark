@@ -57,6 +57,7 @@ with open(file) as data_file:
     ct_df = ct_df[ct_df["data_elem_count"] > 9 * 10**7]
 
     mw_df["probe_distribution"] = mw_df["label"].apply(lambda x : x.split(":")[2] if len(x.split(":")) > 2 else "-")
+    mw_df = mw_df.sort_values("point_lookup_percent", key=lambda x : pd.to_numeric(x), ascending=True)
 
     # ensure export output folder exists
     results_path = "docs" if len(sys.argv) < 3 else sys.argv[2]
