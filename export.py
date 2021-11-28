@@ -157,7 +157,8 @@ with open(file) as data_file:
 
         return fig
 
-    with open(f'{results_path}/index.html', 'w') as readme:
+    outfile_name = "index.html" if len(sys.argv) < 4 else sys.argv[3]
+    with open(f'{results_path}/{outfile_name}', 'w') as readme:
         readme.write(cleandoc(f"""
         <!doctype html>
         <html>
