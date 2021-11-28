@@ -34,6 +34,7 @@ using Payload = std::uint64_t;
 const std::vector<std::int64_t> dataset_sizes{1000000, 10000000, 100000000};
 const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
@@ -42,6 +43,8 @@ const std::vector<std::int64_t> datasets{
 const std::vector<std::int64_t> probe_distributions{
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
         dataset::ProbingDistribution::UNIFORM),
+    static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
+        dataset::ProbingDistribution::EXPONENTIAL_RANDOM),
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
         dataset::ProbingDistribution::EXPONENTIAL_SORTED)};
 
@@ -325,26 +328,57 @@ using namespace masters_thesis;
   using MMPHFTable##MMPHF = MMPHFTable<Key, Payload, MMPHF>; \
   BM(MMPHFTable##MMPHF);
 
+using MWHC = exotic_hashing::MWHC<Key>;
+BenchmarkMMPHFTable(MWHC);
+
 using CompressedMWHC = exotic_hashing::CompressedMWHC<Key>;
 BenchmarkMMPHFTable(CompressedMWHC);
 
+using RankHash = exotic_hashing::RankHash<Key>;
+BenchmarkMMPHFTable(RankHash);
+
 using FST = exotic_hashing::FastSuccinctTrie<Key>;
 BenchmarkMMPHFTable(FST);
+
+// using MonotoneRMILearnedRank =
+//     exotic_hashing::LearnedRank<Key,
+//                                 learned_hashing::MonotoneRMIHash<Key,
+//                                 1000000>>;
+// BenchmarkMMPHFTable(MonotoneRMILearnedRank);
+
+using RadixSplineLearnedRank =
+    exotic_hashing::LearnedRank<Key, learned_hashing::RadixSplineHash<Key>>;
+BenchmarkMMPHFTable(RadixSplineLearnedRank);
+
+using RadixSplineUnoptimizedLearnedRank =
+    exotic_hashing::UnoptimizedLearnedRank<
+        Key, learned_hashing::RadixSplineHash<Key>>;
+BenchmarkMMPHFTable(RadixSplineUnoptimizedLearnedRank);
 
 using RMI = learned_hashing::RMIHash<Key, 1000000>;
 BenchmarkMonotone(1, RMI);
 BenchmarkMonotone(4, RMI);
 
-using RadixSpline = learned_hashing::RadixSplineHash<Key>;
-BenchmarkMonotone(1, RadixSpline);
-BenchmarkMonotone(4, RadixSpline);
+// using MonotoneRMI = learned_hashing::MonotoneRMIHash<Key, 1000000>;
+// BenchmarkMonotone(1, MonotoneRMI);
+// BenchmarkMonotone(4, MonotoneRMI);
 
-using RMIUnoptimizedLearnedRank =
-    exotic_hashing::UnoptimizedLearnedRank<Key, RMI>;
-BenchmarkMMPHFTable(RMIUnoptimizedLearnedRank);
+using MonotoneRadixSpline = learned_hashing::RadixSplineHash<Key>;
+BenchmarkMonotone(1, MonotoneRadixSpline);
+BenchmarkMonotone(4, MonotoneRadixSpline);
 
-using RadixSplineUnoptimizedLearnedRank =
-    exotic_hashing::UnoptimizedLearnedRank<Key, RadixSpline>;
-BenchmarkMMPHFTable(RadixSplineUnoptimizedLearnedRank);
+using CompressedMWHC = exotic_hashing::CompressedMWHC<Key>;
+BenchmarkMMPHFTable(CompressedMWHC);
 
+using CompressedRankHash = exotic_hashing::CompressedRankHash<Key>;
+BenchmarkMMPHFTable(CompressedRankHash);
+
+// using MonotoneRMICompressedLearnedRank =
+// exotic_hashing::CompressedLearnedRank<
+//     Key, learned_hashing::MonotoneRMIHash<Key, 1000000>>;
+// BenchmarkMMPHFTable(MonotoneRMICompressedLearnedRank);
+
+using RadixSplineCompressedLearnedRank = exotic_hashing::CompressedLearnedRank<
+    Key, learned_hashing::RadixSplineHash<Key>>;
+BenchmarkMMPHFTable(RadixSplineCompressedLearnedRank);
 }  // namespace _
