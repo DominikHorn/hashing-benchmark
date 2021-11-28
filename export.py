@@ -56,8 +56,9 @@ with open(file) as data_file:
     ct_df["throughput"] = ct_df.apply(lambda x : 10**9/x["cpu_time_per_key"], axis=1)
     ct_df = ct_df[ct_df["data_elem_count"] > 9 * 10**7]
 
+    mw_df["_sort_name"] = mw_df["label"].apply(lambda x : x.split(":")[0] if len(x.split(":")) > 0 else "-")
     mw_df["probe_distribution"] = mw_df["label"].apply(lambda x : x.split(":")[2] if len(x.split(":")) > 2 else "-")
-    mw_df = mw_df.sort_values("point_lookup_percent", key=lambda x : pd.to_numeric(x), ascending=True)
+    mw_df = mw_df.sort_values(["_sort_name", "point_lookup_percent"], ascending=True)
 
     # ensure export output folder exists
     results_path = "docs" if len(sys.argv) < 3 else sys.argv[2]
