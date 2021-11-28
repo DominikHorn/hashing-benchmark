@@ -17,4 +17,6 @@ with open('results.json') as results_file:
         assert(dp not in new_dp)
         assert(dp in all_dp)
 
+    # only ever benchmark 1000 dp at a time to avoid issues with arg list to long
+    new_dp = new_dp[:1000]
     print('|'.join(new_dp))
