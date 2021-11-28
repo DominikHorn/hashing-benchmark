@@ -21,7 +21,7 @@ plot_labels = dict(
     cpu_time='ns per key',
     data_elem_count='dataset size',
     table_bits_per_key='total bits per key',
-    point_lookup_percent='percentage of range queries')
+    point_lookup_percent='percentage of point queries')
 
 file = "results.json" if len(sys.argv) < 2 else sys.argv[1]
 with open(file) as data_file:
