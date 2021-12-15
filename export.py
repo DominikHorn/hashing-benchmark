@@ -159,6 +159,28 @@ with open(file) as data_file:
 
         return fig
 
+    def plot_pareto_lookup_vs_space(probe_size):
+        filtered = lt_df[(lt_df["probe_size"] == probe_size) & (lt_df["data_elem_count"] > 9 * 10**7)] 
+        fig = px.scatter(
+            filtered,
+            x="cpu_time",
+            y="table_bits_per_key",
+            color="method",
+            facet_row="probe_distribution",
+            facet_col="dataset",
+            category_orders={"dataset": ["seq", "gap_10", "uniform", "normal", "wiki", "osm", "fb"]},
+            labels=plot_labels,
+            color_discrete_sequence=color_sequence,
+            height=1000,
+            title=f"Pareto - lookup ({probe_size} elems in ns) vs space (total in bits/key)"
+            )
+
+        # hide prefetched results by default
+        fig.for_each_trace(lambda trace: trace.update(visible="legendonly")
+                   if trace.name.startswith("Prefetched") else ())
+
+        return fig
+
     outfile_name = "index.html" if len(sys.argv) < 4 else sys.argv[3]
     with open(f'{results_path}/{outfile_name}', 'w') as readme:
         readme.write(cleandoc(f"""
@@ -174,9 +196,14 @@ with open(file) as data_file:
             {convert_to_html(plot_lookup_times(10))}
             {convert_to_html(plot_lookup_times(20))}
 
-            {convert_to_html(plot_construction_times())}
-
             {convert_to_html(plot_space_usage())}
+
+            {convert_to_html(plot_pareto_lookup_vs_space(0))}
+            {convert_to_html(plot_pareto_lookup_vs_space(1))}
+            {convert_to_html(plot_pareto_lookup_vs_space(10))}
+            {convert_to_html(plot_pareto_lookup_vs_space(20))}
+
+            {convert_to_html(plot_construction_times())}
 
             {convert_to_html(plot_mixed())}
           </body>
