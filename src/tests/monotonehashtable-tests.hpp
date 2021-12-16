@@ -16,7 +16,7 @@ static void LookupTest() {
     const auto it = ht[d.first];
     EXPECT_TRUE(it != ht.end());
 
-    const Payload payload = *it;
+    const Payload payload = it.payload();
     EXPECT_EQ(payload, d.second);
   }
 
@@ -80,7 +80,7 @@ TEST(MonotoneHashtable, Iterate) {
       EXPECT_TRUE(it != ht.end());
       EXPECT_LT(j, data.size());
 
-      const Payload payload = *it;
+      const Payload payload = it.payload();
       EXPECT_EQ(payload, data[j].second);
     }
   }

@@ -12,7 +12,7 @@ template <class Key, class Payload,
           class MMPHF = exotic_hashing::LearnedRank<
               Key, learned_hashing::MonotoneRMIHash<Key, 1000000>>>
 class MMPHFTable {
-  std::vector<Payload> payloads;
+  std::vector<std::pair<Key, Payload>> payloads;
   MMPHF mmphf;
 
  public:
@@ -21,8 +21,6 @@ class MMPHFTable {
   /**
    * Constructs a MMPHFtable given a list of keys
    * together with their corresponding payloads
-   *
-   * TODO(dominik): come up with better interface for construction
    */
   MMPHFTable(std::vector<std::pair<Key, Payload>> data) {
     // ensure data is sorted
@@ -30,9 +28,7 @@ class MMPHFTable {
               [](const auto& a, const auto& b) { return a.first < b.first; });
 
     // store list of payloads
-    payloads.reserve(data.size());
-    std::transform(data.begin(), data.end(), std::back_inserter(payloads),
-                   [](const auto& p) { return p.second; });
+    payloads = data;
 
     // obtain list of keys to construct mmphf
     std::vector<Key> keys;
@@ -46,14 +42,16 @@ class MMPHFTable {
 
   class Iterator {
     size_t payloads_ind;
-    const std::vector<Payload>& payloads;
+    const std::vector<std::pair<Key, Payload>>& payloads;
 
-    Iterator(size_t i, const std::vector<Payload>& payloads)
+    Iterator(size_t i, const decltype(payloads)& payloads)
         : payloads_ind(i), payloads(payloads) {}
 
    public:
-    forceinline const Payload& operator*() const {
-      return payloads[payloads_ind];
+    forceinline const Key& key() const { return payloads[payloads_ind].first; }
+
+    forceinline const Payload& payload() const {
+      return payloads[payloads_ind].second;
     }
 
     forceinline Iterator& operator++() {
@@ -82,7 +80,10 @@ class MMPHFTable {
   forceinline Iterator end() const { return {payloads.size(), payloads}; }
 
   forceinline Iterator operator[](const Key& key) const {
-    return {mmphf(key), payloads};
+    const auto index = mmphf(key);
+    if (payloads[index].first != key) return end();
+
+    return {index, payloads};
   }
 
   std::string name() {

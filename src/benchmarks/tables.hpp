@@ -176,12 +176,12 @@ static void TableProbe(benchmark::State& state) {
     if constexpr (RangeSize == 0) {
       benchmark::DoNotOptimize(it);
     } else if constexpr (RangeSize == 1) {
-      const auto payload = *it;
+      const auto payload = it.payload();
       benchmark::DoNotOptimize(payload);
     } else if constexpr (RangeSize > 1) {
       Payload total = 0;
       for (size_t i = 0; it != table->end() && i < RangeSize; i++, ++it) {
-        total += *it;
+        total ^= it.payload();
       }
       benchmark::DoNotOptimize(total);
     }
@@ -272,17 +272,19 @@ static void TableMixedLookup(benchmark::State& state) {
 
     // Lower bound lookup
     auto it = table->operator[](searched);
-    const auto lb_payload = *it;
-    benchmark::DoNotOptimize(lb_payload);
+    if (it != table->end()) {
+      const auto lb_payload = it.payload();
+      benchmark::DoNotOptimize(lb_payload);
 
-    // Chance based perform full range scan
-    if (point_query_dist(rng) > percentage_of_point_queries) {
-      ++it;
-      Payload total = 0;
-      for (size_t i = 1; it != table->end() && i < 10; i++, ++it) {
-        total += *it;
+      // Chance based perform full range scan
+      if (point_query_dist(rng) > percentage_of_point_queries) {
+        ++it;
+        Payload total = 0;
+        for (size_t i = 1; it != table->end() && i < 10; i++, ++it) {
+          total ^= it.payload();
+        }
+        benchmark::DoNotOptimize(total);
       }
-      benchmark::DoNotOptimize(total);
     }
 
     full_mem_barrier;

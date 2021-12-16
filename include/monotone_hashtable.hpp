@@ -123,7 +123,12 @@ class MonotoneHashtable {
           hashtable(hashtable) {}
 
    public:
-    forceinline const Payload& operator*() const {
+    forceinline const Key& key() const {
+      assert(current_bucket != nullptr);
+      return current_bucket->keys[bucket_ind];
+    }
+
+    forceinline const Payload& payload() const {
       assert(current_bucket != nullptr);
       return current_bucket->payloads[bucket_ind];
     }
