@@ -32,18 +32,19 @@ using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
 
-const std::vector<std::int64_t> dataset_sizes{1000000};
+const std::vector<std::int64_t> dataset_sizes{10000000};
 const std::vector<std::int64_t> datasets{
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM)};
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM)
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL)
+    };
 const std::vector<std::int64_t> probe_distributions{
+    // static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
+    //     dataset::ProbingDistribution::EXPONENTIAL_SORTED),
+    // static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
+    //     dataset::ProbingDistribution::EXPONENTIAL_RANDOM),
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
-        dataset::ProbingDistribution::UNIFORM),
-    static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
-        dataset::ProbingDistribution::EXPONENTIAL_RANDOM),
-    static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
-        dataset::ProbingDistribution::EXPONENTIAL_SORTED)};
+        dataset::ProbingDistribution::UNIFORM)};
 
 // const std::vector<std::int64_t> dataset_sizes{1000000, 10000000, 100000000};
 // const std::vector<std::int64_t> datasets{
@@ -383,8 +384,9 @@ static void PointProbe(benchmark::State& state) {
 
   size_t i = 0;
   for (auto _ : state) {
-    while (unlikely(i >= probing_set.size())) i -= probing_set.size();
-    const auto searched = probing_set[i++];
+    // while (unlikely(i >= probing_set.size())) i -= probing_set.size();
+    const auto searched = probing_set[i%probing_set.size()];
+    i++;
 
     // Lower bound lookup
     auto it = table->operator[](
@@ -407,7 +409,8 @@ static void PointProbe(benchmark::State& state) {
     //   }
     //   benchmark::DoNotOptimize(total);
     // }
-    full_mem_barrier;
+    __sync_synchronize();
+    // full_mem_barrier;
   }
 
   // set counters (don't do this in inner loop to avoid tainting results)
@@ -483,11 +486,11 @@ using namespace masters_thesis;
   // BenchmarKapilChained(2,20,MURMUR);
 
 
-  // using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t>;
-  // BenchmarKapilModel(2,20,RadixSplineHash);
+  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
+  BenchmarKapilModel(2,20,RadixSplineHash);
 
-  // using MWHC = exotic_hashing::MWHC<Key>;
-  // BenchmarKapilExotic(1,MWHC);
+  using MWHC = exotic_hashing::MWHC<Key>;
+  BenchmarKapilExotic(1,MWHC);
 
 
 // ############################## LINEAR PROBING ##############################
@@ -506,15 +509,15 @@ using namespace masters_thesis;
   using KapilLinearModelHashTable##BucketSize##OverAlloc##Model = KapilLinearModelHashTable<Key, Payload, BucketSize,OverAlloc, Model>; \
   KAPILBM(KapilLinearModelHashTable##BucketSize##OverAlloc##Model);
 
-  // using MURMUR = hashing::MurmurFinalizer<Key>;
-  // BenchmarKapilLinearProbing(2,50,MURMUR);
+  using MURMUR = hashing::MurmurFinalizer<Key>;
+  BenchmarKapilLinearProbing(2,20,MURMUR);
 
 
-  // using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t>;
-  // BenchmarKapilLinearModel(2,20,RadixSplineHash);
+  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
+  BenchmarKapilLinearModel(2,20,RadixSplineHash);
 
-  // using MWHC = exotic_hashing::MWHC<Key>;
-  // BenchmarKapilLinearExotic(1,MWHC);
+  using MWHC = exotic_hashing::MWHC<Key>;
+  BenchmarKapilLinearExotic(1,MWHC);
 
 
 // ############################## CUCKOO HASHING ##############################
@@ -646,12 +649,12 @@ static void PointProbeCuckoo(benchmark::State& state) {
 
 
 
-  // using MURMUR = hashing::MurmurFinalizer<Key>;
-  // using KickingStrat = kapilhashtable::KapilBalancedKicking;
-  // BenchmarKapilCuckoo(4,50,MURMUR,KickingStrat);
+  using MURMUR = hashing::MurmurFinalizer<Key>;
+  using KickingStrat = kapilhashtable::KapilBalancedKicking;
+  BenchmarKapilCuckoo(4,50,MURMUR,KickingStrat);
 
 
-  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t>;
+  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
   using KickingStrat1 = kapilmodelhashtable::KapilModelBalancedKicking;
   BenchmarKapilCuckooModel(4,50,RadixSplineHash,KickingStrat1);
 

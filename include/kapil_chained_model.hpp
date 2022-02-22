@@ -80,6 +80,7 @@ class KapilChainedModelHashTable {
    */
   forceinline void insert(const Key& key, const Payload& payload) {
     const auto index = model(key);
+    std::cout<<"key: "<<key<<" index: "<<index<<" rs repd: "<<model.rs_pos(key)<<" scale factor: "<<model.get_scale_out_factor()<<std::endl;
     assert(index >= 0);
     assert(index < buckets.size());
     buckets[index].insert(key, payload, *tape);
@@ -211,6 +212,11 @@ class KapilChainedModelHashTable {
     const size_t directory_ind = model(key);
     auto bucket = &buckets[directory_ind];
 
+
+    std::cout<<"key: "<<key<<" index: "<<directory_ind<<std::endl;
+
+    // return {directory_ind, 0, bucket, *this};
+
     // prefetch_next(bucket);
 
     // since BucketSize is a template arg and therefore compile-time static,
@@ -279,16 +285,25 @@ class KapilChainedModelHashTable {
 
     // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
     // this nested loop construction anyways.
+
+    int bucket_count=1;
     while (bucket != nullptr) {
+      // std::cout<<"exploring bucket"<<std::endl;
       for (size_t i = 0; i < BucketSize; i++) {
         const auto& current_key = bucket->keys[i];
         if (current_key == Sentinel) break;
-        if (current_key == key) return {directory_ind, i, bucket, *this};
+        if (current_key == key) 
+        {
+          std::cout<<"bucket count: "<<bucket_count<<std::endl;
+          return {directory_ind, i, bucket, *this};
+        }
       }
-
+      bucket_count++;
       bucket = bucket->next;
     //   prefetch_next(bucket);
     }
+
+    std::cout<<"bucket count: "<<bucket_count<<std::endl;
 
     return end();
   }

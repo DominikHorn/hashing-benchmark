@@ -22,7 +22,7 @@ template <class Key, class Payload, size_t BucketSize,
 class KapilLinearExoticHashTable {
     
     public:
-      const MMPHF mmphf; 
+    MMPHF mmphf; 
 
   struct Bucket {
     std::array<Key, BucketSize> keys;

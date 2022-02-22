@@ -208,7 +208,12 @@ class KapilChainedHashTable {
 
     // obtain directory bucket
     const size_t directory_ind = hashfn(key)%buckets.size();
+
+    
+
     auto bucket = &buckets[directory_ind];
+
+    // return {directory_ind, 0, bucket, *this};
 
     // prefetch_next(bucket);
 
