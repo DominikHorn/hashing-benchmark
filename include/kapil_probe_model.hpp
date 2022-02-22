@@ -242,12 +242,15 @@ class KapilLinearModelHashTable {
 
     auto start=directory_ind;
 
+    //  std::cout<<" key: "<<key<<std::endl;
+
     for(;directory_ind<start+500;)
     {
        auto bucket = &buckets[directory_ind%buckets.size()];
 
       // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
       // this nested loop construction anyways.
+      //  std::cout<<"probe rate: "<<directory_ind+1-start<<std::endl;
         for (size_t i = 0; i < BucketSize; i++)
        {
           const auto& current_key = bucket->keys[i];

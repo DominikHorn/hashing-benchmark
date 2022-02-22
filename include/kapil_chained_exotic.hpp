@@ -218,6 +218,9 @@ class KapilChainedExoticHashTable {
     const size_t directory_ind = mmphf(key);
     auto bucket = &buckets[directory_ind];
 
+
+    return {directory_ind, 0, bucket, *this};
+
     // prefetch_next(bucket);
 
     // since BucketSize is a template arg and therefore compile-time static,

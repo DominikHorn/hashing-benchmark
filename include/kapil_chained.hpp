@@ -208,7 +208,7 @@ class KapilChainedHashTable {
 
     // obtain directory bucket
     const size_t directory_ind = hashfn(key)%buckets.size();
-
+    // std::cout<<"key: "<<key<<std::endl;
     
 
     auto bucket = &buckets[directory_ind];
@@ -283,16 +283,24 @@ class KapilChainedHashTable {
 
     // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
     // this nested loop construction anyways.
+
+    // int bucket_count=1;
+
     while (bucket != nullptr) {
       for (size_t i = 0; i < BucketSize; i++) {
         const auto& current_key = bucket->keys[i];
         if (current_key == Sentinel) break;
-        if (current_key == key) return {directory_ind, i, bucket, *this};
+        if (current_key == key) {
+          // std::cout<<"bucket count: "<<bucket_count<<std::endl;
+          return {directory_ind, i, bucket, *this};
+          }
       }
-
+      // bucket_count++;
       bucket = bucket->next;
     //   prefetch_next(bucket);
     }
+
+    // std::cout<<"bucket count: "<<bucket_count<<std::endl;
 
     return end();
   }

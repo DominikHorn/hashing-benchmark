@@ -182,7 +182,7 @@ namespace kapilmodelhashtable {
             }
          }
 
-         auto i2 = (hashfn2(model(key)))%buckets.size();
+         auto i2 = (hashfn2(key))%buckets.size();
          if (i2 == i1) {
             i2 = (i1 == buckets.size() - 1) ? 0 : i1 + 1;
          }
@@ -273,7 +273,7 @@ namespace kapilmodelhashtable {
 
          const auto h1 = model(key);
          const auto i1 = h1%buckets.size();
-         auto i2 = (hashfn2(model(key)))%buckets.size();
+         auto i2 = (hashfn2(key))%buckets.size();
 
          // std::cout<<key<<" h1: "<<i1<<" h2: "<<i2<<" kick_count "<<kick_count<<" capacity: "<<buckets.size()<<std::endl;
 

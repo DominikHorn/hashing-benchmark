@@ -32,7 +32,7 @@ using Key = std::uint64_t;
 using Payload = std::uint64_t;
 
 
-const std::vector<std::int64_t> dataset_sizes{10000000};
+const std::vector<std::int64_t> dataset_sizes{100000000};
 const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM)
     // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
@@ -483,14 +483,19 @@ using namespace masters_thesis;
   KAPILBM(KapilChainedModelHashTable##BucketSize##OverAlloc##Model);
 
   // using MURMUR = hashing::MurmurFinalizer<Key>;
-  // BenchmarKapilChained(2,20,MURMUR);
+  // BenchmarKapilChained(1,10,MURMUR);
 
+  // using MURMUR = hashing::MurmurFinalizer<Key>;
+  // BenchmarKapilChained(1,10,MURMUR);
 
-  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
-  BenchmarKapilModel(2,20,RadixSplineHash);
+  // using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
+  // BenchmarKapilModel(1,10,RadixSplineHash);
 
-  using MWHC = exotic_hashing::MWHC<Key>;
-  BenchmarKapilExotic(1,MWHC);
+  // using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
+  // BenchmarKapilModel(1,10,RadixSplineHash);
+
+  // using MWHC = exotic_hashing::MWHC<Key>;
+  // BenchmarKapilExotic(1,MWHC);
 
 
 // ############################## LINEAR PROBING ##############################
@@ -509,15 +514,15 @@ using namespace masters_thesis;
   using KapilLinearModelHashTable##BucketSize##OverAlloc##Model = KapilLinearModelHashTable<Key, Payload, BucketSize,OverAlloc, Model>; \
   KAPILBM(KapilLinearModelHashTable##BucketSize##OverAlloc##Model);
 
-  using MURMUR = hashing::MurmurFinalizer<Key>;
-  BenchmarKapilLinearProbing(2,20,MURMUR);
+  // using MURMUR = hashing::MurmurFinalizer<Key>;
+  // BenchmarKapilLinearProbing(1,100,MURMUR);
 
 
-  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
-  BenchmarKapilLinearModel(2,20,RadixSplineHash);
+  // using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
+  // BenchmarKapilLinearModel(1,100,RadixSplineHash);
 
-  using MWHC = exotic_hashing::MWHC<Key>;
-  BenchmarKapilLinearExotic(1,MWHC);
+  // using MWHC = exotic_hashing::MWHC<Key>;
+  // BenchmarKapilLinearExotic(1,MWHC);
 
 
 // ############################## CUCKOO HASHING ##############################
@@ -651,11 +656,13 @@ static void PointProbeCuckoo(benchmark::State& state) {
 
   using MURMUR = hashing::MurmurFinalizer<Key>;
   using KickingStrat = kapilhashtable::KapilBalancedKicking;
+  // using KickingStrat = kapilmodelhashtable::KapilModelBiasedKicking<80>;
   BenchmarKapilCuckoo(4,50,MURMUR,KickingStrat);
 
 
-  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
+  using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
   using KickingStrat1 = kapilmodelhashtable::KapilModelBalancedKicking;
+  // using KickingStrat1 = kapilmodelhashtable::KapilModelBiasedKicking<80>;
   BenchmarKapilCuckooModel(4,50,RadixSplineHash,KickingStrat1);
 
 
