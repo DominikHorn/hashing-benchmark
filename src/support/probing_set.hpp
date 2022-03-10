@@ -37,7 +37,7 @@ inline std::string name(ProbingDistribution p_dist) {
  */
 template <class T>
 static std::vector<T> generate_probing_set(std::vector<T> dataset,
-                                           ProbingDistribution distribution) {
+                                           ProbingDistribution distribution,int succ_probability) {
   if (dataset.empty()) return {};
 
   std::random_device rd;
@@ -49,15 +49,30 @@ static std::vector<T> generate_probing_set(std::vector<T> dataset,
   switch (distribution) {
     case ProbingDistribution::UNIFORM: {
       std::uniform_int_distribution<> dist(0, dataset.size() - 1);
-      for (size_t i = 0; i < size; i++) probing_set[i] = dataset[dist(rng)];
+      
+      for (size_t i = 0; i < size; i++)
+      { 
+        int adder=0;
+        if (((uint64_t)dist(rng)%100)>succ_probability)
+        {
+          adder=1;
+        }
+        probing_set[i] = dataset[dist(rng)]+adder;
+      }
       break;
     }
     case ProbingDistribution::EXPONENTIAL_SORTED: {
       std::exponential_distribution<> dist(10);
 
-      for (size_t i = 0; i < size; i++)
+      for (size_t i = 0; i < size; i++){
+        int adder=0;
+        if (((uint64_t)dist(rng)%100)>succ_probability)
+        {
+          adder=1;
+        }
         probing_set[i] =
-            dataset[(dataset.size() - 1) * std::min(1.0, dist(rng))];
+            dataset[(dataset.size() - 1) * std::min(1.0, dist(rng))]+adder;
+      }
       break;
     }
     case ProbingDistribution::EXPONENTIAL_RANDOM: {
@@ -69,9 +84,15 @@ static std::vector<T> generate_probing_set(std::vector<T> dataset,
 
       std::exponential_distribution<> dist(10);
 
-      for (size_t i = 0; i < size; i++)
+      for (size_t i = 0; i < size; i++){
+        int adder=0;
+        if (((uint64_t)dist(rng)%100)>succ_probability)
+        {
+          adder=1;
+        }
         probing_set[i] =
-            dataset[(dataset.size() - 1) * std::min(1.0, dist(rng))];
+            dataset[(dataset.size() - 1) * std::min(1.0, dist(rng))]+adder;
+      }
       break;
     }
   }

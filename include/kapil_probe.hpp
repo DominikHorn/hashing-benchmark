@@ -96,7 +96,7 @@ class KapilLinearHashTable {
     assert(index < buckets.size());
     auto start=index;
 
-    for(;(index-start<500);)
+    for(;(index-start<50000);)
     {
       // std::cout<<"index: "<<index<<std::endl;
       if(buckets[index%buckets.size()].insert(key, payload, *tape))
@@ -244,7 +244,7 @@ class KapilLinearHashTable {
 
     // std::cout<<" key: "<<key<<std::endl;
 
-    for(;directory_ind<start+500;)
+    for(;directory_ind<start+50000;)
     {
        auto bucket = &buckets[directory_ind%buckets.size()];
 
@@ -252,13 +252,17 @@ class KapilLinearHashTable {
       // this nested loop construction anyways.
 
       // std::cout<<"probe rate: "<<directory_ind+1-start<<std::endl;
+      bool exit=false;
         for (size_t i = 0; i < BucketSize; i++)
        {
           const auto& current_key = bucket->keys[i];
-          if (current_key == Sentinel) break;
+          if (current_key == Sentinel) {exit=true;break;}
           if (current_key == key) return {directory_ind, i, bucket, *this};
         }
-
+      if(exit)
+      {
+        break;
+      }
       directory_ind++;  
 
       //   prefetch_next(bucket);
@@ -266,10 +270,10 @@ class KapilLinearHashTable {
     }
 
    
-   while(true)
-   {
-     std::cout<<"ERROR"<<std::endl;
-   }
+  //  while(true)
+  //  {
+  //    std::cout<<"ERROR"<<std::endl;
+  //  }
 
     return end();
   }

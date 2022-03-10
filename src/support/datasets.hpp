@@ -147,7 +147,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
   std::vector<Data> ds(dataset_size, 0);
   switch (id) {
     case ID::SEQUENTIAL: {
-      for (size_t i = 0; i < ds.size(); i++) ds[i] = i + 20000;
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = i*10 + 20000;
       break;
     }
     case ID::GAPPED_10: {
@@ -160,7 +160,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
       break;
     }
     case ID::UNIFORM: {
-      std::uniform_int_distribution<Data> dist(0, (0x1LLU << 50) - 1);
+      std::uniform_int_distribution<Data> dist(0, std::pow(2, 40));
       for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
       break;
     }
@@ -178,7 +178,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
 
         // rescale to [0, 2^50)
         const auto rescaled =
-            (rand_val - (mean - 3 * std_dev)) * std::pow(2, 50);
+            (rand_val - (mean - 3 * std_dev)) * std::pow(2, 40);
 
         // round
         ds[i] = std::floor(rescaled);
@@ -187,41 +187,93 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
     }
     case ID::FB: {
       if (ds_fb.empty()) {
-        ds_fb = load<Data>("data/fb_200M_uint64");
-        std::shuffle(ds_fb.begin(), ds_fb.end(), rng);
+        ds_fb = load<Data>("/home/kapil/PhDAcads/benchmark_hashing/SOSD/scripts/data/fb_200M_uint64");
+        std::shuffle(ds_fb.begin(), ds_fb.end(),rng);
       }
       // ds file does not exist
       if (ds_fb.empty()) return {};
+      size_t j=0;
+      size_t i = 0;
+
+      // for(int itr=1;itr<ds_fb.size();)
+      // {
+      //   std::cout<<" itr: "<<itr<<" fb val: "<<log2(ds_fb[itr]-ds_fb[itr-1])<<std::endl;
+      //   itr+=10000000;
+      // }
+
 
       // sampling this way is only valid since ds_fb is shuffled!
-      for (size_t i = 0; i < ds_fb.size() && i < ds.size(); i++)
-        ds[i] = ds_fb[i];
+      for (; j < ds_fb.size() && i < ds.size(); j++)
+      {
+        if(log2(ds_fb[j])<35.01 || log2(ds_fb[j])>35.99)
+        {
+          continue;
+        }
+        ds[i] = ds_fb[j]-pow(2,35);
+
+        i++;
+      }
+
+      // std::cout<<" j is: "<<j<<" i is: "<<i<<std::endl;
       break;
     }
     case ID::OSM: {
       if (ds_osm.empty()) {
-        ds_osm = load<Data>("data/osm_cellids_200M_uint64");
-        std::shuffle(ds_osm.begin(), ds_osm.end(), rng);
+        ds_osm = load<Data>("/home/kapil/PhDAcads/benchmark_hashing/SOSD/scripts/data/osm_cellids_200M_uint64");
+        std::shuffle(ds_osm.begin(), ds_osm.end(),rng);
       }
+
+
+      // for(int itr=1;itr<ds_osm.size();)
+      // {
+      //   std::cout<<" itr: "<<itr<<" osm val: "<<log2(ds_osm[itr]-ds_osm[itr-1])<<std::endl;
+      //   itr+=10000000;
+      // }
       // ds file does not exist
       if (ds_osm.empty()) return {};
-
+       size_t j=0;
+       size_t i = 0;
       // sampling this way is only valid since ds_osm is shuffled!
-      for (size_t i = 0; i < ds_osm.size() && i < ds.size(); i++)
-        ds[i] = ds_osm[i];
+      for (; j < ds_osm.size() && i < ds.size(); j++)
+        {
+          if(log2(ds_osm[j])<62.01 || log2(ds_osm[j])>62.99)
+          {
+            continue;
+          }
+          ds[i] = ds_osm[j]-pow(2,62);
+          i++;
+        }
+
+        // std::cout<<" j is: "<<j<<" i is: "<<i<<std::endl;
       break;
     }
     case ID::WIKI: {
       if (ds_wiki.empty()) {
-        ds_wiki = load<Data>("data/wiki_ts_200M_uint64");
-        std::shuffle(ds_wiki.begin(), ds_wiki.end(), rng);
+        ds_wiki = load<Data>("/home/kapil/PhDAcads/benchmark_hashing/SOSD/scripts/data/wiki_ts_200M_uint64");
+        std::shuffle(ds_wiki.begin(), ds_wiki.end(),rng);
       }
+
+      // for(int itr=1;itr<ds_wiki.size();)
+      // {
+      //   std::cout<<" itr: "<<itr<<" wiki val: "<<log2(ds_wiki[itr]-ds_wiki[itr-1])<<std::endl;
+      //   itr+=10000000;
+      // }
       // ds file does not exist
       if (ds_wiki.empty()) return {};
-
+       size_t j=0;
+       size_t i = 0;
       // sampling this way is only valid since ds_wiki is shuffled!
-      for (size_t i = 0; i < ds_wiki.size() && i < ds.size(); i++)
-        ds[i] = ds_wiki[i];
+      for (; j < ds_wiki.size() && i < ds.size(); j++)
+      {
+        // if(ds_wiki[j]>std::pow(2,30))
+        // {
+        //   continue;
+        // }
+        ds[i] = ds_wiki[j];
+        i++;
+      }  
+
+      // std::cout<<" j is: "<<j<<" i is: "<<i<<std::endl;
       break;
     }
     default:

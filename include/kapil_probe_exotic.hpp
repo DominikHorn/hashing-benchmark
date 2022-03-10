@@ -96,7 +96,7 @@ class KapilLinearExoticHashTable {
     assert(index < buckets.size());
     auto start=index;
 
-    for(;(index-start<500);)
+    for(;(index-start<50000);)
     {
       // std::cout<<"index: "<<index<<std::endl;
       if(buckets[index%buckets.size()].insert(key, payload, *tape))
@@ -243,18 +243,23 @@ class KapilLinearExoticHashTable {
 
     auto start=directory_ind;
 
-    for(;directory_ind<start+500;)
+    for(;directory_ind<start+50000;)
     {
        auto bucket = &buckets[directory_ind%buckets.size()];
 
       // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
       // this nested loop construction anyways.
+        bool exit=false;
         for (size_t i = 0; i < BucketSize; i++)
        {
           const auto& current_key = bucket->keys[i];
-          if (current_key == Sentinel) break;
+          if (current_key == Sentinel) {exit=true;break;}
           if (current_key == key) return {directory_ind, i, bucket, *this};
         }
+      if(exit)
+      {
+        break;
+      }
 
       directory_ind++;  
 

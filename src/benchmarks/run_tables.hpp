@@ -19,10 +19,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <string>
-
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "../../thirdparty/perfevent/PerfEvent.hpp"
 #include "../support/datasets.hpp"
@@ -50,17 +46,15 @@ const std::vector<std::int64_t> probe_distributions{
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
         dataset::ProbingDistribution::UNIFORM)};
 
-const std::vector<std::int64_t> dataset_sizes{100000000};
-const std::vector<std::int64_t> succ_probability{100,50,0};
+const std::vector<std::int64_t> dataset_sizes{50000000};
 const std::vector<std::int64_t> datasets{
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
-    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
-    };
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI)};
 
 // const std::vector<std::int64_t> probe_distributions{
 //     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
@@ -154,8 +148,8 @@ static void TableProbe(benchmark::State& state) {
       std::transform(
           keys.begin(), keys.end(), std::back_inserter(data),
           [](const Key& key) { return std::make_pair(key, key - 5); });
-      int succ_probability=100;
-      probing_set = dataset::generate_probing_set(keys, probing_dist,succ_probability);
+
+      probing_set = dataset::generate_probing_set(keys, probing_dist);
     }
 
     if (data.empty()) {
@@ -260,8 +254,8 @@ static void TableMixedLookup(benchmark::State& state) {
       std::transform(
           keys.begin(), keys.end(), std::back_inserter(data),
           [](const Key& key) { return std::make_pair(key, key - 5); });
-      int succ_probability=100;
-      probing_set = dataset::generate_probing_set(keys, probing_dist,succ_probability);
+
+      probing_set = dataset::generate_probing_set(keys, probing_dist);
     }
 
     if (data.empty()) {
@@ -335,8 +329,6 @@ static void PointProbe(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(1));
   const auto probing_dist =
       static_cast<dataset::ProbingDistribution>(state.range(2));
-   const auto succ_probability =
-      static_cast<size_t>(state.range(3));    
 
   // google benchmark will run a benchmark function multiple times
   // to determine, amongst other things, the iteration count for
@@ -363,8 +355,8 @@ static void PointProbe(benchmark::State& state) {
       std::transform(
           keys.begin(), keys.end(), std::back_inserter(data),
           [](const Key& key) { return std::make_pair(key, key - 5); });
-      // int succ_probability=100;
-      probing_set = dataset::generate_probing_set(keys, probing_dist,succ_probability);
+
+      probing_set = dataset::generate_probing_set(keys, probing_dist);
     }
 
     if (data.empty()) {
@@ -427,12 +419,8 @@ static void PointProbe(benchmark::State& state) {
   state.counters["table_directory_bytes"] = table->directory_byte_size();
   state.counters["table_bits_per_key"] = 8. * table->byte_size() / dataset_size;
   state.counters["data_elem_count"] = dataset_size;
-
-  std::stringstream ss;
-  ss << succ_probability;
-  std::string temp = ss.str();
   state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
-                 dataset::name(probing_dist)+":"+temp);
+                 dataset::name(probing_dist));
 }
 
 
@@ -473,7 +461,7 @@ using namespace masters_thesis;
 
 #define KAPILBM(Table)                                                              \
   BENCHMARK_TEMPLATE(PointProbe, Table, 0)                                     \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability});
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions});
 
 
 
@@ -487,7 +475,7 @@ using namespace masters_thesis;
   using KapilChainedHashTable##BucketSize##OverAlloc##HashFn = KapilChainedHashTable<Key, Payload, BucketSize,OverAlloc, HashFn>; \
   KAPILBM(KapilChainedHashTable##BucketSize##OverAlloc##HashFn);
 
-#define BenchmarKapilChainedExotic(BucketSize,OverAlloc,MMPHF)                           \
+#define BenchmarKapilExotic(BucketSize,OverAlloc,MMPHF)                           \
   using KapilChainedExoticHashTable##BucketSize##MMPHF = KapilChainedExoticHashTable<Key, Payload, BucketSize, MMPHF>; \
   KAPILBM(KapilChainedExoticHashTable##BucketSize##MMPHF);
 
@@ -531,8 +519,7 @@ static void PointProbeCuckoo(benchmark::State& state) {
   const auto did = static_cast<dataset::ID>(state.range(1));
   const auto probing_dist =
       static_cast<dataset::ProbingDistribution>(state.range(2));
-  const auto succ_probability =
-      static_cast<size_t>(state.range(3));
+
   // google benchmark will run a benchmark function multiple times
   // to determine, amongst other things, the iteration count for
   // the benchmark loop. Technically, BM functions must be pure. However,
@@ -558,8 +545,8 @@ static void PointProbeCuckoo(benchmark::State& state) {
       std::transform(
           keys.begin(), keys.end(), std::back_inserter(data),
           [](const Key& key) { return std::make_pair(key, key - 5); });
-      // int succ_probability=100;
-      probing_set = dataset::generate_probing_set(keys, probing_dist,succ_probability);
+
+      probing_set = dataset::generate_probing_set(keys, probing_dist);
     }
 
     if (data.empty()) {
@@ -620,18 +607,14 @@ static void PointProbeCuckoo(benchmark::State& state) {
   state.counters["table_directory_bytes"] = table->directory_byte_size();
   state.counters["table_bits_per_key"] = 8. * table->byte_size() / dataset_size;
   state.counters["data_elem_count"] = dataset_size;
-
-  std::stringstream ss;
-  ss << succ_probability;
-  std::string temp = ss.str();
   state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
-                 dataset::name(probing_dist)+":"+temp);
+                 dataset::name(probing_dist));
 }
 
 
 #define KAPILBMCuckoo(Table)                                                              \
   BENCHMARK_TEMPLATE(PointProbeCuckoo, Table, 0)                                     \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability});
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions});
 
 
 
@@ -649,9 +632,16 @@ static void PointProbeCuckoo(benchmark::State& state) {
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
 
-using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000>;
+using MURMUR = hashing::MurmurFinalizer<Key>;
 
-BenchmarKapilLinearModel(1,50,RMIHash);
+BenchmarKapilChained(1,1,MURMUR)
+
+
+
+}  // namespace _
+using MURMUR = hashing::MurmurFinalizer<Key>;
+
+BenchmarKapilChained(1,1,MURMUR)
 
 
 

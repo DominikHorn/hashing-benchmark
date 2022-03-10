@@ -649,10 +649,3 @@ static void PointProbeCuckoo(benchmark::State& state) {
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
 
-using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000>;
-
-BenchmarKapilLinearModel(1,50,RMIHash);
-
-
-
-}  // namespace _
