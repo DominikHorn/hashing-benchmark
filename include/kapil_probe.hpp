@@ -227,7 +227,7 @@ class KapilLinearHashTable {
    *
    * @param key the key to search
    */
-  forceinline implementing operator[](const Key& key) const {
+  forceinline int operator[](const Key& key) const {
     assert(key != Sentinel);
 
     // will become NOOP at compile time if ManualPrefetch == false
