@@ -228,7 +228,7 @@ class KapilLinearExoticHashTable {
    *
    * @param key the key to search
    */
-  forceinline Iterator operator[](const Key& key) const {
+  forceinline int operator[](const Key& key) const {
     assert(key != Sentinel);
 
     // will become NOOP at compile time if ManualPrefetch == false
@@ -249,17 +249,23 @@ class KapilLinearExoticHashTable {
 
       // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
       // this nested loop construction anyways.
-        bool exit=false;
+        // bool exit=false;
         for (size_t i = 0; i < BucketSize; i++)
        {
           const auto& current_key = bucket->keys[i];
-          if (current_key == Sentinel) {exit=true;break;}
-          if (current_key == key) return {directory_ind, i, bucket, *this};
+          if (current_key == Sentinel) {
+            return 0;
+            // return end();
+            }
+          if (current_key == key) {
+            return 1;
+            // return {directory_ind, i, bucket, *this};
+          }
         }
-      if(exit)
-      {
-        break;
-      }
+      // if(exit)
+      // {
+      //   break;
+      // }
 
       directory_ind++;  
 
@@ -268,8 +274,8 @@ class KapilLinearExoticHashTable {
     }
 
    
-
-    return end();
+    return 0;
+    // return end();
   }
 
   std::string name() {

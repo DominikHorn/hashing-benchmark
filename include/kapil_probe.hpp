@@ -227,7 +227,7 @@ class KapilLinearHashTable {
    *
    * @param key the key to search
    */
-  forceinline Iterator operator[](const Key& key) const {
+  forceinline implementing operator[](const Key& key) const {
     assert(key != Sentinel);
 
     // will become NOOP at compile time if ManualPrefetch == false
@@ -252,17 +252,23 @@ class KapilLinearHashTable {
       // this nested loop construction anyways.
 
       // std::cout<<"probe rate: "<<directory_ind+1-start<<std::endl;
-      bool exit=false;
+      // bool exit=false;
         for (size_t i = 0; i < BucketSize; i++)
        {
           const auto& current_key = bucket->keys[i];
-          if (current_key == Sentinel) {exit=true;break;}
-          if (current_key == key) return {directory_ind, i, bucket, *this};
+          if (current_key == Sentinel) {
+            return 0;
+            // return end();
+            }
+          if (current_key == key){ 
+            return 1;
+            // return {directory_ind, i, bucket, *this};
+          }
         }
-      if(exit)
-      {
-        break;
-      }
+      // if(exit)
+      // {
+      //   break;
+      // }
       directory_ind++;  
 
       //   prefetch_next(bucket);
@@ -274,8 +280,8 @@ class KapilLinearHashTable {
   //  {
   //    std::cout<<"ERROR"<<std::endl;
   //  }
-
-    return end();
+    return 0;
+    // return end();
   }
 
   std::string name() {

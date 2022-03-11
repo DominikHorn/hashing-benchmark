@@ -96,6 +96,9 @@ class KapilLinearModelHashTable {
     assert(index < buckets.size());
     auto start=index;
 
+    
+    // std::cout<<key<<" "<<index<<std::endl;
+
     for(;(index-start<50000);)
     {
       // std::cout<<"index: "<<index<<std::endl;
@@ -230,7 +233,7 @@ class KapilLinearModelHashTable {
    *
    * @param key the key to search
    */
-  forceinline Iterator operator[](const Key& key) const {
+  forceinline int operator[](const Key& key) const {
     assert(key != Sentinel);
 
     // will become NOOP at compile time if ManualPrefetch == false
@@ -243,9 +246,15 @@ class KapilLinearModelHashTable {
     // obtain directory bucket
     size_t directory_ind = model(key)%(buckets.size());
 
+    // if(directory_ind>0)
+    // {
+    //   return end();
+    // }
+
     auto start=directory_ind;
 
     //  std::cout<<" key: "<<key<<std::endl;
+    //  bool exit=false;
 
     for(;directory_ind<start+50000;)
     {
@@ -254,17 +263,24 @@ class KapilLinearModelHashTable {
       // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
       // this nested loop construction anyways.
       //  std::cout<<"probe rate: "<<directory_ind+1-start<<std::endl;
-       bool exit=false;
-        for (size_t i = 0; i < BucketSize; i++)
+       
+      for (size_t i = 0; i < BucketSize; i++)
        {
           const auto& current_key = bucket->keys[i];
-          if (current_key == Sentinel) {exit=true;break;}
-          if (current_key == key) return {directory_ind, i, bucket, *this};
+          // std::cout<<current_key<<" match "<<key<<std::endl;
+          if (current_key == Sentinel) {
+            return 0;
+            // return end();
+            }
+          if (current_key == key) {
+            // return {0,0,nullptr,*this};
+            return 1;
+            // return {directory_ind, i, bucket, *this};
+            }
         }
-      if(exit)
-      {
-        break;
-      }
+      
+
+      // exit=false;
 
       directory_ind++;
 
@@ -272,9 +288,9 @@ class KapilLinearModelHashTable {
       
     }
 
-   
+   return 0;
 
-    return end();
+    // return end();
   }
 
   std::string name() {

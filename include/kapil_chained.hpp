@@ -196,7 +196,7 @@ class KapilChainedHashTable {
    *
    * @param key the key to search
    */
-  forceinline Iterator operator[](const Key& key) const {
+  forceinline int operator[](const Key& key) const {
     assert(key != Sentinel);
 
     // will become NOOP at compile time if ManualPrefetch == false
@@ -292,7 +292,8 @@ class KapilChainedHashTable {
         if (current_key == Sentinel) break;
         if (current_key == key) {
           // std::cout<<"bucket count: "<<bucket_count<<std::endl;
-          return {directory_ind, i, bucket, *this};
+          return 1;
+          // return {directory_ind, i, bucket, *this};
           }
       }
       // bucket_count++;
@@ -301,8 +302,8 @@ class KapilChainedHashTable {
     }
 
     // std::cout<<"bucket count: "<<bucket_count<<std::endl;
-
-    return end();
+    return 0;
+    // return end();
   }
 
   std::string name() {

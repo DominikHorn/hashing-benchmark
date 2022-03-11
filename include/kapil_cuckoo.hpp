@@ -170,7 +170,7 @@ namespace kapilhashtable {
 
            }
 
-      std::optional<Payload> lookup(const Key& key) const {
+       int lookup(const Key& key) const {
          const auto h1 = hashfn1(key);
          const auto i1 = h1%buckets.size();
 
@@ -178,7 +178,8 @@ namespace kapilhashtable {
          for (size_t i = 0; i < BucketSize; i++) {
             if (b1->slots[i].key == key) {
                Payload payload = b1->slots[i].payload;
-               return std::make_optional(payload);
+               return 1;
+               // return std::make_optional(payload);
             }
          }
 
@@ -191,11 +192,13 @@ namespace kapilhashtable {
          for (size_t i = 0; i < BucketSize; i++) {
             if (b2->slots[i].key == key) {
                Payload payload = b2->slots[i].payload;
-               return std::make_optional(payload);
+               return 1;
+               // return std::make_optional(payload);
             }
          }
 
-         return std::nullopt;
+         return 0;
+         // return std::nullopt;
       }
 
       std::map<std::string, std::string> lookup_statistics(const std::vector<Key>& dataset) const {

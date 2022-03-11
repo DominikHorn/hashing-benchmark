@@ -204,7 +204,7 @@ class KapilChainedExoticHashTable {
    *
    * @param key the key to search
    */
-  forceinline Iterator operator[](const Key& key) const {
+  forceinline int operator[](const Key& key) const {
     assert(key != Sentinel);
 
     // will become NOOP at compile time if ManualPrefetch == false
@@ -219,7 +219,7 @@ class KapilChainedExoticHashTable {
     auto bucket = &buckets[directory_ind];
 
 
-    return {directory_ind, 0, bucket, *this};
+    // return {directory_ind, 0, bucket, *this};
 
     // prefetch_next(bucket);
 
@@ -293,14 +293,18 @@ class KapilChainedExoticHashTable {
       for (size_t i = 0; i < BucketSize; i++) {
         const auto& current_key = bucket->keys[i];
         if (current_key == Sentinel) break;
-        if (current_key == key) return {directory_ind, i, bucket, *this};
+        if (current_key == key) {
+          return 1;
+          // return {directory_ind, i, bucket, *this};
+        }
       }
 
       bucket = bucket->next;
     //   prefetch_next(bucket);
     }
 
-    return end();
+    // return end();
+    return 0;
   }
 
   std::string name() {
