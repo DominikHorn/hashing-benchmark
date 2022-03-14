@@ -191,6 +191,60 @@ class KapilChainedExoticHashTable {
     friend class KapilChainedExoticHashTable;
   };
 
+
+
+  void print_data_statistics()
+  {
+    std::vector<uint64_t> num_ele;
+    std::map<int,int> num_ele_map;
+
+    for(uint64_t buck_ind=0;buck_ind<buckets.size();buck_ind++)
+    {
+      auto bucket = &buckets[buck_ind%buckets.size()];
+
+      int ele_count=0;
+
+      while (bucket != nullptr) {
+        for (size_t i = 0; i < BucketSize; i++) {
+          const auto& current_key = bucket->keys[i];
+          if (current_key == Sentinel) break;
+          ele_count++;
+        }
+        // bucket_count++;
+        bucket = bucket->next;
+      //   prefetch_next(bucket);
+      }
+
+      num_ele.push_back(ele_count);
+    }  
+
+    std::sort(num_ele.begin(),num_ele.end());
+
+    for(int i=0;i<num_ele.size();i++)
+    {
+      num_ele_map[num_ele[i]]=0;
+    }
+
+    for(int i=0;i<num_ele.size();i++)
+    {
+      num_ele_map[num_ele[i]]+=1;
+    }
+
+
+    std::map<int, int>::iterator it;
+
+    std::cout<<"Start Num Elements"<<std::endl;
+
+    for (it = num_ele_map.begin(); it != num_ele_map.end(); it++)
+    {
+      std::cout<<"Num Elements: ";
+      std::cout<<it->first<<" : "<<it->second<<std::endl;
+    }
+
+    return;
+  }
+
+
   /**
    * Past the end iterator, use like usual in stl
    */

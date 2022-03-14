@@ -222,6 +222,128 @@ class KapilLinearExoticHashTable {
     return {buckets.size(), 0, nullptr, *this};
   }
 
+   void print_data_statistics()
+  {
+    std::vector<uint64_t> dist_from_ideal;
+    std::vector<uint64_t> dist_to_empty;
+
+
+    std::map<int,int> dist_from_ideal_map;
+    std::map<int,int> dist_to_empty_map;
+
+    for(uint64_t buck_ind=0;buck_ind<buckets.size();buck_ind++)
+    {
+      auto bucket = &buckets[buck_ind%buckets.size()];
+
+      for (size_t i = 0; i < BucketSize; i++)
+       {
+        
+          const auto& current_key = bucket->keys[i];
+          if(current_key==Sentinel)
+          {
+            break;
+          }
+
+          size_t directory_ind = mmphf(current_key)%(buckets.size());
+          // std::cout<<" pred val: "<<directory_ind<<" key val: "<<current_key<<" bucket val: "<<buck_ind<<std::endl;
+          dist_from_ideal.push_back(directory_ind-buck_ind);
+        }
+
+    }  
+
+    for(int buck_ind=0;buck_ind<buckets.size();buck_ind++)
+    {
+      auto directory_ind=buck_ind;
+      auto start=directory_ind;
+      for(;directory_ind<start+50000;)
+      {
+        auto bucket = &buckets[directory_ind%buckets.size()];
+
+        // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
+        
+        bool found_sentinel=false;
+        for (size_t i = 0; i < BucketSize; i++)
+        {
+            const auto& current_key = bucket->keys[i];
+            // std::cout<<current_key<<" match "<<key<<std::endl;
+            if (current_key == Sentinel) {
+              found_sentinel=true;
+              break;
+              // return end();
+              }
+        }
+
+        if(found_sentinel)
+        {
+          break;
+        }
+        
+        directory_ind++;        
+      }  
+
+      dist_to_empty.push_back(directory_ind-buck_ind);
+
+    } 
+
+
+    std::sort(dist_from_ideal.begin(),dist_from_ideal.end());
+    std::sort(dist_to_empty.begin(),dist_to_empty.end());
+
+
+    for(int i=0;i<dist_from_ideal.size();i++)
+    {
+      dist_from_ideal_map[dist_from_ideal[i]]=0;
+    }
+
+    for(int i=0;i<dist_from_ideal.size();i++)
+    {
+      dist_from_ideal_map[dist_from_ideal[i]]+=1;
+    }
+
+    for(int i=0;i<dist_to_empty.size();i++)
+    {
+      dist_to_empty_map[dist_to_empty[i]]=0;
+    }
+
+    for(int i=0;i<dist_to_empty.size();i++)
+    {
+      dist_to_empty_map[dist_to_empty[i]]+=1;
+    }
+
+
+    std::map<int, int>::iterator it;
+
+    std::cout<<"Start Distance To Empty"<<std::endl;
+
+    for (it = dist_to_empty_map.begin(); it != dist_to_empty_map.end(); it++)
+    {
+      std::cout<<"Distance To Empty: ";
+      std::cout<<it->first<<" : "<<it->second<<std::endl;
+        // std::cout << it->first    // string (key)
+        //           << ':'
+        //           << it->second   // string's value 
+        //           << std::endl;
+    }
+
+    std::cout<<"Start Distance From Ideal"<<std::endl;
+
+    for (it = dist_from_ideal_map.begin(); it != dist_from_ideal_map.end(); it++)
+    {
+      std::cout<<"Distance From Ideal: ";
+      std::cout<<it->first<<" : "<<it->second<<std::endl;
+        // std::cout << it->first    // string (key)
+        //           << ':'
+        //           << it->second   // string's value 
+        //           << std::endl;
+    }
+
+    return;
+
+
+
+  }
+
+
   /**
    * Returns an iterator pointing to the payload for a given key
    * or end() if no such key could be found

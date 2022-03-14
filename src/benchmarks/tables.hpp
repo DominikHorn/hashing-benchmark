@@ -56,10 +56,10 @@ const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI)
     // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
     };
 
 // const std::vector<std::int64_t> probe_distributions{
@@ -385,11 +385,26 @@ static void PointProbe(benchmark::State& state) {
     std::chrono::duration<double> diff = end - start;
     std::cout << "succeeded in " << std::setw(9) << diff.count() << " seconds"
               << std::endl;
+    
+    
+
   }
-  previous_signature = signature;
+  
 
   assert(prev_table != nullptr);
   Table* table = (Table*)prev_table;
+
+  if (previous_signature != signature)
+  {
+    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+    table->print_data_statistics();
+  }
+
+  // std::cout<<"signature swap"<<std::endl;
+
+  previous_signature = signature;  
+
+  // std::cout<<"again?"<<std::endl;
 
   size_t i = 0;
   for (auto _ : state) {
@@ -403,21 +418,6 @@ static void PointProbe(benchmark::State& state) {
                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     benchmark::DoNotOptimize(it);
-    // RangeSize == 0 -> only key lookup
-    // RangeSize == 1 -> key + payload lookup
-    // RangeSize  > 1 -> lb key + multiple payload lookups
-    // if constexpr (RangeSize == 0) {
-    //   benchmark::DoNotOptimize(it);
-    // } else if constexpr (RangeSize == 1) {
-    //   const auto payload = it.payload();
-    //   benchmark::DoNotOptimize(payload);
-    // } else if constexpr (RangeSize > 1) {
-    //   Payload total = 0;
-    //   for (size_t i = 0; it != table->end() && i < RangeSize; i++, ++it) {
-    //     total ^= it.payload();
-    //   }
-    //   benchmark::DoNotOptimize(total);
-    // }
     __sync_synchronize();
     // full_mem_barrier;
   }
@@ -580,12 +580,30 @@ static void PointProbeCuckoo(benchmark::State& state) {
     std::chrono::duration<double> diff = end - start;
     std::cout << "succeeded in " << std::setw(9) << diff.count() << " seconds"
               << std::endl;
+
+    // std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+    // prev_table->print_data_statistics();
+
   }
-  previous_signature = signature;
+  
 
   assert(prev_table != nullptr);
   Table* table = (Table*)prev_table;
 
+
+  if (previous_signature != signature)
+  {
+    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+    table->print_data_statistics();
+  }
+
+  // std::cout<<"signature swap"<<std::endl;
+
+  previous_signature = signature;  
+
+  // std::cout<<"again?"<<std::endl;
+
+  
   size_t i = 0;
   for (auto _ : state) {
     while (unlikely(i >= probing_set.size())) i -= probing_set.size();
@@ -596,21 +614,6 @@ static void PointProbeCuckoo(benchmark::State& state) {
                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     benchmark::DoNotOptimize(it);
-    // RangeSize == 0 -> only key lookup
-    // RangeSize == 1 -> key + payload lookup
-    // RangeSize  > 1 -> lb key + multiple payload lookups
-    // if constexpr (RangeSize == 0) {
-    //   benchmark::DoNotOptimize(it);
-    // } else if constexpr (RangeSize == 1) {
-    //   const auto payload = it.payload();
-    //   benchmark::DoNotOptimize(payload);
-    // } else if constexpr (RangeSize > 1) {
-    //   Payload total = 0;
-    //   for (size_t i = 0; it != table->end() && i < RangeSize; i++, ++it) {
-    //     total ^= it.payload();
-    //   }
-    //   benchmark::DoNotOptimize(total);
-    // }
     __sync_synchronize();
     // full_mem_barrier;
   }
@@ -649,9 +652,9 @@ static void PointProbeCuckoo(benchmark::State& state) {
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
 
-using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000>;
+using MURMUR = hashing::MurmurFinalizer<Key>;
 
-BenchmarKapilLinearModel(1,50,RMIHash);
+BenchmarKapilChained(1,50,MURMUR);
 
 
 

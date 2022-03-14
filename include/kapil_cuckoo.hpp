@@ -201,6 +201,39 @@ namespace kapilhashtable {
          // return std::nullopt;
       }
 
+
+
+   void print_data_statistics()
+  {
+     size_t primary_key_cnt = 0;
+     size_t total_cnt=0;
+
+   for(uint64_t buck_ind=0;buck_ind<buckets.size();buck_ind++)
+    {
+
+      const Bucket* b1 = &buckets[buck_ind];
+      for (size_t i = 0; i < BucketSize; i++) {
+         if (b1->slots[i].key == Sentinel) {
+            break;
+            // return std::make_optional(payload);
+         }
+         size_t directory_ind = hashfn1(b1->slots[i].key)%(buckets.size());
+         if(directory_ind==buck_ind)
+          {
+             primary_key_cnt++;
+          }
+          total_cnt++;
+      }
+
+    }  
+
+    std::cout<<" Primary Key Ratio: "<<primary_key_cnt*1.00/total_cnt<<std::endl;
+
+    return ;
+
+  }
+
+
       std::map<std::string, std::string> lookup_statistics(const std::vector<Key>& dataset) const {
          size_t primary_key_cnt = 0;
 
