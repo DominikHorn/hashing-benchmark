@@ -242,8 +242,12 @@ def expt_1():
 
                 if temp_inst_keys in done_dict.keys():
                     continue
-                if ";2;100" not in temp_inst_keys and "MWHC" not in temp_inst_keys:
+                if ";2;100" not in temp_inst_keys and "Cuckoo" not in temp_inst_keys:
                     continue    
+
+                if "Cuckoo"  in temp_inst_keys and ";4;15" not in temp_inst_keys:
+                    continue    
+
                 if scheme_key not in temp_inst_keys:
                     continue
                 if dataset_key not in temp_inst_keys:
