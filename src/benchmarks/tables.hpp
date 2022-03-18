@@ -51,7 +51,7 @@ const std::vector<std::int64_t> probe_distributions{
         dataset::ProbingDistribution::UNIFORM)};
 
 const std::vector<std::int64_t> dataset_sizes{100000000};
-const std::vector<std::int64_t> succ_probability{100,50,0};
+const std::vector<std::int64_t> succ_probability{50,0};
 const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
@@ -652,9 +652,9 @@ static void PointProbeCuckoo(benchmark::State& state) {
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
 
-using MURMUR = hashing::MurmurFinalizer<Key>;
+using MWHC = exotic_hashing::MWHC<Key>;
 
-BenchmarKapilChained(1,50,MURMUR);
+BenchmarKapilChainedExotic(1,20,MWHC);
 
 
 
