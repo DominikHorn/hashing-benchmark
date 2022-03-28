@@ -94,8 +94,18 @@ class KapilChainedModelHashTable {
    * together with their corresponding payloads
    */
   KapilChainedModelHashTable(std::vector<std::pair<Key, Payload>> data)
-      : buckets((1 + data.size()*(1.00+(OverAlloc/100.0))) / BucketSize),
+      : 
         tape(std::make_unique<support::Tape<Bucket>>()) {
+
+    if (OverAlloc<10000)
+    {
+      buckets.resize((1 + data.size()*(1.00+(OverAlloc/100.00))) / BucketSize); 
+    } 
+    else
+    {
+      buckets.resize((1 + data.size()*(((OverAlloc-10000)/100.00)) / BucketSize)); 
+    }         
+    
     // ensure data is sorted
     std::sort(data.begin(), data.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
@@ -108,6 +118,20 @@ class KapilChainedModelHashTable {
 
     // train model on sorted data
     model.train(keys.begin(), keys.end(), buckets.size());
+    
+
+    std::string model_name=model.name();
+
+    // if (model_name.find("pgm_hash_eps") != std::string::npos)
+    // {
+    //   model = new Model(keys.begin(), keys.end(), buckets.size());
+    // }
+    // else
+    // {
+      // model.train(keys.begin(), keys.end(), buckets.size());
+    // }
+
+    std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<model.name()<<" Traditional Chained Balanced 0 "<<model.model_count()<<" 0"<<std::endl<<std::endl;
 
     // insert all keys according to model prediction.
     // since we sorted above, this will permit further
@@ -184,6 +208,88 @@ class KapilChainedModelHashTable {
 
     friend class KapilChainedModelHashTable;
   };
+
+
+   int useless_func()
+  {
+    return 0;
+  }
+
+  void gap_stats()
+  {
+    std::vector<uint64_t> key_vec;
+    std::vector<double> cdf_prediction,gap;
+    std::map<int,uint64_t> count_gap;
+
+    for(uint64_t buck_ind=0;buck_ind<buckets.size();buck_ind++)
+    {
+      auto bucket = &buckets[buck_ind%buckets.size()];
+
+     
+
+      while (bucket != nullptr)
+      {
+        for (size_t i = 0; i < BucketSize; i++)
+        {
+          const auto& current_key = bucket->keys[i];
+          if (current_key == Sentinel) break;
+          key_vec.push_back(current_key);
+          cdf_prediction.push_back(model.double_prediction(current_key));
+        }
+        // bucket_count++;
+        bucket = bucket->next;
+      //   prefetch_next(bucket);
+      }
+
+    }  
+
+    std::sort(key_vec.begin(),key_vec.end());
+    std::sort(cdf_prediction.begin(),cdf_prediction.end());
+
+    for(int i=0;i<cdf_prediction.size()-1;i++)
+    {
+      gap.push_back(cdf_prediction[i+1]-cdf_prediction[i]);
+      gap[i]=gap[i]*key_vec.size();
+    }
+
+    for(int i=0;i<gap.size();i++)
+    {
+      int temp=ceil((gap[i]*5)-0.1);
+      temp=temp*20;
+      count_gap[temp]=0;
+    }
+
+    for(int i=0;i<gap.size();i++)
+    {
+      int temp=ceil((gap[i]*5)-0.1);
+      temp=temp*20;
+      count_gap[temp]++;
+    }
+
+
+    std::map<int, uint64_t>::iterator it;
+
+    std::cout<<"Start Gap Stats"<<std::endl;
+
+    for (it = count_gap.begin(); it != count_gap.end(); it++)
+    {
+      std::cout<<"Gap Stats: ";
+      std::cout<<it->first<<" : "<<it->second<<std::endl;
+        // std::cout << it->first    // string (key)
+        //           << ':'
+        //           << it->second   // string's value 
+        //           << std::endl;
+    }
+
+    std::cout<<"End Gap Stats"<<std::endl;
+
+
+    return;
+
+
+  }
+
+
 
 
 

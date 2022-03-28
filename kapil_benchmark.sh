@@ -26,71 +26,71 @@
 ###########################CHAINED############################
 #Traditional Chained Experiments 
 
-# for bucket_size in 1 2 4 8
-# do
-#     for overalloc in 50 100 300
-#     do
-#         for model_name in "MURMUR" "MultPrime64" "XXHash3"
-#         do
-#             echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0 >>kapil_results.json
-#             echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0  >>data_stats_mar14.out
-#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0
-#             bash run.sh >>data_stats_mar14.out
-#             cat benchmark_results.json >>kapil_results.json
-#         done
-#     done
-# done
+for bucket_size in 1 
+do
+    for overalloc in 50 100 300 10050 10075
+    do
+        for model_name in "MURMUR" "MultPrime64" "XXHash3"
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0 >>kapil_results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0  >>data_stats_mar14.out
+            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0
+            bash run.sh >>data_stats_mar14.out
+            cat benchmark_results.json >>kapil_results.json
+        done
+    done
+done
 
 
 #Model Chained Experiments 
 
-# for bucket_size in 1 2 4 8
-# do
-#     for overalloc in 50 100 300
-#     do
-#         for model_name in  "RMIHash" "RadixSplineHash" 
-#         do
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 1000 1024 >>kapil_results.json
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 1000 1024 >>data_stats_mar14.out
-#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 1000 1024
-#             bash run.sh >>data_stats_mar14.out
-#             cat benchmark_results.json >>kapil_results.json
-#         done
-#     done
-# done
+for bucket_size in 1 
+do
+    for overalloc in 50 100 300 10050 10075
+    do
+        for model_name in  "RMIHash" "RadixSplineHash" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 1 10024 >>kapil_results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 1 10024 >>data_stats_mar14.out
+            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 1 10024
+            bash run.sh >>data_stats_mar14.out
+            cat benchmark_results.json >>kapil_results.json
+        done
+    done
+done
 
-# for bucket_size in 1 2 4 8
-# do
-#     for overalloc in 50 100 300
-#     do
-#         for model_name in "RMIHash" "RadixSplineHash" 
-#         do
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100000 32 >>kapil_results.json
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100000 32 >>data_stats_mar14.out
-#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100000 32
-#             bash run.sh >>data_stats_mar14.out
-#             cat benchmark_results.json >>kapil_results.json
-#         done
-#     done
-# done
+for bucket_size in 1 
+do
+    for overalloc in 50 100 300 10050 10075
+    do
+        for model_name in "RMIHash" "RadixSplineHash" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100 1024 >>kapil_results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100 1024 >>data_stats_mar14.out
+            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100 1024
+            bash run.sh >>data_stats_mar14.out
+            cat benchmark_results.json >>kapil_results.json
+        done
+    done
+done
 
 
 #Exotic Chained Experiments 
 
-# for bucket_size in 1
-# do
-#     for overalloc in 10 20
-#     do
-#         for model_name in "MWHC" 
-#         do
-#             echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Chained" "Balanced" 0 0 0 >>kapil_results.json
-#             echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Chained" "Balanced" 0 0 0 >>data_stats_mar14.out
-#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Exotic" "Chained" "Balanced" 0 0 0
-#             bash run.sh >>data_stats_mar14.out
-#             cat benchmark_results.json >>kapil_results.json
-#         done
-#     done
-# done
+for bucket_size in 1
+do
+    for overalloc in 10 20
+    do
+        for model_name in "MWHC" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Chained" "Balanced" 0 0 0 >>kapil_results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Chained" "Balanced" 0 0 0 >>data_stats_mar14.out
+            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Exotic" "Chained" "Balanced" 0 0 0
+            bash run.sh >>data_stats_mar14.out
+            cat benchmark_results.json >>kapil_results.json
+        done
+    done
+done
 
 
 
@@ -104,53 +104,53 @@
 
 # python3 kapil_python_edit_script.py 1 50 RMIHash Model Linear Balanced 0 1000 1024
 
-# for bucket_size in 1 2 4 8
-# do
-#     for overalloc in 50 100 300
-#     do
-#         for model_name in "RMIHash"  "RadixSplineHash" 
-#         do
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 1000 1024 >>kapil_results.json
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 1000 1024 >>data_stats_mar14.out
-#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 1000 1024
-#             bash run.sh >>data_stats_mar14.out
-#             cat benchmark_results.json >>kapil_results.json
-#         done
-#     done
-# done
+for bucket_size in 1 
+do
+    for overalloc in 50 100 300 10050 10075
+    do
+        for model_name in "RMIHash"  "RadixSplineHash" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 1 10024 >>kapil_results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 1 10024 >>data_stats_mar14.out
+            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 1 10024
+            bash run.sh >>data_stats_mar14.out
+            cat benchmark_results.json >>kapil_results.json
+        done
+    done
+done
 
-# for bucket_size in 1 2 4 8
-# do
-#     for overalloc in 50 100 300
-#     do
-#         for model_name in "RMIHash" "RadixSplineHash" 
-#         do
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100000 32 >>kapil_results.json
-#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100000 32 >>data_stats_mar14.out
-#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100000 32
-#             bash run.sh >>data_stats_mar14.out
-#             cat benchmark_results.json >>kapil_results.json
-#         done
-#     done
-# done
+for bucket_size in 1
+do
+    for overalloc in 50 100 300 10050 10075
+    do
+        for model_name in "RMIHash" "RadixSplineHash" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100 1024 >>kapil_results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100 1024 >>data_stats_mar14.out
+            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100 1024
+            bash run.sh >>data_stats_mar14.out
+            cat benchmark_results.json >>kapil_results.json
+        done
+    done
+done
 
 
 #Traditional Linear Experiments 
 
-# for bucket_size in 1 2 4 8
-# do
-#     for overalloc in 50 100 300
-#     do
-#         for model_name in "MURMUR" "MultPrime64" "XXHash3"
-#         do
-#             echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0 >>kapil_results.json
-#             echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0 >>data_stats_mar14.out
-#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0
-#             bash run.sh >>data_stats_mar14.out
-#             cat benchmark_results.json >>kapil_results.json
-#         done
-#     done
-# done
+for bucket_size in 1
+do
+    for overalloc in 50 100 300 10050 10075
+    do
+        for model_name in "MURMUR" "MultPrime64" "XXHash3"
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0 >>kapil_results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0 >>data_stats_mar14.out
+            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0
+            bash run.sh >>data_stats_mar14.out
+            cat benchmark_results.json >>kapil_results.json
+        done
+    done
+done
 
 
 
@@ -213,50 +213,50 @@
 
 #Model Cuckoo Experiments 
 
-for bucket_size in 4 8
-do
-    for overalloc in 15 30 
-    do
-        for model_name in "RMIHash"  "RadixSplineHash" 
-        do
-            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 1000 1024 >>kapil_results.json
-            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 1000 1024 >>data_stats_mar14.out
-            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 1000 1024
-            bash run.sh >>data_stats_mar14.out
-            cat benchmark_results.json >>kapil_results.json
-        done
-    done
-done
+# for bucket_size in 4 8
+# do
+#     for overalloc in 15 30 
+#     do
+#         for model_name in "RMIHash"  "RadixSplineHash" 
+#         do
+#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 1000 1024 >>kapil_results.json
+#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 1000 1024 >>data_stats_mar14.out
+#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 1000 1024
+#             bash run.sh >>data_stats_mar14.out
+#             cat benchmark_results.json >>kapil_results.json
+#         done
+#     done
+# done
 
-for bucket_size in 4 8
-do
-    for overalloc in 15 30
-    do
-        for model_name in "RMIHash" "RadixSplineHash" 
-        do
-            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100000 32 >>kapil_results.json
-            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100000 32 >>data_stats_mar14.out
-            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100000 32
-            bash run.sh >>data_stats_mar14.out
-            cat benchmark_results.json >>kapil_results.json
-        done
-    done
-done
+# for bucket_size in 4 8
+# do
+#     for overalloc in 15 30
+#     do
+#         for model_name in "RMIHash" "RadixSplineHash" 
+#         do
+#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100000 32 >>kapil_results.json
+#             echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100000 32 >>data_stats_mar14.out
+#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100000 32
+#             bash run.sh >>data_stats_mar14.out
+#             cat benchmark_results.json >>kapil_results.json
+#         done
+#     done
+# done
 
 #Traditional Cuckoo Experiments 
 
 
-for bucket_size in 4 8
-do
-    for overalloc in 15 30
-    do
-        for model_name in "MURMUR" "MultPrime64"  "XXHash3"
-        do
-            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0 >>kapil_results.json
-            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0 >>data_stats_mar14.out
-            python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0
-            bash run.sh >>data_stats_mar14.out
-            cat benchmark_results.json >>kapil_results.json
-        done
-    done
-done
+# for bucket_size in 4 8
+# do
+#     for overalloc in 15 30
+#     do
+#         for model_name in "MURMUR" "MultPrime64"  "XXHash3"
+#         do
+#             echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0 >>kapil_results.json
+#             echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0 >>data_stats_mar14.out
+#             python3 kapil_python_edit_script.py $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0
+#             bash run.sh >>data_stats_mar14.out
+#             cat benchmark_results.json >>kapil_results.json
+#         done
+#     done
+# done

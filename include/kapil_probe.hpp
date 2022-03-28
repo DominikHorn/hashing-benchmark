@@ -123,8 +123,18 @@ class KapilLinearHashTable {
    * together with their corresponding payloads
    */
   KapilLinearHashTable(std::vector<std::pair<Key, Payload>> data)
-      : buckets((1 + data.size()*(1.00+(OverAlloc/100.00))) / BucketSize),
+      : 
         tape(std::make_unique<support::Tape<Bucket>>()) {
+
+
+    if (OverAlloc<10000)
+    {
+      buckets.resize((1 + data.size()*(1.00+(OverAlloc/100.00))) / BucketSize); 
+    } 
+    else
+    {
+      buckets.resize((1 + data.size()*(((OverAlloc-10000)/100.00)) / BucketSize)); 
+    }               
     // ensure data is sorted
     std::sort(data.begin(), data.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
@@ -342,6 +352,13 @@ class KapilLinearHashTable {
 
 
   }
+
+
+  int useless_func()
+  {
+    return 0;
+  }
+
 
 
 

@@ -58,8 +58,17 @@ const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
-    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM)
+    };
+
+const std::vector<std::int64_t> variance_datasets{
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::Variance_2),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::Variance_4),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::Variance_half),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::Variance_quarter)
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM)
     };
 
 // const std::vector<std::int64_t> probe_distributions{
@@ -418,7 +427,7 @@ static void PointProbe(benchmark::State& state) {
                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     benchmark::DoNotOptimize(it);
-    // __sync_synchronize();
+    __sync_synchronize();
     // full_mem_barrier;
   }
 
@@ -436,6 +445,112 @@ static void PointProbe(benchmark::State& state) {
 }
 
 
+
+template <class Table,size_t RangeSize>
+static void GapStats(benchmark::State& state) {
+  // Extract variables
+  const auto dataset_size = static_cast<size_t>(state.range(0));
+  const auto did = static_cast<dataset::ID>(state.range(1));
+  const auto probing_dist =
+      static_cast<dataset::ProbingDistribution>(state.range(2));
+   const auto succ_probability =
+      static_cast<size_t>(state.range(3));    
+
+  // google benchmark will run a benchmark function multiple times
+  // to determine, amongst other things, the iteration count for
+  // the benchmark loop. Technically, BM functions must be pure. However,
+  // since this setup logic is very expensive, we cache setup based on
+  // a unique signature containing all parameters.
+  // NOTE: google benchmark's fixtures suffer from the same
+  // 'execute setup multiple times' issue:
+  // https://github.com/google/benchmark/issues/952
+  std::string signature =
+      std::string(typeid(Table).name()) + "_" + std::to_string(RangeSize) +
+      "_" + std::to_string(dataset_size) + "_" + dataset::name(did) + "_" +
+      dataset::name(probing_dist);
+  if (previous_signature != signature) {
+    std::cout << "performing setup... ";
+    auto start = std::chrono::steady_clock::now();
+
+    // Generate data (keys & payloads) & probing set
+    std::vector<std::pair<Key, Payload>> data{};
+    data.reserve(dataset_size);
+    {
+      auto keys = dataset::load_cached<Key>(did, dataset_size);
+
+      std::transform(
+          keys.begin(), keys.end(), std::back_inserter(data),
+          [](const Key& key) { return std::make_pair(key, key - 5); });
+      // int succ_probability=100;
+      probing_set = dataset::generate_probing_set(keys, probing_dist,succ_probability);
+    }
+
+    if (data.empty()) {
+      // otherwise google benchmark produces an error ;(
+      for (auto _ : state) {
+      }
+      std::cout << "failed" << std::endl;
+      return;
+    }
+
+    // build table
+    if (prev_table != nullptr) free_lambda();
+    prev_table = new Table(data);
+    free_lambda = []() { delete ((Table*)prev_table); };
+
+    // measure time elapsed
+    const auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "succeeded in " << std::setw(9) << diff.count() << " seconds"
+              << std::endl;
+    
+    
+
+  }
+  
+
+  assert(prev_table != nullptr);
+  Table* table = (Table*)prev_table;
+
+  if (previous_signature != signature)
+  {
+    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+    table->gap_stats();
+  }
+
+  // std::cout<<"signature swap"<<std::endl;
+
+  previous_signature = signature;  
+
+  // std::cout<<"again?"<<std::endl;
+
+  size_t i = 0;
+  for (auto _ : state) {
+    // while (unlikely(i >= probing_set.size())) i -= probing_set.size();
+    // const auto searched = probing_set[i%probing_set.size()];
+    // i++;
+
+    // Lower bound lookup
+    auto it = table->useless_func();  // TODO: does this generate a 'call' op? =>
+                    // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+
+    benchmark::DoNotOptimize(it);
+    __sync_synchronize();
+    // full_mem_barrier;
+  }
+
+  // set counters (don't do this in inner loop to avoid tainting results)
+  state.counters["table_bytes"] = table->byte_size();
+  state.counters["table_directory_bytes"] = table->directory_byte_size();
+  state.counters["table_bits_per_key"] = 8. * table->byte_size() / dataset_size;
+  state.counters["data_elem_count"] = dataset_size;
+
+  std::stringstream ss;
+  ss << succ_probability;
+  std::string temp = ss.str();
+  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
+                 dataset::name(probing_dist)+":"+temp);
+}
 
 template <class Table,size_t RangeSize>
 static void CollisionStats(benchmark::State& state) {
@@ -521,12 +636,12 @@ static void CollisionStats(benchmark::State& state) {
     // const auto searched = probing_set[i%probing_set.size()];
     // i++;
 
-    // Lower bound lookup
+    // // Lower bound lookup
     auto it = table->useless_func();  // TODO: does this generate a 'call' op? =>
-                    // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+    //                 // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
-    benchmark::DoNotOptimize(it);
-    __sync_synchronize();
+    // benchmark::DoNotOptimize(it);
+    // __sync_synchronize();
     // full_mem_barrier;
   }
 
@@ -542,6 +657,8 @@ static void CollisionStats(benchmark::State& state) {
   state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
                  dataset::name(probing_dist)+":"+temp);
 }
+
+
 
 
 
@@ -586,6 +703,20 @@ using namespace masters_thesis;
 
 
 
+#define KAPILGAPBM(Table)                                                              \
+  BENCHMARK_TEMPLATE(GapStats, Table, 0)                                     \
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability});
+
+#define KAPILVarianceCollisionBM(Table)                                                              \
+  BENCHMARK_TEMPLATE(CollisionStats, Table, 0)                                     \
+      ->ArgsProduct({dataset_sizes, variance_datasets, probe_distributions,succ_probability});
+
+#define KAPILCollisionBM(Table)                                                              \
+  BENCHMARK_TEMPLATE(CollisionStats, Table, 0)                                     \
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability});
+
+
+
 
 // ############################## Chaining ##############################
 // ############################## Chaining ##############################
@@ -605,166 +736,124 @@ using namespace masters_thesis;
   KAPILBM(KapilChainedModelHashTable##BucketSize##OverAlloc##Model);
 
 
-const std::vector<std::int64_t> bucket_size_chain{1,2,4,8};
-const std::vector<std::int64_t> overalloc_chain{10,25,50,100};
+#define BenchmarKapilGAPChainedModel(BucketSize,OverAlloc,Model)                           \
+  using KapilChainedModelHashTable##BucketSize##OverAlloc##Model = KapilChainedModelHashTable<Key, Payload, BucketSize,OverAlloc, Model>; \
+  KAPILGAPBM(KapilChainedModelHashTable##BucketSize##OverAlloc##Model);
+
+#define BenchmarKapilVarianceCollisionChainedModel(BucketSize,OverAlloc,Model)                           \
+  using KapilVarianceChainedModelHashTable##BucketSize##OverAlloc##Model = KapilChainedModelHashTable<Key, Payload, BucketSize,OverAlloc, Model>; \
+  KAPILVarianceCollisionBM(KapilVarianceChainedModelHashTable##BucketSize##OverAlloc##Model);
+
+#define BenchmarKapilCollisionChainedModel(BucketSize,OverAlloc,Model)                           \
+  using KapilChainedModelHashTable##BucketSize##OverAlloc##Model = KapilChainedModelHashTable<Key, Payload, BucketSize,OverAlloc, Model>; \
+  KAPILCollisionBM(KapilChainedModelHashTable##BucketSize##OverAlloc##Model);  
 
 
-// ############################## LINEAR PROBING ##############################
-// ############################## LINEAR PROBING ##############################
-// ############################## LINEAR PROBING ##############################
+/////////////////GAP EXPTS/////////////////
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilGAPChainedModel(1,0,RMIHash);
 
-#define BenchmarKapilLinear(BucketSize,OverAlloc,HashFn)                           \
-  using KapilLinearHashTable##BucketSize##OverAlloc##HashFn = KapilLinearHashTable<Key, Payload, BucketSize,OverAlloc, HashFn>; \
-  KAPILBM(KapilLinearHashTable##BucketSize##OverAlloc##HashFn);
+/////////////////VARIANCE EXPTS/////////////////
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilVarianceCollisionChainedModel(1,10050,RMIHash);
 
-#define BenchmarKapilLinearExotic(BucketSize,OverAlloc,MMPHF)                           \
-  using KapilLinearExoticHashTable##BucketSize##MMPHF = KapilLinearExoticHashTable<Key, Payload, BucketSize, MMPHF>; \
-  KAPILBM(KapilLinearExoticHashTable##BucketSize##MMPHF);
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilVarianceCollisionChainedModel(1,10075,RMIHash);
 
-#define BenchmarKapilLinearModel(BucketSize,OverAlloc,Model)                           \
-  using KapilLinearModelHashTable##BucketSize##OverAlloc##Model = KapilLinearModelHashTable<Key, Payload, BucketSize,OverAlloc, Model>; \
-  KAPILBM(KapilLinearModelHashTable##BucketSize##OverAlloc##Model);
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilVarianceCollisionChainedModel(1,0,RMIHash);
 
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilVarianceCollisionChainedModel(1,50,RMIHash);
 
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilVarianceCollisionChainedModel(1,100,RMIHash);
 
-// ############################## CUCKOO HASHING ##############################
-// ############################## CUCKOO HASHING ##############################
-// ############################## CUCKOO HASHING ##############################
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilVarianceCollisionChainedModel(1,300,RMIHash);
 
-
-
-template <class Table,size_t RangeSize>
-static void PointProbeCuckoo(benchmark::State& state) {
-  // Extract variables
-  const auto dataset_size = static_cast<size_t>(state.range(0));
-  const auto did = static_cast<dataset::ID>(state.range(1));
-  const auto probing_dist =
-      static_cast<dataset::ProbingDistribution>(state.range(2));
-  const auto succ_probability =
-      static_cast<size_t>(state.range(3));
-  // google benchmark will run a benchmark function multiple times
-  // to determine, amongst other things, the iteration count for
-  // the benchmark loop. Technically, BM functions must be pure. However,
-  // since this setup logic is very expensive, we cache setup based on
-  // a unique signature containing all parameters.
-  // NOTE: google benchmark's fixtures suffer from the same
-  // 'execute setup multiple times' issue:
-  // https://github.com/google/benchmark/issues/952
-  std::string signature =
-      std::string(typeid(Table).name()) + "_" + std::to_string(RangeSize) +
-      "_" + std::to_string(dataset_size) + "_" + dataset::name(did) + "_" +
-      dataset::name(probing_dist);
-  if (previous_signature != signature) {
-    std::cout << "performing setup... ";
-    auto start = std::chrono::steady_clock::now();
-
-    // Generate data (keys & payloads) & probing set
-    std::vector<std::pair<Key, Payload>> data{};
-    data.reserve(dataset_size);
-    {
-      auto keys = dataset::load_cached<Key>(did, dataset_size);
-
-      std::transform(
-          keys.begin(), keys.end(), std::back_inserter(data),
-          [](const Key& key) { return std::make_pair(key, key - 5); });
-      // int succ_probability=100;
-      probing_set = dataset::generate_probing_set(keys, probing_dist,succ_probability);
-    }
-
-    if (data.empty()) {
-      // otherwise google benchmark produces an error ;(
-      for (auto _ : state) {
-      }
-      std::cout << "failed" << std::endl;
-      return;
-    }
-
-    // build table
-    if (prev_table != nullptr) free_lambda();
-    prev_table = new Table(data);
-    free_lambda = []() { delete ((Table*)prev_table); };
-
-    // measure time elapsed
-    const auto end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> diff = end - start;
-    std::cout << "succeeded in " << std::setw(9) << diff.count() << " seconds"
-              << std::endl;
-
-    // std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
-    // prev_table->print_data_statistics();
-
-  }
-  
-
-  assert(prev_table != nullptr);
-  Table* table = (Table*)prev_table;
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilVarianceCollisionChainedModel(1,700,RMIHash);
 
 
-  if (previous_signature != signature)
-  {
-    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
-    table->print_data_statistics();
-  }
+/////////////////MODEL SIZE EXPTS/////////////////
 
-  // std::cout<<"signature swap"<<std::endl;
+using RMIHash1 = learned_hashing::RMIHash<std::uint64_t,1>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash1);
 
-  previous_signature = signature;  
+using RMIHash2 = learned_hashing::RMIHash<std::uint64_t,10>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash2);
 
-  // std::cout<<"again?"<<std::endl;
+using RMIHash3 = learned_hashing::RMIHash<std::uint64_t,25>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash3);
 
-  
-  size_t i = 0;
-  for (auto _ : state) {
-    while (unlikely(i >= probing_set.size())) i -= probing_set.size();
-    const auto searched = probing_set[i++];
+using RMIHash4 = learned_hashing::RMIHash<std::uint64_t,100>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash4);
 
-    // Lower bound lookup
-    auto it = table->lookup(searched);  // TODO: does this generate a 'call' op? =>
-                    // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+using RMIHash5 = learned_hashing::RMIHash<std::uint64_t,1000>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash5);
 
-    benchmark::DoNotOptimize(it);
-    __sync_synchronize();
-    // full_mem_barrier;
-  }
+using RMIHash6 = learned_hashing::RMIHash<std::uint64_t,10000>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash6);
 
-  // set counters (don't do this in inner loop to avoid tainting results)
-  state.counters["table_bytes"] = table->byte_size();
-  state.counters["table_directory_bytes"] = table->directory_byte_size();
-  state.counters["table_bits_per_key"] = 8. * table->byte_size() / dataset_size;
-  state.counters["data_elem_count"] = dataset_size;
-
-  std::stringstream ss;
-  ss << succ_probability;
-  std::string temp = ss.str();
-  state.SetLabel(table->name() + ":" + dataset::name(did) + ":" +
-                 dataset::name(probing_dist)+":"+temp);
-}
+using RMIHash7 = learned_hashing::RMIHash<std::uint64_t,100000>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash7);
 
 
-#define KAPILBMCuckoo(Table)                                                              \
-  BENCHMARK_TEMPLATE(PointProbeCuckoo, Table, 0)                                     \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability});
+using RMIHash8 = learned_hashing::RMIHash<std::uint64_t,1000000>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash8);
+
+using RMIHash9 = learned_hashing::RMIHash<std::uint64_t,10000000>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash9);
+
+using RMIHash10 = learned_hashing::RMIHash<std::uint64_t,50000000>;
+BenchmarKapilCollisionChainedModel(1,0,RMIHash10);
 
 
+using RadixSplineHash1 = learned_hashing::RadixSplineHash<std::uint64_t,18,100000>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash1);
+
+using RadixSplineHash2 = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash2);
+
+using RadixSplineHash3 = learned_hashing::RadixSplineHash<std::uint64_t,18,256>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash3);
+
+using RadixSplineHash4 = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash4);
+
+using RadixSplineHash5 = learned_hashing::RadixSplineHash<std::uint64_t,18,32>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash5);
+
+using RadixSplineHash6 = learned_hashing::RadixSplineHash<std::uint64_t,18,16>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash6);
+
+using RadixSplineHash7 = learned_hashing::RadixSplineHash<std::uint64_t,18,8>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash7);
+
+using RadixSplineHash8 = learned_hashing::RadixSplineHash<std::uint64_t,18,4>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash8);
+
+using RadixSplineHash9 = learned_hashing::RadixSplineHash<std::uint64_t,18,2>;
+BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash9);
 
 
+// using PGMHash1 = learned_hashing::PGMHash<std::uint64_t,100000,100000,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash1);
 
-#define BenchmarKapilCuckoo(BucketSize,OverAlloc,HashFn,KickingStrat)                           \
-  using MURMUR1 = hashing::MurmurFinalizer<Key>; \
-  using KapilCuckooHashTable##BucketSize##OverAlloc##HashFn##KickingStrat = kapilhashtable::KapilCuckooHashTable<Key, Payload, BucketSize,OverAlloc, HashFn, MURMUR1,KickingStrat>; \
-  KAPILBMCuckoo(KapilCuckooHashTable##BucketSize##OverAlloc##HashFn##KickingStrat);
+// using PGMHash2 = learned_hashing::PGMHash<std::uint64_t,1024,1024,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash2);
 
+// using PGMHash3 = learned_hashing::PGMHash<std::uint64_t,128,128,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash3);
 
-#define BenchmarKapilCuckooModel(BucketSize,OverAlloc,Model,KickingStrat1)                           \
-  using MURMUR1 = hashing::MurmurFinalizer<Key>; \
-  using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilmodelhashtable::KapilCuckooModelHashTable<Key, Payload, BucketSize,OverAlloc, Model, MURMUR1,KickingStrat1>; \
-  KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
+// using PGMHash4 = learned_hashing::PGMHash<std::uint64_t,32,32,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash4);
 
-
-using XXHash3 = hashing::XXHash3<Key>;
-
-BenchmarKapilLinear(1,10075,XXHash3);
+// using PGMHash5 = learned_hashing::PGMHash<std::uint64_t,2,2,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash5);
 
 
 
 }  // namespace _
+

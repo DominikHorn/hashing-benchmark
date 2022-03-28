@@ -148,8 +148,16 @@ namespace kapilhashtable {
 
      public:
       KapilCuckooHashTable(std::vector<std::pair<Key, Payload>> data)
-         : MaxKickCycleLength(50000), buckets((1 + data.size()*(1.00+(OverAlloc/100.0))) / BucketSize) {
+         : MaxKickCycleLength(50000) {
 
+            if (OverAlloc<10000)
+            {
+               buckets.resize((1 + data.size()*(1.00+(OverAlloc/100.00))) / BucketSize); 
+            } 
+            else
+            {
+               buckets.resize((1 + data.size()*(((OverAlloc-10000)/100.00)) / BucketSize)); 
+            }         
             std::sort(data.begin(), data.end(),
               [](const auto& a, const auto& b) { return a.first < b.first; });
 
@@ -170,7 +178,7 @@ namespace kapilhashtable {
 
            }
 
-       int lookup(const Key& key) const {
+   int lookup(const Key& key) const {
          const auto h1 = hashfn1(key);
          const auto i1 = h1%buckets.size();
 
@@ -201,6 +209,10 @@ namespace kapilhashtable {
          // return std::nullopt;
       }
 
+    int useless_func()
+  {
+    return 0;
+  }
 
 
    void print_data_statistics()
