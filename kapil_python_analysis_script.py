@@ -1614,7 +1614,7 @@ def expt_3():
                 if "MWHC" in curr_inst_key:
                     over_alloc_list=[110,120]
                 else:    
-                    over_alloc_list=[50,75,150,200,400]
+                    over_alloc_list=[150,200,400]
                 # print(succ_key_list)
                 for i in range(0,len(over_alloc_list)):
                     
@@ -1647,8 +1647,10 @@ def expt_3():
                     done_dict[temp_key]=1
 
                     # print(temp_key,instance_dict[temp_key])
-
-                    latency_list.append(min(instance_dict[temp_key]))
+                    if temp_key not in instance_dict.keys():
+                        latency_list.append(400)
+                    else:    
+                        latency_list.append(min(instance_dict[temp_key]))
 
                 split_key=curr_inst_key.split(";")
                 label_key=split_key[4] 
@@ -1668,7 +1670,7 @@ def expt_3():
             # plt.yscale('log')
             plt.ylabel('Probe Latency(in ns)',fontsize=20,weight='bold')
             # plt.ylabel('95th Percentile Suboptimality')
-            #plt.ylim(0.01, 100000)
+            plt.ylim(0, 200)
             # plt.ylim(0.00005,1.5)
             plt.yticks(fontsize=36,weight='bold')
             plt.xticks(fontsize=36,weight='bold')
