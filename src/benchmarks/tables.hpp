@@ -57,9 +57,9 @@ const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI)
     // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
     };
 
 // const std::vector<std::int64_t> probe_distributions{
@@ -398,11 +398,39 @@ static void PointProbe(benchmark::State& state) {
   {
     std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
     table->print_data_statistics();
+
+    uint64_t total_sum=0;
+
+     auto start = std::chrono::high_resolution_clock::now(); 
+
+    for(int itr=0;itr<probing_set.size()*0.1;itr++)
+    {
+      const auto searched = probing_set[itr%probing_set.size()];
+      // i++;
+
+      // Lower bound lookup
+      auto it = table->operator[](
+          searched);  // TODO: does this generate a 'call' op? =>
+                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+      total_sum+=it;
+      benchmark::DoNotOptimize(it);
+      // __sync_synchronize();
+    }
+
+     auto stop = std::chrono::high_resolution_clock::now(); 
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
+    std::cout << "Time taken by function: "<< duration.count()*10.00/probing_set.size() << " nanoseconds" << std::endl;
+
+    std::cout<<"total sum:"<<total_sum<<std::endl;
+
   }
 
   // std::cout<<"signature swap"<<std::endl;
 
   previous_signature = signature;  
+
+
 
   // std::cout<<"again?"<<std::endl;
 
@@ -761,9 +789,9 @@ static void PointProbeCuckoo(benchmark::State& state) {
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
 
-using XXHash3 = hashing::XXHash3<Key>;
+using RMIHash = learned_hashing::RMIHash<std::uint64_t,1>;
 
-BenchmarKapilLinear(1,10075,XXHash3);
+BenchmarKapilChainedModel(1,0,RMIHash);
 
 
 

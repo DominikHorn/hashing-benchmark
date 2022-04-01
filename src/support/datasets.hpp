@@ -101,7 +101,11 @@ enum class ID {
   FB = 3,
   OSM = 4,
   WIKI = 5,
-  NORMAL = 6
+  NORMAL = 6,
+  Variance_2=7,
+  Variance_4=8,
+  Variance_half=9,
+  Variance_quarter=10
 };
 
 inline std::string name(ID id) {
@@ -120,6 +124,14 @@ inline std::string name(ID id) {
       return "osm";
     case ID::WIKI:
       return "wiki";
+    case ID::Variance_2:
+      return "Variance_2";
+    case ID::Variance_4:
+      return "Variance_4";
+    case ID::Variance_half:
+      return "Variance_half";
+    case ID::Variance_quarter:
+      return "Variance_quarter";    
   }
   return "unnamed";
 };
@@ -153,7 +165,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
     case ID::GAPPED_10: {
       std::uniform_int_distribution<size_t> dist(0, 99999);
       for (size_t i = 0, num = 0; i < ds.size(); i++) {
-        do num++;
+        do num+=10;
         while (dist(rng) < 10000);
         ds[i] = num;
       }
@@ -164,6 +176,115 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
       for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
       break;
     }
+    case ID::Variance_2: {
+      std::uniform_int_distribution<Data> dist(0, std::pow(2, 40));
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
+
+      std::sort(ds.begin(),ds.end());
+
+      double constant=1.414;
+
+      for(int i=0;i<ds.size();i++)
+      {
+        uint64_t temp=i*std::pow(2, 40)/ds.size();
+        uint64_t diff=0;
+        if(temp>ds[i])
+        {
+          diff=temp-ds[i];
+          ds[i]=temp-(diff*constant);
+        }
+        else
+        {
+          diff=ds[i]-temp;
+          ds[i]=temp+(diff*constant);
+        }
+      }
+
+      break;
+    }
+
+    case ID::Variance_4: {
+      std::uniform_int_distribution<Data> dist(0, std::pow(2, 40));
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
+
+      std::sort(ds.begin(),ds.end());
+
+      double constant=2;
+
+      for(int i=0;i<ds.size();i++)
+      {
+        uint64_t temp=i*std::pow(2, 40)/ds.size();
+        uint64_t diff=0;
+        if(temp>ds[i])
+        {
+          diff=temp-ds[i];
+          ds[i]=temp-(diff*constant);
+        }
+        else
+        {
+          diff=ds[i]-temp;
+          ds[i]=temp+(diff*constant);
+        }
+      }
+
+      break;
+    }
+
+    case ID::Variance_half: {
+      std::uniform_int_distribution<Data> dist(0, std::pow(2, 40));
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
+
+      std::sort(ds.begin(),ds.end());
+
+      double constant=1.414;
+
+      for(int i=0;i<ds.size();i++)
+      {
+        uint64_t temp=i*std::pow(2, 40)/ds.size();
+        uint64_t diff=0;
+        if(temp>ds[i])
+        {
+          diff=temp-ds[i];
+          ds[i]=temp-(diff/constant);
+        }
+        else
+        {
+          diff=ds[i]-temp;
+          ds[i]=temp+(diff/constant);
+        }
+      }
+
+      break;
+    }
+
+    case ID::Variance_quarter: {
+      std::uniform_int_distribution<Data> dist(0, std::pow(2, 40));
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = dist(rng);
+
+      std::sort(ds.begin(),ds.end());
+
+      double constant=2;
+
+      for(int i=0;i<ds.size();i++)
+      {
+        uint64_t temp=i*std::pow(2, 40)/ds.size();
+        uint64_t diff=0;
+        if(temp>ds[i])
+        {
+          diff=temp-ds[i];
+          ds[i]=temp-(diff/constant);
+        }
+        else
+        {
+          diff=ds[i]-temp;
+          ds[i]=temp+(diff/constant);
+        }
+      }
+
+      break;
+    }
+
+
     case ID::NORMAL: {
       const auto mean = 100.0;
       const auto std_dev = 20.0;
