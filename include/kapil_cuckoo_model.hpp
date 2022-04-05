@@ -170,6 +170,8 @@ namespace kapilmodelhashtable {
             // train model on sorted data
             model.train(keys.begin(), keys.end(), buckets.size());
 
+            // std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<model.name()<<" Model Cuckoo Balanced 0 "<<model.model_count()<<" 0"<<std::endl<<std::endl;
+
             // insert all keys according to model prediction.
             // since we sorted above, this will permit further
             // optimizations during lookup etc & enable implementing

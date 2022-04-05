@@ -125,6 +125,8 @@ class KapilChainedExoticHashTable {
     // train mmphf on sorted data
     mmphf.construct(keys.begin(), keys.end());
 
+    // std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<mmphf.name()<<" Exotic Chained Balanced 0 0 "<<" 0"<<std::endl<<std::endl;
+
     // insert all keys according to mmphf prediction.
     // since we sorted above, this will permit further
     // optimizations during lookup etc & enable implementing

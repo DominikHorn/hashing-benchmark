@@ -167,6 +167,10 @@ namespace kapilhashtable {
             std::transform(data.begin(), data.end(), std::back_inserter(keys),
                            [](const auto& p) { return p.first; });
 
+
+         // std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<hashfn.name()<<" Traditional Cuckoo Biased 5 "<<0<<" 0"<<std::endl<<std::endl;
+               
+
             // train model on sorted data
             // model.train(keys.begin(), keys.end(), buckets.size());
 
