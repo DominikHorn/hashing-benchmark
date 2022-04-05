@@ -260,6 +260,11 @@ class KapilChainedHashTable {
     return 0;
   }
 
+  forceinline int hash_val(const Key& key)
+  {
+    return hashfn(key)%buckets.size();
+  }
+
 
   
 

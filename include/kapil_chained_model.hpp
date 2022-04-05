@@ -291,7 +291,7 @@ class KapilChainedModelHashTable {
 
 
 
-
+  
 
   void print_data_statistics()
   {
@@ -352,6 +352,12 @@ class KapilChainedModelHashTable {
   forceinline Iterator end() const {
     return {buckets.size(), 0, nullptr, *this};
   }
+
+  forceinline int hash_val(const Key& key)
+  {
+    return model(key);
+  }
+
 
   /**
    * Returns an iterator pointing to the payload for a given key

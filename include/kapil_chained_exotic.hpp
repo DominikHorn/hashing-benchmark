@@ -268,6 +268,11 @@ class KapilChainedExoticHashTable {
     return 0;
   }
 
+  forceinline int hash_val(const Key& key)
+  {
+    return mmphf(key)%buckets.size();
+  }
+
   /**
    * Returns an iterator pointing to the payload for a given key
    * or end() if no such key could be found
