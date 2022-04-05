@@ -48,7 +48,7 @@ static std::vector<T> generate_probing_set(std::vector<T> dataset,
 
   switch (distribution) {
     case ProbingDistribution::UNIFORM: {
-      std::uniform_int_distribution<> dist(0, dataset.size() - 1);
+      std::uniform_int_distribution<> dist(10000, dataset.size() - 10000);
       
       for (size_t i = 0; i < size; i++)
       { 
