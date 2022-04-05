@@ -55,7 +55,7 @@ static std::vector<T> generate_probing_set(std::vector<T> dataset,
         int adder=0;
         if (((uint64_t)dist(rng)%100)>succ_probability)
         {
-          adder=1;
+          adder=dist(rng)%997;
         }
         probing_set[i] = dataset[dist(rng)]+adder;
       }
