@@ -624,6 +624,37 @@ static void CollisionStats(benchmark::State& state) {
     table->print_data_statistics();
   }
 
+   if (previous_signature != signature)
+  {
+    std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
+    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+    // table->print_data_statistics();
+
+   
+
+     auto start = std::chrono::high_resolution_clock::now(); 
+
+    for(int itr=0;itr<probing_set.size()*0.1;itr++)
+    {
+      const auto searched = probing_set[itr%probing_set.size()];
+      // i++;
+      table->hash_val(searched);
+      // Lower bound lookup
+    //  table->insert(searched,searched);  // TODO: does this generate a 'call' op? =>
+                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+      
+      
+      // __sync_synchronize();
+    }
+
+     auto stop = std::chrono::high_resolution_clock::now(); 
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
+    std::cout << "Hash Computation is: "<< duration.count()*10.00/probing_set.size() << " nanoseconds" << std::endl;
+
+  
+  }
+
   // std::cout<<"signature swap"<<std::endl;
 
   previous_signature = signature;  
@@ -749,6 +780,11 @@ using namespace masters_thesis;
   KAPILCollisionBM(KapilChainedModelHashTable##BucketSize##OverAlloc##Model);  
 
 
+#define BenchmarKapilCollisionChainedExotic(BucketSize,OverAlloc,Model)                           \
+  using KapilChainedExoticHashTable##BucketSize##OverAlloc##Model = KapilChainedExoticHashTable<Key, Payload, BucketSize, Model>; \
+  KAPILCollisionBM(KapilChainedExoticHashTable##BucketSize##OverAlloc##Model);  
+
+
 /////////////////GAP EXPTS/////////////////
 // using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
 // BenchmarKapilGAPChainedModel(1,0,RMIHash);
@@ -778,64 +814,64 @@ using namespace masters_thesis;
 
 /////////////////MODEL SIZE EXPTS/////////////////
 
-using RMIHash1 = learned_hashing::RMIHash<std::uint64_t,1>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash1);
+// using RMIHash1 = learned_hashing::RMIHash<std::uint64_t,1>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash1);
 
-using RMIHash2 = learned_hashing::RMIHash<std::uint64_t,10>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash2);
+// using RMIHash2 = learned_hashing::RMIHash<std::uint64_t,10>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash2);
 
-using RMIHash3 = learned_hashing::RMIHash<std::uint64_t,25>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash3);
+// using RMIHash3 = learned_hashing::RMIHash<std::uint64_t,25>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash3);
 
-using RMIHash4 = learned_hashing::RMIHash<std::uint64_t,100>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash4);
+// using RMIHash4 = learned_hashing::RMIHash<std::uint64_t,100>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash4);
 
-using RMIHash5 = learned_hashing::RMIHash<std::uint64_t,1000>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash5);
+// using RMIHash5 = learned_hashing::RMIHash<std::uint64_t,1000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash5);
 
-using RMIHash6 = learned_hashing::RMIHash<std::uint64_t,10000>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash6);
+// using RMIHash6 = learned_hashing::RMIHash<std::uint64_t,10000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash6);
 
-using RMIHash7 = learned_hashing::RMIHash<std::uint64_t,100000>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash7);
-
-
-using RMIHash8 = learned_hashing::RMIHash<std::uint64_t,1000000>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash8);
-
-using RMIHash9 = learned_hashing::RMIHash<std::uint64_t,10000000>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash9);
-
-using RMIHash10 = learned_hashing::RMIHash<std::uint64_t,50000000>;
-BenchmarKapilCollisionChainedModel(1,0,RMIHash10);
+// using RMIHash7 = learned_hashing::RMIHash<std::uint64_t,100000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash7);
 
 
-using RadixSplineHash1 = learned_hashing::RadixSplineHash<std::uint64_t,18,100000>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash1);
+// using RMIHash8 = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash8);
 
-using RadixSplineHash2 = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash2);
+// using RMIHash9 = learned_hashing::RMIHash<std::uint64_t,10000000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash9);
 
-using RadixSplineHash3 = learned_hashing::RadixSplineHash<std::uint64_t,18,256>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash3);
+// using RMIHash10 = learned_hashing::RMIHash<std::uint64_t,50000000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash10);
 
-using RadixSplineHash4 = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash4);
 
-using RadixSplineHash5 = learned_hashing::RadixSplineHash<std::uint64_t,18,32>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash5);
+// using RadixSplineHash1 = learned_hashing::RadixSplineHash<std::uint64_t,18,100000>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash1);
 
-using RadixSplineHash6 = learned_hashing::RadixSplineHash<std::uint64_t,18,16>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash6);
+// using RadixSplineHash2 = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash2);
 
-using RadixSplineHash7 = learned_hashing::RadixSplineHash<std::uint64_t,18,8>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash7);
+// using RadixSplineHash3 = learned_hashing::RadixSplineHash<std::uint64_t,18,256>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash3);
 
-using RadixSplineHash8 = learned_hashing::RadixSplineHash<std::uint64_t,18,4>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash8);
+// using RadixSplineHash4 = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash4);
 
-using RadixSplineHash9 = learned_hashing::RadixSplineHash<std::uint64_t,18,2>;
-BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash9);
+// using RadixSplineHash5 = learned_hashing::RadixSplineHash<std::uint64_t,18,32>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash5);
+
+// using RadixSplineHash6 = learned_hashing::RadixSplineHash<std::uint64_t,18,16>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash6);
+
+// using RadixSplineHash7 = learned_hashing::RadixSplineHash<std::uint64_t,18,8>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash7);
+
+// using RadixSplineHash8 = learned_hashing::RadixSplineHash<std::uint64_t,18,4>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash8);
+
+// using RadixSplineHash9 = learned_hashing::RadixSplineHash<std::uint64_t,18,2>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash9);
 
 
 // using PGMHash1 = learned_hashing::PGMHash<std::uint64_t,100000,100000,500000000,float>;
@@ -852,6 +888,118 @@ BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash9);
 
 // using PGMHash5 = learned_hashing::PGMHash<std::uint64_t,2,2,500000000,float>;
 // BenchmarKapilCollisionChainedModel(1,0,PGMHash5);
+
+
+/////////////////HASH COMPUTE EXPTS/////////////////
+
+
+// using MURMUR = hashing::MurmurFinalizer<Key>;
+// BenchmarKapilCollisionChainedModel(1,0,MURMUR);
+
+// using MultPrime64 = hashing::MultPrime64;
+// BenchmarKapilCollisionChainedModel(1,0,MultPrime64);
+
+// using FibonacciPrime64 = hashing::FibonacciPrime64;
+// BenchmarKapilCollisionChainedModel(1,0,FibonacciPrime64);
+
+// using AquaHash = hashing::AquaHash<Key>;
+// BenchmarKapilCollisionChainedModel(1,0,AquaHash);
+
+// using XXHash3 = hashing::XXHash3<Key>;
+// BenchmarKapilCollisionChainedModel(1,0,XXHash3);
+
+using MWHC = exotic_hashing::MWHC<Key>;
+ BenchmarKapilCollisionChainedExotic(1,20,MWHC);
+
+// using BitMWHC = exotic_hashing::BitMWHC<Key>;
+//  BenchmarKapilCollisionChainedExotic(1,20,BitMWHC);
+
+using FST = exotic_hashing::FastSuccinctTrie<Data>;
+BenchmarKapilCollisionChainedExotic(1,20,FST);
+
+// using CompressedMWHC = exotic_hashing::CompressedMWHC<Key>;
+// BenchmarKapilCollisionChainedExotic(1,20,CompressedMWHC);
+
+// using RankHash = exotic_hashing::RankHash<Key>;
+// BenchmarKapilCollisionChainedExotic(1,20,RankHash);
+
+
+
+// using RMIHash1 = learned_hashing::RMIHash<std::uint64_t,1>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash1);
+
+// using RMIHash2 = learned_hashing::RMIHash<std::uint64_t,10>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash2);
+
+// using RMIHash3 = learned_hashing::RMIHash<std::uint64_t,25>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash3);
+
+// using RMIHash4 = learned_hashing::RMIHash<std::uint64_t,100>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash4);
+
+// using RMIHash5 = learned_hashing::RMIHash<std::uint64_t,1000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash5);
+
+// using RMIHash6 = learned_hashing::RMIHash<std::uint64_t,10000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash6);
+
+// using RMIHash7 = learned_hashing::RMIHash<std::uint64_t,100000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash7);
+
+
+// using RMIHash8 = learned_hashing::RMIHash<std::uint64_t,1000000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash8);
+
+// using RMIHash9 = learned_hashing::RMIHash<std::uint64_t,10000000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash9);
+
+// using RMIHash10 = learned_hashing::RMIHash<std::uint64_t,50000000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash10);
+
+
+// using RadixSplineHash1 = learned_hashing::RadixSplineHash<std::uint64_t,18,100000>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash1);
+
+// using RadixSplineHash2 = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash2);
+
+// using RadixSplineHash3 = learned_hashing::RadixSplineHash<std::uint64_t,18,256>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash3);
+
+// using RadixSplineHash4 = learned_hashing::RadixSplineHash<std::uint64_t,18,128>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash4);
+
+// using RadixSplineHash5 = learned_hashing::RadixSplineHash<std::uint64_t,18,32>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash5);
+
+// using RadixSplineHash6 = learned_hashing::RadixSplineHash<std::uint64_t,18,16>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash6);
+
+// using RadixSplineHash7 = learned_hashing::RadixSplineHash<std::uint64_t,18,8>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash7);
+
+// using RadixSplineHash8 = learned_hashing::RadixSplineHash<std::uint64_t,18,4>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash8);
+
+// using RadixSplineHash9 = learned_hashing::RadixSplineHash<std::uint64_t,18,2>;
+// BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash9);
+
+
+// using PGMHash1 = learned_hashing::PGMHash<std::uint64_t,100000,100000,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash1);
+
+// using PGMHash2 = learned_hashing::PGMHash<std::uint64_t,1024,1024,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash2);
+
+// using PGMHash3 = learned_hashing::PGMHash<std::uint64_t,128,128,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash3);
+
+// using PGMHash4 = learned_hashing::PGMHash<std::uint64_t,32,32,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash4);
+
+// using PGMHash5 = learned_hashing::PGMHash<std::uint64_t,2,2,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash5);
+
 
 
 

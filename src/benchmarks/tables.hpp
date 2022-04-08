@@ -57,9 +57,9 @@ const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI)
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
     // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
-    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
     };
 
 // const std::vector<std::int64_t> probe_distributions{
@@ -464,7 +464,7 @@ static void PointProbe(benchmark::State& state) {
   {
     std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
     std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
-    table->print_data_statistics();
+    // table->print_data_statistics();
 
     uint64_t total_sum=0;
 
@@ -510,12 +510,12 @@ static void PointProbe(benchmark::State& state) {
     i++;
 
     // Lower bound lookup
-    auto it = table->operator[](
-        searched);  // TODO: does this generate a 'call' op? =>
+    auto it = table->useless_func();
+    // auto it = table->operator[](searched);  // TODO: does this generate a 'call' op? =>
                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     benchmark::DoNotOptimize(it);
-    __sync_synchronize();
+    // __sync_synchronize();
     // full_mem_barrier;
   }
 
@@ -891,9 +891,9 @@ static void PointProbeCuckoo(benchmark::State& state) {
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
 
-using MURMUR = hashing::MurmurFinalizer<Key>;
+using RMIHash = learned_hashing::RMIHash<std::uint64_t,1>;
 
-BenchmarKapilChained(1,0,MURMUR);
+BenchmarKapilLinearModel(1,34,RMIHash);
 
 
 

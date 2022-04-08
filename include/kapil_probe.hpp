@@ -353,6 +353,11 @@ class KapilLinearHashTable {
 
   }
 
+  forceinline int hash_val(const Key& key)
+  {
+    return hashfn(key);
+  }
+
 
   int useless_func()
   {

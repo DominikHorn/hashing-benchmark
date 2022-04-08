@@ -168,6 +168,14 @@ class KapilLinearModelHashTable {
   }
 
 
+  forceinline int hash_val(const Key& key)
+  {
+    return model(key);
+  }
+
+  
+
+
   class Iterator {
     size_t directory_ind, bucket_ind;
     Bucket const* current_bucket;

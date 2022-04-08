@@ -223,6 +223,11 @@ class KapilLinearExoticHashTable {
     return {buckets.size(), 0, nullptr, *this};
   }
 
+  forceinline int hash_val(const Key& key)
+  {
+    return mmphf(key);
+  }
+
    void print_data_statistics()
   {
     std::vector<uint64_t> dist_from_ideal;
