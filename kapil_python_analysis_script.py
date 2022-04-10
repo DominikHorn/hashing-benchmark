@@ -11,7 +11,7 @@ from tqdm import tqdm
 import math
 import copy
 import random
-
+from statistics import median
 from matplotlib import rc, rcParams
 
 
@@ -48,15 +48,24 @@ hash_color_dict={
     "MWHC":"purple",
     "FST":"Exotic",
     "RadixSplineHashSmall":'orange',
+    "RadixSplineHash":'orange',
     "RMIHashSmall":'grey',
     "RadixSplineHashBig":'red',
-    "RMIHashBig":'brown'
+    "RMIHashBig":'brown',
+    "RMIHash":'brown',
+    "murmur_finalizer64":"blue",
+    "mult_prime64":"green",
+    "FibonacciPrime64":"Traditional",
+    "AquaHash":"Traditional",
+    "xxh3_64":"black",
+    "MWHC":"purple",
+    "FST":"Exotic"
 }
 
 
-# file_str_latency="data_logs_combined/kapil_combined_mar20.json"
+file_str_latency="data_logs_combined/kapil_combined_apr1.json"
 # file_str_stats="data_logs_combined/data_stats_combined_mar20.out"
-file_str_latency="kapil_results.json"
+# file_str_latency="kapil_results.json"
 file_str_stats="data_stats_mar14.out"
 file_gap_stats="logs/gap_stats_21mar.out"
 file_variance_stats="logs/variance_stats_mar22.out"
@@ -1486,7 +1495,7 @@ def expt_3():
 
     # print("start")
 
-    with open(file_str_latency) as f:
+    with open("kapil_results.json") as f:
     # with open('log_results.out') as f:
         lines = f.readlines()
         scheme_key=""
@@ -1522,15 +1531,17 @@ def expt_3():
 
                 if "RMI" in hash_func_key :
                     if int(model_num_key)<10:
-                        hash_func_key=hash_func_key+"Small"
+                        hash_func_key=hash_func_key
                     else:
-                        hash_func_key=hash_func_key+"Big"
+                        hash_func_key=hash_func_key
 
                 if "Radix" in hash_func_key:
                     if int(model_error_key)<5000:
-                        hash_func_key=hash_func_key+"Small"
+                        hash_func_key=hash_func_key
+                        hash_func_key="RMIHash"
                     else:
-                        hash_func_key=hash_func_key+"Big"        
+                        hash_func_key=hash_func_key     
+                        hash_func_key="RMIHash"   
 
                 scheme_dict[scheme_key]=1
                 
@@ -1596,8 +1607,12 @@ def expt_3():
                 # if "MWHC" not in temp_inst_keys:
                 #     continue    
 
-                if "Radix" in temp_inst_keys:
+                split_key_here=temp_inst_keys.split(";")
+                if 100 != int(split_key_here[-1]):
                     continue
+
+                # if "Radix" in temp_inst_keys:
+                #     continue
 
                 if scheme_key not in temp_inst_keys:
                     continue
@@ -1613,8 +1628,15 @@ def expt_3():
                 over_alloc_list=list(overalloc_dict.keys())
                 if "MWHC" in curr_inst_key:
                     over_alloc_list=[110,120]
-                else:    
-                    over_alloc_list=[150,200,400]
+                else:
+                    if "Chained" in curr_inst_key:    
+                        over_alloc_list=[50,67,80,100,134,200,400]
+                    else:
+                        if "Linear" in curr_inst_key:
+                            over_alloc_list=[134,154,182,222, 285,400 ]
+                        else:
+                            over_alloc_list=[134,125,117,111,105]  
+
                 # print(succ_key_list)
                 for i in range(0,len(over_alloc_list)):
                     
@@ -1645,12 +1667,13 @@ def expt_3():
                     # print("compare",curr_inst_key,temp_key)
 
                     done_dict[temp_key]=1
+                    print("temp_key: ",temp_key,"inst keys:" ,temp_inst_keys)
 
                     # print(temp_key,instance_dict[temp_key])
                     if temp_key not in instance_dict.keys():
-                        latency_list.append(400)
+                        latency_list.append(1000.0/400)
                     else:    
-                        latency_list.append(min(instance_dict[temp_key]))
+                        latency_list.append(1000.0/min(instance_dict[temp_key]))
 
                 split_key=curr_inst_key.split(";")
                 label_key=split_key[4] 
@@ -1663,17 +1686,17 @@ def expt_3():
            
 
              
-            plt.xlabel('OverAlloc',fontsize=20,weight='bold')
+            # plt.xlabel('OverAlloc',fontsize=20,weight='bold')
             plt.legend(fontsize=15)
             #plt.xlim(0.9, 100000)
             # plt.xlabel( _metric + ' ' + subopt_type)
             # plt.yscale('log')
-            plt.ylabel('Probe Latency(in ns)',fontsize=20,weight='bold')
+            # plt.ylabel('Probe Throughput(in Mops)',fontsize=20,weight='bold')
             # plt.ylabel('95th Percentile Suboptimality')
-            plt.ylim(0, 200)
+            plt.ylim(0, 25)
             # plt.ylim(0.00005,1.5)
-            plt.yticks(fontsize=36,weight='bold')
-            plt.xticks(fontsize=36,weight='bold')
+            plt.yticks(fontsize=42,weight='bold')
+            plt.xticks(fontsize=42,weight='bold')
             # template_name=all_QTs[0].split('/')[-1]
             savefilename = "expt_3_"+scheme_key+"_"+dataset_key+'.png'
             # savepath = path.join(base_path, 'charts/' + savefilename)
@@ -1686,6 +1709,300 @@ def expt_3():
  
 
 
+#For each (scheme, dataset), plot different (hash functions, scheme config) performance
+def expt_4():
+
+    config_dict={}
+    instance_dict={}
+    dataset_dict={}
+    scheme_dict={}
+    succ_query_dict={}
+    overalloc_dict={}
+
+    # print("start")
+
+    with open("data_stats_mar14.out") as f:
+    # with open('log_results.out') as f:
+        lines = f.readlines()
+        scheme_key=""
+        bucket_size_key=""
+        overalloc_key=""
+        hash_func_key=""
+        dataset_key=""
+        model_error_key=""
+        model_num_key=""
+        cpu_time_key=""
+        succ_query_key=""
+        for line in lines:
+            line=line.strip('\n')
+            # print(line)
+            if "Start Here" in line:
+                line=line[line.find('Start Here'):]
+                scheme_key=line.split(" ")[6]
+                if "Cuckoo" in scheme_key:
+                    scheme_key=line.split(" ")[6]+"_"+line.split(" ")[7]
+                bucket_size_key=line.split(" ")[2]
+                overalloc_key=line.split(" ")[3]
+                if int(overalloc_key)>10000:
+                    overalloc_key=str(int(overalloc_key)-10000)
+                else:
+                    overalloc_key=str(int(overalloc_key)+100) 
+                overalloc_dict[overalloc_key]=1       
+                # hash_func_key=hash_mapping_dict[line.split(" ")[4]]
+                hash_func_key=line.split(" ")[4]
+                
+                model_error_key=line.split(" ")[-1]
+                model_num_key=line.split(" ")[-2]
+                config_key=scheme_key+";"+bucket_size_key+";"+overalloc_key
+
+                if "rmi" in hash_func_key :
+                    if int(model_num_key)<10:
+                        hash_func_key="RMIHash"
+                    else:
+                        hash_func_key="RMIHash"
+
+                if "radix_spline" in hash_func_key:
+                    if int(model_error_key)<5000:
+                        hash_func_key="RadixSplineHash"
+                        hash_func_key="RMIHash"
+                    else:
+                        hash_func_key="RadixSplineHash"  
+                        hash_func_key="RMIHash"
+
+                if "RMIHash" in hash_func_key :
+                    if int(model_num_key)<10:
+                        hash_func_key="RMIHash"
+                    else:
+                        hash_func_key="RMIHash"
+
+                if "RadixSpline" in hash_func_key:
+                    if int(model_error_key)<5000:
+                        hash_func_key="RadixSplineHash"
+                        hash_func_key="RMIHash"
+                    else:
+                        hash_func_key="RadixSplineHash"               
+                        hash_func_key="RMIHash"
+
+                scheme_dict[scheme_key]=1
+                
+                # print(line)
+                # print(config_key)
+
+                continue
+            if "Insert Latency" in line: 
+                temp_str=line.split(" ")[-2]
+                # temp_str=temp_str.replace(",","")   
+                cpu_time_key=float(temp_str)
+                continue
+
+            if "PointProbe" in line:   
+                succ_query_key=line.split(":")[-1]
+                succ_query_key=succ_query_key[:-1]
+                succ_query_dict[succ_query_key]=1
+
+                dataset_key=line.split(":")[-3]
+                dataset_dict[dataset_key]=1
+
+                config_key=scheme_key+";"+bucket_size_key+";"+overalloc_key
+                config_dict[config_key]=1 
+                instance_key=scheme_key+";"+bucket_size_key+";"+overalloc_key+";"+dataset_key+";"+hash_func_key+";"+succ_query_key
+                if instance_key in instance_dict.keys():
+                    instance_dict[instance_key].append(cpu_time_key)
+                else:
+                    instance_dict[instance_key]=[]   
+                    instance_dict[instance_key].append(cpu_time_key)             
+                continue
+
+    
+
+    for scheme_key in scheme_dict.keys():
+        for dataset_key in dataset_dict.keys():
+
+            done_dict={}           
+
+            plt.figure(figsize=(14,12))
+
+            font = {'family' : 'normal',
+                'weight' : 'bold',
+                'size'   : 20}
+
+            matplotlib.rc('font', **font)
+            color_list=['blue','green','red',"orange","black"] 
+
+           
+            
+            for temp_inst_keys in instance_dict.keys():
+
+                # while(temp_inst_keys[-1]!=";"):
+                #     temp_inst_keys=temp_inst_keys[:-1]
+
+                if temp_inst_keys in done_dict.keys():
+                    continue
+                # if ";1;100" not in temp_inst_keys and "Cuckoo" not in temp_inst_keys and "MWHC" not in temp_inst_keys:
+                #     continue    
+
+                # if "Cuckoo"  in temp_inst_keys and ";4;15" not in temp_inst_keys:
+                #     continue    
+
+                # if "MWHC" not in temp_inst_keys:
+                #     continue    
+
+                split_key_here=temp_inst_keys.split(";")
+
+                if 8==int(split_key_here[1]):
+                    continue
+
+                # if "Radix" in temp_inst_keys:
+                #     continue
+
+                if scheme_key not in temp_inst_keys:
+                    continue
+                if dataset_key not in temp_inst_keys:
+                    continue
+
+                print("Here in the loop: ")    
+
+                curr_inst_key=temp_inst_keys
+                done_dict[curr_inst_key]=1
+
+                latency_list=[]
+                over_alloc_list=list(overalloc_dict.keys())
+                if "MWHC" in curr_inst_key:
+                    over_alloc_list=[110,120]
+                else:
+                    if "Chained" in curr_inst_key:    
+                        over_alloc_list=[50,67,80,100,134,200,400]
+                    else:
+                        if "Linear" in curr_inst_key:
+                            over_alloc_list=[134,154,182,222, 285,400 ]
+                        else:
+                            over_alloc_list=[134,125,117,111,105]  
+                # print(succ_key_list)
+                for i in range(0,len(over_alloc_list)):
+                    
+                    over_alloc_list[i]=int(over_alloc_list[i])
+                over_alloc_list.sort()
+
+                # for temp_iter in range(0,len(over_alloc_list)):
+                #     if over_alloc_list[temp_iter]<=100:
+                #         over_alloc_list[temp_iter]=150
+
+
+                for overalloc_key in over_alloc_list:
+
+
+                    split_key=curr_inst_key.split(";")
+                    # label_key=split_key[4]+";"+split_key[1]+";"+split_key[2]   
+                    
+                    # if overalloc_key<100:
+                    #     temp_key=split_key[0]+";"+split_key[1]+";"+str(200)
+                    #     temp_key+=";"+split_key[3]+";"+split_key[4]+";"+split_key[5]
+                    # else:
+                    temp_key=split_key[0]+";"+split_key[1]+";"+str(overalloc_key)
+                    temp_key+=";"+split_key[3]+";"+split_key[4]+";"+split_key[5]
+
+                    # if("MWHC" in curr_inst_key):
+                    #     temp_key=curr_inst_key+"100"
+
+                    # print("compare",curr_inst_key,temp_key)
+                    print("temp key",temp_key," curr key: ",curr_inst_key)
+
+                    done_dict[temp_key]=1
+
+                    # print(temp_key,instance_dict[temp_key])
+                    if temp_key not in instance_dict.keys():
+                        latency_list.append(1000.0/40000)
+                    else:    
+                        latency_list.append(1000.0/min(instance_dict[temp_key]))
+
+                split_key=curr_inst_key.split(";")
+                label_key=split_key[4] 
+
+                print(split_key) 
+
+                load_factor=[]
+
+                for load_id in range(0,len(over_alloc_list)):
+                    load_factor.append(10000.00/over_alloc_list[load_id])
+
+                for load_id in range(0,len(over_alloc_list)):
+                    load_factor[load_id]=int(load_factor[load_id])    
+
+                plt.plot(load_factor,latency_list,marker="o",markersize=10, lw=4.5, label=label_key, color=hash_color_dict[split_key[4]])   
+                
+
+           
+
+             
+            plt.xlabel('Load Factor',fontsize=20,weight='bold')
+            plt.legend(fontsize=15)
+            #plt.xlim(0.9, 100000)
+            # plt.xlabel( _metric + ' ' + subopt_type)
+            # plt.yscale('log')
+            plt.ylabel('Update Throughput(in Mops)',fontsize=20,weight='bold')
+            # plt.ylabel('95th Percentile Suboptimality')
+            plt.ylim(0, 25)
+            # plt.ylim(0.00005,1.5)
+            plt.yticks(fontsize=36,weight='bold')
+            plt.xticks(fontsize=36,weight='bold')
+            # template_name=all_QTs[0].split('/')[-1]
+            savefilename = "expt_4_"+scheme_key+"_"+dataset_key+'.png'
+            # savepath = path.join(base_path, 'charts/' + savefilename)
+            # plt.title("Geometric mean Suboptimality on a sequence of queries")
+            # plt.title("Tail Suboptimality on a sequence of queries")
+            plt.tight_layout()
+            plt.savefig("figures/"+savefilename)
+            plt.close()
+            plt.clf()
+ 
+
+
+def expt_5():
+    fig = plt.figure()
+    ax = fig.add_axes([0,0,1,1])
+    # langs = ['C', 'C++', 'Java', 'Python', 'PHP']
+    # students = [23,17,35,29,12]
+    # ax = fig.add_axes([0,0,1,1])
+    langs = ['MURMUR', 'MultPrime64', 'XXHash', 'AquaHash','FibonacciPrime64', 'rmi_1','rmi_10','rmi_100','rmi_1000','rmi_10000','rmi_100000','rmi_1000000']
+    students = [10.5,9.36051,11.6,11.12,9.3,8.02,8.4,8.5,8.2,9,11.2,22]
+    # for i in range(0,len(students)):
+    #     students[i]=1000.0/students[i]
+    # ax.bar(langs,students)
+
+    fig = plt.figure(figsize = (10, 5))
+ 
+    # creating the bar plot
+    plt.bar(langs, students, color ='maroon', width = 0.4)
+    
+    plt.xlabel("Courses offered")
+    plt.ylabel("No. of students enrolled")
+    plt.title("Students enrolled in different courses")
+    # plt.show()
+    
+    # plt.xlabel('OverAlloc',fontsize=20,weight='bold')
+    # plt.legend(fontsize=15)
+    #plt.xlim(0.9, 100000)
+    # plt.xlabel( _metric + ' ' + subopt_type)
+    # plt.yscale('log')
+    # plt.ylabel('Hash Computation Throughput(in Mops)',fontsize=20,weight='bold')
+    # plt.tight_layout()
+    plt.savefig("figures/expt_5_hash_compute.png")
+    plt.close()
+    plt.clf()
+
+# {
+# BitMWHC=55.2
+# MWHC=94.2
+# CompressedMWHC=125
+# CompactedMWHC=225
+# CompactTrie=1796
+# SimpleHollowTrie=704
+# HollowTrie=1118
+# FST=272
+# }
+
+
+
 
 # probe_latencies()
 # expt_1()
@@ -1694,6 +2011,8 @@ def expt_3():
 # expt_2_chained()
 # expt_2_cuckoo()
 expt_3()
+expt_4()
+# expt_5()
 
 # collision_expt_1_gaps()
 # collision_expt_2_variance()

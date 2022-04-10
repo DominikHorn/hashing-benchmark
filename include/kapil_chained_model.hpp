@@ -25,6 +25,8 @@ class KapilChainedModelHashTable {
      Model model;
     //   const HashFn hashfn;  
 
+  std::vector<Key> key_vec;  
+
   struct Bucket {
     std::array<Key, BucketSize> keys;
     std::array<Payload, BucketSize> payloads;
@@ -133,6 +135,11 @@ class KapilChainedModelHashTable {
 
     std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<model.name()<<" Model Chained Balanced 0 "<<model.model_count()<<" 0"<<std::endl<<std::endl;
 
+    key_vec.resize(keys.size(),0);
+    for(int i=0;i<keys.size();i++)
+    {
+      key_vec.push_back(keys[i]);
+    }
     // insert all keys according to model prediction.
     // since we sorted above, this will permit further
     // optimizations during lookup etc & enable implementing

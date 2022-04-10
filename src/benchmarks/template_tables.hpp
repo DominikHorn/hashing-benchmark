@@ -805,36 +805,36 @@ static void PointProbeCuckoo(benchmark::State& state) {
   }
 
 
-  if (previous_signature != signature)
-  {
-    std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
-    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
-    table->print_data_statistics();
+  // if (previous_signature != signature)
+  // {
+  //   std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
+  //   std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+  //   table->print_data_statistics();
 
    
 
-     auto start = std::chrono::high_resolution_clock::now(); 
+  //    auto start = std::chrono::high_resolution_clock::now(); 
 
-    for(int itr=0;itr<probing_set.size()*0.01;itr++)
-    {
-      const auto searched = probing_set[itr%probing_set.size()];
-      // i++;
-      // table->hash_val(searched);
-      // Lower bound lookup
-     table->insert(searched,searched);  // TODO: does this generate a 'call' op? =>
-                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+  //   for(int itr=0;itr<probing_set.size()*0.01;itr++)
+  //   {
+  //     const auto searched = probing_set[itr%probing_set.size()];
+  //     // i++;
+  //     // table->hash_val(searched);
+  //     // Lower bound lookup
+  //    table->insert(searched,searched);  // TODO: does this generate a 'call' op? =>
+  //                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
       
       
-      // __sync_synchronize();
-    }
+  //     // __sync_synchronize();
+  //   }
 
-     auto stop = std::chrono::high_resolution_clock::now(); 
-    // auto duration = duration_cast<milliseconds>(stop - start); 
-    auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
-    std::cout << "Insert Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
+  //    auto stop = std::chrono::high_resolution_clock::now(); 
+  //   // auto duration = duration_cast<milliseconds>(stop - start); 
+  //   auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
+  //   std::cout << "Insert Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
 
   
-  }
+  // }
 
 
   // std::cout<<"signature swap"<<std::endl;
@@ -854,7 +854,7 @@ static void PointProbeCuckoo(benchmark::State& state) {
                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     benchmark::DoNotOptimize(it);
-    __sync_synchronize();
+    // __sync_synchronize();
     // full_mem_barrier;
   }
 

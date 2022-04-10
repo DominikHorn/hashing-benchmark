@@ -25,7 +25,7 @@ namespace kapilmodelhashtable {
     * Place entry in bucket with more available space.
     * If both are full, kick from either bucket with 50% chance
     */
-   struct KapilModelBalancedKicking {
+   struct KapilExoticBalancedKicking {
      private:
       std::mt19937 rand_;
 
@@ -71,7 +71,7 @@ namespace kapilmodelhashtable {
     * @tparam Bias chance that element is kicked from second bucket in percent (i.e., value of 10 -> 10%)
     */
    template<uint8_t Bias>
-   struct KapilModelBiasedKicking {
+   struct KapilExoticBiasedKicking {
      private:
       std::mt19937 rand_;
       double chance = static_cast<double>(Bias) / 100.0;
@@ -116,18 +116,18 @@ namespace kapilmodelhashtable {
     * else if secondary bucket has space, place entry in there
     * else kick a random entry from the primary bucket and place entry in primary bucket
     */
-   using KapilModelUnbiasedKicking = KapilModelBiasedKicking<0>;
+   using KapilExoticUnbiasedKicking = KapilExoticBiasedKicking<0>;
 
-   template<class Key, class Payload, size_t BucketSize, size_t OverAlloc, class Model , class HashFn2, 
+   template<class Key, class Payload, size_t BucketSize, size_t OverAlloc, class MMPHF , class HashFn2, 
     class KickingFn, Key Sentinel = std::numeric_limits<Key>::max()>
-   class KapilCuckooModelHashTable {
+   class KapilCuckooExoticHashTable {
      public:
       using KeyType = Key;
       using PayloadType = Payload;
 
      private:
       const size_t MaxKickCycleLength;
-      Model model;
+      MMPHF mmphf;
       const HashFn2 hashfn2;
       // const ReductionFn1 reductionfn1;
       // const ReductionFn2 reductionfn2;
@@ -147,7 +147,7 @@ namespace kapilmodelhashtable {
       std::mt19937 rand_; // RNG for moving items around
 
      public:
-      KapilCuckooModelHashTable(std::vector<std::pair<Key, Payload>> data)
+      KapilCuckooExoticHashTable(std::vector<std::pair<Key, Payload>> data)
          : MaxKickCycleLength(50000) {
 
             if (OverAlloc<10000)
@@ -168,7 +168,7 @@ namespace kapilmodelhashtable {
                            [](const auto& p) { return p.first; });
 
             // train model on sorted data
-            model.train(keys.begin(), keys.end(), buckets.size());
+            mmphf.construct(keys.begin(), keys.end());
 
             // std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<model.name()<<" Model Cuckoo Balanced 0 "<<model.model_count()<<" 0"<<std::endl<<std::endl;
 
@@ -181,13 +181,13 @@ namespace kapilmodelhashtable {
            }
 
        int lookup(const Key& key) const {
-         const auto h1 = model(key);
+         const auto h1 = mmphf(key);
          const auto i1 = h1%buckets.size();
 
          const Bucket* b1 = &buckets[i1];
          for (size_t i = 0; i < BucketSize; i++) {
             if (b1->slots[i].key == key) {
-               // Payload payload = b1->slots[i].payload;
+               Payload payload = b1->slots[i].payload;
                return 1;
                // return std::make_optional(payload);
             }
@@ -201,7 +201,7 @@ namespace kapilmodelhashtable {
          const Bucket* b2 = &buckets[i2];
          for (size_t i = 0; i < BucketSize; i++) {
             if (b2->slots[i].key == key) {
-               // Payload payload = b2->slots[i].payload;
+               Payload payload = b2->slots[i].payload;
                return 1;
                // return std::make_optional(payload);
             }
@@ -230,7 +230,7 @@ namespace kapilmodelhashtable {
             break;
             // return std::make_optional(payload);
          }
-         size_t directory_ind = model(b1->slots[i].key)%(buckets.size());
+         size_t directory_ind = mmphf(b1->slots[i].key)%(buckets.size());
          if(directory_ind==buck_ind)
           {
              primary_key_cnt++;
@@ -250,7 +250,7 @@ namespace kapilmodelhashtable {
          size_t primary_key_cnt = 0;
 
          for (const auto& key : dataset) {
-            const auto h1 = model(key);
+            const auto h1 = mmphf(key);
             const auto i1 = h1%buckets.size();
 
             const Bucket* b1 = &buckets[i1];
@@ -278,7 +278,7 @@ namespace kapilmodelhashtable {
       }
 
       static forceinline std::string hash_name() {
-         return Model::name() + "-" + HashFn2::name();
+         return MMPHF::name() + "-" + HashFn2::name();
       }
 
       // static forceinline std::string reducer_name() {
@@ -297,9 +297,9 @@ namespace kapilmodelhashtable {
       }
 
       //kapil_change: assuming model size to be zero  
-      size_t model_byte_size() const { return 0; }
+      size_t mmphf_byte_size() const { return 0; }
 
-      size_t byte_size() const { return model_byte_size() + directory_byte_size(); }
+      size_t byte_size() const { return mmphf_byte_size() + directory_byte_size(); }
 
       // static constexpr forceinline size_t directory_address_count(const size_t& buckets.size()) {
       //    return (buckets.size() + BucketSize - 1) / BucketSize;
@@ -319,7 +319,7 @@ namespace kapilmodelhashtable {
             throw std::runtime_error("maximum kick cycle length (" + std::to_string(MaxKickCycleLength) + ") reached");
          }
 
-         const auto h1 = model(key);
+         const auto h1 = mmphf(key);
          const auto i1 = h1%buckets.size();
          auto i2 = (hashfn2(key))%buckets.size();
 
@@ -357,7 +357,7 @@ namespace kapilmodelhashtable {
 
    //   template<class Payload, class HashFn1, class HashFn2, class ReductionFn1, class ReductionFn2, class KickingFn,
    //            uint32_t Sentinel>
-   //   class KapilCuckooModelHashTable<uint32_t, Payload, 8, HashFn1, HashFn2, ReductionFn1, ReductionFn2, KickingFn, Sentinel> {
+   //   class KapilCuckoommphfHashTable<uint32_t, Payload, 8, HashFn1, HashFn2, ReductionFn1, ReductionFn2, KickingFn, Sentinel> {
    //     public:
    //      typedef uint32_t KeyType;
    //      typedef Payload PayloadType;
