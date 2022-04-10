@@ -122,7 +122,34 @@ class KapilChainedHashTable {
     // since we sorted above, this will permit further
     // optimizations during lookup etc & enable implementing
     // efficient iterators in the first place.
-    for (const auto& d : data) insert(d.first, d.second);
+    // for (const auto& d : data)
+    // {
+    //   insert(d.first, d.second);
+    // }
+
+    std::random_shuffle(data.begin(), data.end());
+    uint64_t insert_count=1000000;
+
+    for(uint64_t i=0;i<data.size()-insert_count;i++)
+    {
+      insert(data[i].first,data[i].second);
+    }
+
+ 
+   
+    auto start = std::chrono::high_resolution_clock::now(); 
+
+    for(uint64_t i=data.size()-insert_count;i<data.size();i++)
+    {
+      insert(data[i].first,data[i].second);
+    }
+
+     auto stop = std::chrono::high_resolution_clock::now(); 
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
+    std::cout<< std::endl << "Insert Latency is: "<< duration.count()*1.00/insert_count << " nanoseconds" << std::endl;
+
+
   }
 
   class Iterator {

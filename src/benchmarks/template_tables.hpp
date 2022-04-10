@@ -350,6 +350,13 @@ static void PointProbe(benchmark::State& state) {
       std::string(typeid(Table).name()) + "_" + std::to_string(RangeSize) +
       "_" + std::to_string(dataset_size) + "_" + dataset::name(did) + "_" +
       dataset::name(probing_dist);
+
+  if(previous_signature!=signature) 
+  {
+    std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
+    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+  }
+     
   if (previous_signature != signature) {
     std::cout << "performing setup... ";
     auto start = std::chrono::steady_clock::now();
@@ -460,41 +467,41 @@ static void PointProbe(benchmark::State& state) {
   
   // }
 
-  if (previous_signature != signature)
-  {
-    std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
-    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
-    // table->print_data_statistics();
+  // if (previous_signature != signature)
+  // {
+  //   std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
+  //   std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+  //   // table->print_data_statistics();
 
-    uint64_t total_sum=0;
+  //   uint64_t total_sum=0;
 
-     auto start = std::chrono::high_resolution_clock::now(); 
+  //    auto start = std::chrono::high_resolution_clock::now(); 
 
-    for(int itr=0;itr<probing_set.size()*0.01;itr++)
-    {
-      const auto searched = probing_set[itr%probing_set.size()];
-      // i++;
+  //   for(int itr=0;itr<probing_set.size()*0.01;itr++)
+  //   {
+  //     const auto searched = probing_set[itr%probing_set.size()];
+  //     // i++;
 
-      // total_sum+=table->hash_val(searched); 
+  //     // total_sum+=table->hash_val(searched); 
 
-      // Lower bound lookup
-     total_sum+=table->operator[](searched);  // TODO: does this generate a 'call' op? =>
-                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+  //     // Lower bound lookup
+  //    total_sum+=table->operator[](searched);  // TODO: does this generate a 'call' op? =>
+  //                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
       
-      // total_sum+=table->rmi_range_query(searched,1); 
-      // total_sum+=table->range_query(searched,1); 
-      // __sync_synchronize();
-    }
+  //     // total_sum+=table->rmi_range_query(searched,1); 
+  //     // total_sum+=table->range_query(searched,1); 
+  //     // __sync_synchronize();
+  //   }
 
-     auto stop = std::chrono::high_resolution_clock::now(); 
-    // auto duration = duration_cast<milliseconds>(stop - start); 
-    auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
-    // std::cout << "HashComputation Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
-    std::cout << "Probe Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
-     std::cout <<total_sum<<std::endl;
+  //    auto stop = std::chrono::high_resolution_clock::now(); 
+  //   // auto duration = duration_cast<milliseconds>(stop - start); 
+  //   auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
+  //   // std::cout << "HashComputation Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
+  //   std::cout << "Probe Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
+  //    std::cout <<total_sum<<std::endl;
    
 
-  }
+  // }
 
   // std::cout<<"signature swap"<<std::endl;
 
@@ -695,7 +702,7 @@ using namespace masters_thesis;
   KAPILBM(KapilChainedHashTable##BucketSize##OverAlloc##HashFn);
 
 #define BenchmarKapilChainedExotic(BucketSize,OverAlloc,MMPHF)                           \
-  using KapilChainedExoticHashTable##BucketSize##MMPHF = KapilChainedExoticHashTable<Key, Payload, BucketSize, MMPHF>; \
+  using KapilChainedExoticHashTable##BucketSize##MMPHF = KapilChainedExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF>; \
   KAPILBM(KapilChainedExoticHashTable##BucketSize##MMPHF);
 
 #define BenchmarKapilChainedModel(BucketSize,OverAlloc,Model)                           \
@@ -716,7 +723,7 @@ const std::vector<std::int64_t> overalloc_chain{10,25,50,100};
   KAPILBM(KapilLinearHashTable##BucketSize##OverAlloc##HashFn);
 
 #define BenchmarKapilLinearExotic(BucketSize,OverAlloc,MMPHF)                           \
-  using KapilLinearExoticHashTable##BucketSize##MMPHF = KapilLinearExoticHashTable<Key, Payload, BucketSize, MMPHF>; \
+  using KapilLinearExoticHashTable##BucketSize##MMPHF = KapilLinearExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF>; \
   KAPILBM(KapilLinearExoticHashTable##BucketSize##MMPHF);
 
 #define BenchmarKapilLinearModel(BucketSize,OverAlloc,Model)                           \
@@ -891,4 +898,8 @@ static void PointProbeCuckoo(benchmark::State& state) {
   using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilmodelhashtable::KapilCuckooModelHashTable<Key, Payload, BucketSize,OverAlloc, Model, MURMUR1,KickingStrat1>; \
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
+#define BenchmarKapilCuckooExotic(BucketSize,OverAlloc,MMPHF,KickingStrat1)                           \
+  using MURMUR1 = hashing::MurmurFinalizer<Key>; \
+  using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilmodelhashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
+  KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 

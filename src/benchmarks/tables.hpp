@@ -350,6 +350,13 @@ static void PointProbe(benchmark::State& state) {
       std::string(typeid(Table).name()) + "_" + std::to_string(RangeSize) +
       "_" + std::to_string(dataset_size) + "_" + dataset::name(did) + "_" +
       dataset::name(probing_dist);
+
+  if(previous_signature!=signature) 
+  {
+    std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
+    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+  }
+     
   if (previous_signature != signature) {
     std::cout << "performing setup... ";
     auto start = std::chrono::steady_clock::now();
@@ -695,7 +702,7 @@ using namespace masters_thesis;
   KAPILBM(KapilChainedHashTable##BucketSize##OverAlloc##HashFn);
 
 #define BenchmarKapilChainedExotic(BucketSize,OverAlloc,MMPHF)                           \
-  using KapilChainedExoticHashTable##BucketSize##MMPHF = KapilChainedExoticHashTable<Key, Payload, BucketSize, MMPHF>; \
+  using KapilChainedExoticHashTable##BucketSize##MMPHF = KapilChainedExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF>; \
   KAPILBM(KapilChainedExoticHashTable##BucketSize##MMPHF);
 
 #define BenchmarKapilChainedModel(BucketSize,OverAlloc,Model)                           \
@@ -716,7 +723,7 @@ const std::vector<std::int64_t> overalloc_chain{10,25,50,100};
   KAPILBM(KapilLinearHashTable##BucketSize##OverAlloc##HashFn);
 
 #define BenchmarKapilLinearExotic(BucketSize,OverAlloc,MMPHF)                           \
-  using KapilLinearExoticHashTable##BucketSize##MMPHF = KapilLinearExoticHashTable<Key, Payload, BucketSize, MMPHF>; \
+  using KapilLinearExoticHashTable##BucketSize##MMPHF = KapilLinearExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF>; \
   KAPILBM(KapilLinearExoticHashTable##BucketSize##MMPHF);
 
 #define BenchmarKapilLinearModel(BucketSize,OverAlloc,Model)                           \
@@ -891,10 +898,14 @@ static void PointProbeCuckoo(benchmark::State& state) {
   using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilmodelhashtable::KapilCuckooModelHashTable<Key, Payload, BucketSize,OverAlloc, Model, MURMUR1,KickingStrat1>; \
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
+#define BenchmarKapilCuckooExotic(BucketSize,OverAlloc,MMPHF,KickingStrat1)                           \
+  using MURMUR1 = hashing::MurmurFinalizer<Key>; \
+  using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilmodelhashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
+  KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
 using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000>;
 using KickingStrat = kapilmodelhashtable::KapilModelBiasedKicking<5>;
-BenchmarKapilCuckooModel(4,20,RMIHash,KickingStrat);
+BenchmarKapilCuckooModel(4,100,RMIHash,KickingStrat);
 
 
 
