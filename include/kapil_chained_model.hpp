@@ -139,11 +139,15 @@ class KapilChainedModelHashTable {
 
     std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<model.name()<<" Model Chained Balanced 0 "<<model.model_count()<<" 0"<<std::endl<<std::endl;
 
-    key_vec.resize(keys.size(),0);
+    key_vec.resize(2*keys.size(),0);
+    std::sort(keys.begin(),keys.end());
     for(int i=0;i<keys.size();i++)
     {
-      key_vec.push_back(keys[i]);
+      key_vec[2*i]=keys[i];
+      key_vec[2*i+1]=1;
     }
+
+    // std::cout<<key_vec.size()<<std::endl;
     // insert all keys according to model prediction.
     // since we sorted above, this will permit further
     // optimizations during lookup etc & enable implementing
@@ -242,6 +246,167 @@ class KapilChainedModelHashTable {
 
     friend class KapilChainedModelHashTable;
   };
+
+
+  uint64_t rmi_range_query(uint64_t low_key,uint64_t high_key)
+  {
+    // std::cout<<"low high: "<<low_key<<" "<<high_key<<std::endl;
+    uint64_t ans=0;
+    uint64_t index=(model(low_key)*1.00/buckets.size())*(key_vec.size()/2);
+    index=2*index;
+
+    // std::cout<<"index: "<<index<<" curr val: "<<key_vec[index]<<std::endl;
+
+    if(key_vec[index]<low_key)
+    {
+      while(key_vec[index]<low_key)
+      {
+        index+=2;
+      }
+    }
+    else
+    {
+      while(key_vec[index-2]>low_key)
+      {
+        index-=2;
+      }
+    }
+
+    // std::cout<<"index adjusted: "<<index<<" "<<std::endl;
+
+    // int scan_keys=0;
+    
+    while(true)
+    {
+      if(key_vec[index]>high_key)
+      {
+        break;
+      }
+      else
+      {
+        ans+=key_vec[index+1];
+        index+=2;
+      }
+      // scan_keys+=2;
+    }
+
+    // std::cout<<scan_keys<<std::endl;
+
+    return  ans;
+
+  }
+
+    uint64_t rmi_point_query(uint64_t low_key)
+  {
+    // std::cout<<"low high: "<<low_key<<" "<<high_key<<std::endl;
+    uint64_t ans=0;
+    uint64_t index=(model(low_key)*1.00/buckets.size())*(key_vec.size()/2);
+    index=2*index;
+
+    // std::cout<<"index: "<<index<<" curr val: "<<key_vec[index]<<std::endl;
+
+    if(key_vec[index]<low_key)
+    {
+      while(key_vec[index]<low_key)
+      {
+        index+=2;
+      }
+    }
+    else
+    {
+      while(key_vec[index-2]>low_key)
+      {
+        index-=2;
+      }
+    }
+
+    // std::cout<<"index adjusted: "<<index<<" "<<std::endl;
+
+    // int scan_keys=0;
+
+    if(key_vec[index]==low_key)
+    {
+      return 1;
+    }
+    else
+    {
+      return 0;
+    }
+    
+
+    // std::cout<<scan_keys<<std::endl;
+
+    return  ans;
+
+  }
+
+
+
+  uint64_t hash_range_query(uint64_t low_key,uint64_t high_key)
+  {
+    uint64_t ans=0;
+    uint64_t directory_ind=model(low_key);
+
+    int exit_check=0;
+
+    while(true)
+    {
+        auto bucket = &buckets[directory_ind];
+      
+        while (bucket != nullptr) 
+        {
+            for (size_t i = 0; i < BucketSize; i++) 
+            {
+                const auto& current_key = bucket->keys[i];
+                if (current_key == Sentinel) break;
+                if (current_key >= low_key && current_key <= high_key) 
+                {
+                  ans+=bucket->payloads[0];
+                  // std::cout<<"bucket count: "<<bucket_count<<std::endl;
+                  // return {directory_ind, i, bucket, *this};
+                }
+                if(current_key>high_key && current_key!=Sentinel)
+                {
+                  exit_check=1;
+                  break;
+                }
+            }
+            // std::cout<<"bucket: "<<directory_ind<<" "<<bucket->keys[0]<<" low: "<<low_key<<" high: "<<high_key<<std::endl;
+            // const auto& current_key = bucket->keys[0];
+            // if (current_key >= low_key && current_key <= high_key) 
+            // {
+            //   ans+=bucket->payloads[0];
+            // }
+
+            // if(current_key>high_key && current_key!=Sentinel)
+            // {
+            //   exit_check=1;
+            //   break;
+            // }
+
+            if(exit_check==1)
+            {
+              break;
+            }
+            
+            // bucket_count++;
+            bucket = bucket->next;
+        //   prefetch_next(bucket);
+        }
+
+        if(exit_check==1)
+        {
+          break;
+        }
+
+        directory_ind++;
+
+    }
+
+    return  ans;
+
+  }
+
 
 
    int useless_func()
@@ -402,87 +567,11 @@ class KapilChainedModelHashTable {
   forceinline int operator[](const Key& key) const {
     assert(key != Sentinel);
 
-    // will become NOOP at compile time if ManualPrefetch == false
-    // const auto prefetch_next = [](const auto& bucket) {
-    //   if constexpr (ManualPrefetch)
-    //     // manually prefetch next if != nullptr;
-    //     if (bucket->next != nullptr) prefetch(bucket->next, 0, 0);
-    // };
 
     // obtain directory bucket
     const size_t directory_ind = model(key);
     auto bucket = &buckets[directory_ind];
 
-
-    // std::cout<<"key: "<<key<<" index: "<<directory_ind<<std::endl;
-
-    // return {directory_ind, 0, bucket, *this};
-
-    // prefetch_next(bucket);
-
-    // since BucketSize is a template arg and therefore compile-time static,
-    // compiler will recognize that all branches of this if/else but one can
-    // be eliminated during optimization, therefore making this a 0 runtime
-    // cost specialization
-// #ifdef __AVX512F__
-//     if constexpr (BucketSize == 8 && sizeof(Key) == 8) {
-//       while (bucket != nullptr) {
-//         auto vkey = _mm512_set1_epi64(key);
-//         auto vbucket = _mm512_loadu_si512((const __m512i*)&bucket->keys);
-//         auto mask = _mm512_cmpeq_epi64_mask(vkey, vbucket);
-
-//         if (mask != 0) {
-//           size_t index = __builtin_ctz(mask);
-//           assert(index >= 0);
-//           assert(index < BucketSize);
-//           return {directory_ind, index, bucket, *this};
-//         }
-
-//         bucket = bucket->next;
-//         prefetch_next(bucket);
-//       }
-
-//       return end();
-//     }
-// #endif
-// #ifdef __AVX2__
-//     if constexpr (BucketSize == 8 && sizeof(Key) == 4) {
-//       while (bucket != nullptr) {
-//         auto vkey = _mm256_set1_epi32(key);
-//         auto vbucket = _mm256_loadu_si256((const __m256i*)&bucket->keys);
-//         auto cmp = _mm256_cmpeq_epi32(vkey, vbucket);
-//         int mask = _mm256_movemask_epi8(cmp);
-//         if (mask != 0) {
-//           size_t index = __builtin_ctz(mask) >> 2;
-//           assert(index >= 0);
-//           assert(index < BucketSize);
-//           return {directory_ind, index, bucket, *this};
-//         }
-
-//         bucket = bucket->next;
-//         prefetch_next(bucket);
-//       }
-//       return end();
-//     }
-//     if constexpr (BucketSize == 4 && sizeof(Key) == 8) {
-//       while (bucket != nullptr) {
-//         auto vkey = _mm256_set1_epi64x(key);
-//         auto vbucket = _mm256_loadu_si256((const __m256i*)&bucket->keys);
-//         auto cmp = _mm256_cmpeq_epi64(vkey, vbucket);
-//         int mask = _mm256_movemask_epi8(cmp);
-//         if (mask != 0) {
-//           size_t index = __builtin_ctz(mask) >> 3;
-//           assert(index >= 0);
-//           assert(index < BucketSize);
-//           return {directory_ind, index, bucket, *this};
-//         }
-
-//         bucket = bucket->next;
-//         prefetch_next(bucket);
-//       }
-//       return end();
-//     }
-// #endif
 
     // Generic non-SIMD algorithm. Note that a smart compiler might vectorize
     // this nested loop construction anyways.

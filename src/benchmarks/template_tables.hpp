@@ -52,6 +52,7 @@ const std::vector<std::int64_t> probe_distributions{
 
 const std::vector<std::int64_t> dataset_sizes{100000000};
 const std::vector<std::int64_t> succ_probability{100};
+const std::vector<std::int64_t> point_query_prop{0,10,20,30,40,50,60,70,80,90,100};
 const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
@@ -336,7 +337,8 @@ static void PointProbe(benchmark::State& state) {
   const auto probing_dist =
       static_cast<dataset::ProbingDistribution>(state.range(2));
    const auto succ_probability =
-      static_cast<size_t>(state.range(3));    
+      static_cast<size_t>(state.range(3)); 
+         
 
   // google benchmark will run a benchmark function multiple times
   // to determine, amongst other things, the iteration count for
@@ -393,7 +395,99 @@ static void PointProbe(benchmark::State& state) {
     std::cout << "succeeded in " << std::setw(9) << diff.count() << " seconds"
               << std::endl;
     
+    std::sort(data.begin(), data.end(),[](const auto& a, const auto& b) { return a.first < b.first; });
+    std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+    // table->print_data_statistics();
+
+    Table* table = (Table*)prev_table;
+
+    uint64_t total_sum=0;
+    uint64_t query_count=100000;
+
+    auto start_3 = std::chrono::high_resolution_clock::now(); 
+
+    for(int itr=0;itr<query_count;itr++)
+    {
+      // Lower bound lookup
+      // auto it = table->rmi_point_query(probing_set[2*itr]); 
+      auto it = table->rmi_point_query(probing_set[itr]);  // TODO: does this generate a 'call' op? =>
+                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+      total_sum+=it;
+      benchmark::DoNotOptimize(it);
+      // __sync_synchronize();
+    }
+
+    auto stop_3 = std::chrono::high_resolution_clock::now(); 
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration_3 = duration_cast<std::chrono::nanoseconds>(stop_3 - start_3); 
+    std::cout << "RMIPointQuery Latency is: "<< duration_3.count()*1.00/query_count << " nanoseconds" << std::endl;
+
+
+    std::random_device rd;
+    std::default_random_engine rng(rd());
+
+    std::uniform_int_distribution<> dist(10000, data.size() - 10000);
+    std::uniform_int_distribution<> dist2(5,10);
+
+    for(uint64_t query_id=0;query_id<query_count;)
+    {
+      uint64_t temp_index = dist(rng);
+      uint64_t rg_size = dist2(rng);
+      probing_set[2*query_id]=data[temp_index].first;
+      probing_set[2*query_id+1]=data[temp_index+rg_size].first;
+      query_id+=1;
+    }
+
     
+    auto start_2 = std::chrono::high_resolution_clock::now(); 
+
+    for(int itr=0;itr<query_count;itr++)
+    {
+      // const auto searched = probing_set[itr%probing_set.size()];
+      // i++;
+
+      // if(itr%10==0)
+      // {
+      //   std::cout<<itr<<std::endl;
+      // }
+
+      // Lower bound lookup
+      // auto it = table->rmi_point_query(probing_set[2*itr]); 
+      auto it = table->rmi_range_query(probing_set[2*itr],probing_set[2*itr+1]);  // TODO: does this generate a 'call' op? =>
+                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+      total_sum+=it;
+      benchmark::DoNotOptimize(it);
+      // __sync_synchronize();
+    }
+
+    auto stop_2 = std::chrono::high_resolution_clock::now(); 
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration_2 = duration_cast<std::chrono::nanoseconds>(stop_2 - start_2); 
+    std::cout << "RMIRangeQuery Latency is: "<< duration_2.count()*1.00/query_count << " nanoseconds" << std::endl;
+
+    auto start_1 = std::chrono::high_resolution_clock::now(); 
+
+    for(int itr=0;itr<query_count;itr++)
+    {
+      // const auto searched = probing_set[itr%probing_set.size()];
+      // i++;
+
+      // Lower bound lookup
+      auto it = table->hash_range_query(probing_set[2*itr],probing_set[2*itr+1]);  // TODO: does this generate a 'call' op? =>
+                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+      total_sum+=it;
+      benchmark::DoNotOptimize(it);
+      // __sync_synchronize();
+    }
+
+    auto stop_1 = std::chrono::high_resolution_clock::now(); 
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration_1 = duration_cast<std::chrono::nanoseconds>(stop_1 - start_1); 
+    std::cout << "HashRangeQuery Latency is: "<< duration_1.count()*1.00/query_count << " nanoseconds" << std::endl;
+
+
+    std::cout<<"total sum:"<<total_sum<<std::endl;
+
 
   }
   
@@ -404,37 +498,6 @@ static void PointProbe(benchmark::State& state) {
 
   
 
-  // if (previous_signature != signature)
-  // {
-  //   std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
-  //   table->print_data_statistics();
-
-  //   uint64_t total_sum=0;
-
-  //    auto start = std::chrono::high_resolution_clock::now(); 
-
-  //   for(int itr=0;itr<probing_set.size()*0.1;itr++)
-  //   {
-  //     const auto searched = probing_set[itr%probing_set.size()];
-  //     // i++;
-
-  //     // Lower bound lookup
-  //     auto it = table->operator[](
-  //         searched);  // TODO: does this generate a 'call' op? =>
-  //                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
-  //     total_sum+=it;
-  //     benchmark::DoNotOptimize(it);
-  //     // __sync_synchronize();
-  //   }
-
-  //    auto stop = std::chrono::high_resolution_clock::now(); 
-  //   // auto duration = duration_cast<milliseconds>(stop - start); 
-  //   auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
-  //   std::cout << "Probe Latency is: "<< duration.count()*10.00/probing_set.size() << " nanoseconds" << std::endl;
-
-  //   std::cout<<"total sum:"<<total_sum<<std::endl;
-
-  // }
 
   // if (previous_signature != signature)
   // {
