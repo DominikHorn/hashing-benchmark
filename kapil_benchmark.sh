@@ -26,7 +26,7 @@
 # python3 kapil_python_edit_script.py 4 15 "MURMUR" "Traditional" "Cuckoo" "Biased" 90 0 0
 
 # python3 kapil_python_edit_script.py 1 50 "MURMUR" "Traditional" "Linear" "Balanced" 0 0 0
-
+# python3 kapil_python_edit_script.py 1 34 "RMIHash" "Traditional" "Linear" "Balanced" 0 100 1024
 # python3 kapil_python_edit_script.py 4 20 RMIHash "Model" "Cuckoo" "Biased" 5 1000 1024
 
 ## HASH Computation

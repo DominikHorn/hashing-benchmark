@@ -298,9 +298,9 @@ class KapilChainedModelHashTable {
 
     uint64_t rmi_point_query(uint64_t low_key)
   {
-    // std::cout<<"low high: "<<low_key<<" "<<high_key<<std::endl;
+    // std::cout<<"low high: "<<low_key<<" "<<std::endl;
     uint64_t ans=0;
-    uint64_t index=(model(low_key)*1.00/buckets.size())*(key_vec.size()/2);
+    uint64_t index=(model(low_key)*(key_vec.size()/2.00)/buckets.size());
     index=2*index;
 
     // std::cout<<"index: "<<index<<" curr val: "<<key_vec[index]<<std::endl;
@@ -320,7 +320,7 @@ class KapilChainedModelHashTable {
       }
     }
 
-    // std::cout<<"index adjusted: "<<index<<" "<<std::endl;
+    // std::cout<<"index adjusted: "<<index<<" "<<std::endl<<std::endl;
 
     // int scan_keys=0;
 
@@ -453,15 +453,15 @@ class KapilChainedModelHashTable {
 
     for(int i=0;i<gap.size();i++)
     {
-      int temp=ceil((gap[i]*5)-0.1);
-      temp=temp*20;
+      int temp=ceil((gap[i]*50)-0.1);
+      temp=temp*2;
       count_gap[temp]=0;
     }
 
     for(int i=0;i<gap.size();i++)
     {
-      int temp=ceil((gap[i]*5)-0.1);
-      temp=temp*20;
+      int temp=ceil((gap[i]*50)-0.1);
+      temp=temp*2;
       count_gap[temp]++;
     }
 
@@ -565,7 +565,7 @@ class KapilChainedModelHashTable {
    * @param key the key to search
    */
   forceinline int operator[](const Key& key) const {
-    assert(key != Sentinel);
+    // assert(key != Sentinel);
 
 
     // obtain directory bucket

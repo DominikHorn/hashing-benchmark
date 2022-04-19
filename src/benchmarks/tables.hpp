@@ -52,7 +52,9 @@ const std::vector<std::int64_t> probe_distributions{
 
 const std::vector<std::int64_t> dataset_sizes{100000000};
 const std::vector<std::int64_t> succ_probability{100};
-const std::vector<std::int64_t> point_query_prop{100,90,80,70,60,50,40,30,20,10,0};
+// const std::vector<std::int64_t> point_query_prop{100,90,80,70,60,50,40,30,20,10,0};
+const std::vector<std::int64_t> point_query_prop{0};
+const std::vector<std::int64_t> range_query_size{1,2,4,8,16,32,64,128,256,512,1024};
 const std::vector<std::int64_t> datasets{
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
@@ -339,7 +341,9 @@ static void PointProbe(benchmark::State& state) {
    const auto succ_probability =
       static_cast<size_t>(state.range(3)); 
     const auto point_query_prop =
-      static_cast<size_t>(state.range(4));    
+      static_cast<size_t>(state.range(4)); 
+    const auto range_query_size =
+      static_cast<size_t>(state.range(5));      
          
 
   // google benchmark will run a benchmark function multiple times
@@ -406,8 +410,10 @@ static void PointProbe(benchmark::State& state) {
     uint64_t total_sum=0;
     uint64_t query_count=100000;
 
+    // std::cout<<"Point Query Prop: "<<point_query_prop<<std::endl;
     std::cout<<"Point Query Prop: "<<point_query_prop<<std::endl;
 
+    std::cout<<"Range Query Size: "<<range_query_size<<std::endl;
     // auto start_3 = std::chrono::high_resolution_clock::now(); 
 
     // for(int itr=0;itr<query_count;itr++)
@@ -431,12 +437,13 @@ static void PointProbe(benchmark::State& state) {
     std::default_random_engine rng(rd());
 
     std::uniform_int_distribution<> dist(10000, data.size() - 10000);
-    std::uniform_int_distribution<> dist2(5,10);
+    std::uniform_int_distribution<> dist2(25,800);
 
     for(uint64_t query_id=0;query_id<query_count;)
     {
       uint64_t temp_index = dist(rng);
-      uint64_t rg_size = dist2(rng);
+      // uint64_t rg_size = dist2(rng);
+      uint64_t rg_size=range_query_size;
       probing_set[2*query_id]=data[temp_index].first;
       probing_set[2*query_id+1]=data[temp_index+rg_size].first;
       query_id+=1;
@@ -701,7 +708,7 @@ using namespace masters_thesis;
 
 #define KAPILBM(Table)                                                              \
   BENCHMARK_TEMPLATE(PointProbe, Table, 0)                                     \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability,point_query_prop});
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability,point_query_prop,range_query_size});
 
 
 
@@ -916,6 +923,16 @@ static void PointProbeCuckoo(benchmark::State& state) {
   using MURMUR1 = hashing::MurmurFinalizer<Key>; \
   using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilmodelhashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
+
+using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
+BenchmarKapilChainedModel(8,100,RadixSplineHash);
+
+
+using RadixSplineHash1 = learned_hashing::RadixSplineHash<std::uint64_t,18,64>;
+BenchmarKapilChainedModel(8,100,RadixSplineHash1);
+
+using RadixSplineHash2 = learned_hashing::RadixSplineHash<std::uint64_t,18,4>;
+BenchmarKapilChainedModel(8,100,RadixSplineHash2);
 
 using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
 BenchmarKapilChainedModel(8,100,RMIHash);

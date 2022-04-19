@@ -422,12 +422,13 @@ static void PointProbe(benchmark::State& state) {
     i++;
 
     // Lower bound lookup
-    auto it = table->operator[](
-        searched);  // TODO: does this generate a 'call' op? =>
+    auto it = table->hash_val(searched);
+    // auto it = table->operator[](
+        // searched);  // TODO: does this generate a 'call' op? =>
                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     benchmark::DoNotOptimize(it);
-    __sync_synchronize();
+    // __sync_synchronize();
     // full_mem_barrier;
   }
 
@@ -631,14 +632,14 @@ static void CollisionStats(benchmark::State& state) {
     // table->print_data_statistics();
 
    
-
+      uint64_t total_sum=0;
      auto start = std::chrono::high_resolution_clock::now(); 
 
     for(int itr=0;itr<probing_set.size()*0.1;itr++)
     {
       const auto searched = probing_set[itr%probing_set.size()];
       // i++;
-      table->hash_val(searched);
+      total_sum+=table->hash_val(searched);
       // Lower bound lookup
     //  table->insert(searched,searched);  // TODO: does this generate a 'call' op? =>
                       // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
@@ -651,7 +652,7 @@ static void CollisionStats(benchmark::State& state) {
     // auto duration = duration_cast<milliseconds>(stop - start); 
     auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
     std::cout << "Hash Computation is: "<< duration.count()*10.00/probing_set.size() << " nanoseconds" << std::endl;
-
+    std::cout << "Total Sum: "<<total_sum<<std::endl;
   
   }
 
@@ -729,7 +730,7 @@ using namespace masters_thesis;
 
 
 #define KAPILBM(Table)                                                              \
-  BENCHMARK_TEMPLATE(PointProbe, Table, 0)                                     \
+  BENCHMARK_TEMPLATE(CollisionStats, Table, 0)                                     \
       ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability});
 
 
@@ -758,8 +759,9 @@ using namespace masters_thesis;
   using KapilChainedHashTable##BucketSize##OverAlloc##HashFn = KapilChainedHashTable<Key, Payload, BucketSize,OverAlloc, HashFn>; \
   KAPILBM(KapilChainedHashTable##BucketSize##OverAlloc##HashFn);
 
+
 #define BenchmarKapilChainedExotic(BucketSize,OverAlloc,MMPHF)                           \
-  using KapilChainedExoticHashTable##BucketSize##MMPHF = KapilChainedExoticHashTable<Key, Payload, BucketSize, MMPHF>; \
+  using KapilChainedExoticHashTable##BucketSize##MMPHF = KapilChainedExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF>; \
   KAPILBM(KapilChainedExoticHashTable##BucketSize##MMPHF);
 
 #define BenchmarKapilChainedModel(BucketSize,OverAlloc,Model)                           \
@@ -786,8 +788,8 @@ using namespace masters_thesis;
 
 
 /////////////////GAP EXPTS/////////////////
-// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
-// BenchmarKapilGAPChainedModel(1,0,RMIHash);
+using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
+BenchmarKapilGAPChainedModel(1,0,RMIHash);
 
 /////////////////VARIANCE EXPTS/////////////////
 // using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
@@ -892,36 +894,35 @@ using namespace masters_thesis;
 
 /////////////////HASH COMPUTE EXPTS/////////////////
 
-
 // using MURMUR = hashing::MurmurFinalizer<Key>;
-// BenchmarKapilCollisionChainedModel(1,0,MURMUR);
+// BenchmarKapilChained(1,0,MURMUR);
 
 // using MultPrime64 = hashing::MultPrime64;
-// BenchmarKapilCollisionChainedModel(1,0,MultPrime64);
+// BenchmarKapilChained(1,0,MultPrime64);
 
 // using FibonacciPrime64 = hashing::FibonacciPrime64;
-// BenchmarKapilCollisionChainedModel(1,0,FibonacciPrime64);
+// BenchmarKapilChained(1,0,FibonacciPrime64);
 
 // using AquaHash = hashing::AquaHash<Key>;
-// BenchmarKapilCollisionChainedModel(1,0,AquaHash);
+// BenchmarKapilChained(1,0,AquaHash);
 
 // using XXHash3 = hashing::XXHash3<Key>;
-// BenchmarKapilCollisionChainedModel(1,0,XXHash3);
+// BenchmarKapilChained(1,0,XXHash3);
 
-using MWHC = exotic_hashing::MWHC<Key>;
- BenchmarKapilCollisionChainedExotic(1,20,MWHC);
+// using MWHC = exotic_hashing::MWHC<Key>;
+// BenchmarKapilChainedExotic(1,20,MWHC);
 
 // using BitMWHC = exotic_hashing::BitMWHC<Key>;
-//  BenchmarKapilCollisionChainedExotic(1,20,BitMWHC);
+// BenchmarKapilChainedExotic(1,20,BitMWHC);
 
-using FST = exotic_hashing::FastSuccinctTrie<Data>;
-BenchmarKapilCollisionChainedExotic(1,20,FST);
+// using FST = exotic_hashing::FastSuccinctTrie<Data>;
+// BenchmarKapilChainedExotic(1,20,FST);
 
 // using CompressedMWHC = exotic_hashing::CompressedMWHC<Key>;
-// BenchmarKapilCollisionChainedExotic(1,20,CompressedMWHC);
+// BenchmarKapilChainedExotic(1,20,CompressedMWHC);
 
 // using RankHash = exotic_hashing::RankHash<Key>;
-// BenchmarKapilCollisionChainedExotic(1,20,RankHash);
+// BenchmarKapilChainedExotic(1,20,RankHash);
 
 
 

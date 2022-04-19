@@ -101,7 +101,7 @@ class KapilLinearModelHashTable {
     
     // std::cout<<key<<" "<<index<<std::endl;
 
-    for(;(index-start<50000);)
+    for(;(index-start<5000000);)
     {
       // std::cout<<"index: "<<index<<std::endl;
       if(buckets[index%buckets.size()].insert(key, payload, *tape))
@@ -149,11 +149,12 @@ class KapilLinearModelHashTable {
     std::transform(data.begin(), data.end(), std::back_inserter(keys),
                    [](const auto& p) { return p.first; });
 
-    // std::cout<<"model building started"<<std::endl;
+    std::cout<<"dataset size: "<<keys.size()<<" buckets size: "<<buckets.size()<<std::endl;
+    std::cout<<"model building started"<<std::endl;
     // train model on sorted data
     model.train(keys.begin(), keys.end(), buckets.size());
 
-    // std::cout<<"model building over"<<std::endl;
+    std::cout<<"model building over"<<std::endl;
 
     // insert all keys according to model prediction.
     // since we sorted above, this will permit further
@@ -409,7 +410,7 @@ class KapilLinearModelHashTable {
    * @param key the key to search
    */
   forceinline int operator[](const Key& key) const {
-    assert(key != Sentinel);
+    // assert(key != Sentinel);
 
     // will become NOOP at compile time if ManualPrefetch == false
     // const auto prefetch_next = [](const auto& bucket) {
