@@ -20,7 +20,7 @@
 
 #include "convenience/builtins.hpp"
 
-namespace kapilmodelhashtable {
+namespace kapilcuckooexotichashtable {
    /**
     * Place entry in bucket with more available space.
     * If both are full, kick from either bucket with 50% chance

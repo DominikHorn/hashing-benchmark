@@ -788,8 +788,8 @@ using namespace masters_thesis;
 
 
 /////////////////GAP EXPTS/////////////////
-using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
-BenchmarKapilGAPChainedModel(1,0,RMIHash);
+// using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000>;
+// BenchmarKapilGAPChainedModel(1,0,RMIHash);
 
 /////////////////VARIANCE EXPTS/////////////////
 // using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
@@ -986,21 +986,26 @@ BenchmarKapilGAPChainedModel(1,0,RMIHash);
 // BenchmarKapilCollisionChainedModel(1,0,RadixSplineHash9);
 
 
-// using PGMHash1 = learned_hashing::PGMHash<std::uint64_t,100000,100000,500000000,float>;
-// BenchmarKapilCollisionChainedModel(1,0,PGMHash1);
 
-// using PGMHash2 = learned_hashing::PGMHash<std::uint64_t,1024,1024,500000000,float>;
-// BenchmarKapilCollisionChainedModel(1,0,PGMHash2);
 
-// using PGMHash3 = learned_hashing::PGMHash<std::uint64_t,128,128,500000000,float>;
-// BenchmarKapilCollisionChainedModel(1,0,PGMHash3);
 
-// using PGMHash4 = learned_hashing::PGMHash<std::uint64_t,32,32,500000000,float>;
-// BenchmarKapilCollisionChainedModel(1,0,PGMHash4);
 
-// using PGMHash5 = learned_hashing::PGMHash<std::uint64_t,2,2,500000000,float>;
-// BenchmarKapilCollisionChainedModel(1,0,PGMHash5);
 
+
+using PGMHash4 = learned_hashing::PGMHash<std::uint64_t,32,32,500000000,float>;
+BenchmarKapilCollisionChainedModel(1,0,PGMHash4);
+
+using PGMHash5 = learned_hashing::PGMHash<std::uint64_t,2,2,500000000,float>;
+BenchmarKapilCollisionChainedModel(1,0,PGMHash5);
+
+using PGMHash3 = learned_hashing::PGMHash<std::uint64_t,128,128,500000000,float>;
+BenchmarKapilCollisionChainedModel(1,0,PGMHash3);
+
+using PGMHash2 = learned_hashing::PGMHash<std::uint64_t,1024,1024,500000000,float>;
+BenchmarKapilCollisionChainedModel(1,0,PGMHash2);
+
+using PGMHash1 = learned_hashing::PGMHash<std::uint64_t,10000,10000,500000000,float>;
+BenchmarKapilCollisionChainedModel(1,0,PGMHash1);
 
 
 

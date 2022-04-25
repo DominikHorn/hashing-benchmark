@@ -13,6 +13,7 @@
 
 #include "include/kapil_cuckoo.hpp"
 #include "include/kapil_cuckoo_model.hpp"
+#include "include/kapil_cuckoo_exotic.hpp"
 
 // Order is important
 #include "include/convenience/undef.hpp"

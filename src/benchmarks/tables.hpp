@@ -52,15 +52,13 @@ const std::vector<std::int64_t> probe_distributions{
 
 const std::vector<std::int64_t> dataset_sizes{100000000};
 const std::vector<std::int64_t> succ_probability{100};
-// const std::vector<std::int64_t> point_query_prop{100,90,80,70,60,50,40,30,20,10,0};
-const std::vector<std::int64_t> point_query_prop{0};
-const std::vector<std::int64_t> range_query_size{1,2,4,8,16,32,64,128,256,512,1024};
+const std::vector<std::int64_t> point_query_prop{0,10,20,30,40,50,60,70,80,90,100};
 const std::vector<std::int64_t> datasets{
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
     // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM),
     static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
     };
@@ -340,10 +338,6 @@ static void PointProbe(benchmark::State& state) {
       static_cast<dataset::ProbingDistribution>(state.range(2));
    const auto succ_probability =
       static_cast<size_t>(state.range(3)); 
-    const auto point_query_prop =
-      static_cast<size_t>(state.range(4)); 
-    const auto range_query_size =
-      static_cast<size_t>(state.range(5));      
          
 
   // google benchmark will run a benchmark function multiple times
@@ -407,13 +401,11 @@ static void PointProbe(benchmark::State& state) {
 
     Table* table = (Table*)prev_table;
 
+    table->print_data_statistics();
+
     uint64_t total_sum=0;
     uint64_t query_count=100000;
 
-    // std::cout<<"Point Query Prop: "<<point_query_prop<<std::endl;
-    std::cout<<"Point Query Prop: "<<point_query_prop<<std::endl;
-
-    std::cout<<"Range Query Size: "<<range_query_size<<std::endl;
     // auto start_3 = std::chrono::high_resolution_clock::now(); 
 
     // for(int itr=0;itr<query_count;itr++)
@@ -433,89 +425,70 @@ static void PointProbe(benchmark::State& state) {
     // std::cout << "RMIPointQuery Latency is: "<< duration_3.count()*1.00/query_count << " nanoseconds" << std::endl;
 
 
-    std::random_device rd;
-    std::default_random_engine rng(rd());
+    // std::random_device rd;
+    // std::default_random_engine rng(rd());
 
-    std::uniform_int_distribution<> dist(10000, data.size() - 10000);
-    std::uniform_int_distribution<> dist2(25,800);
+    // std::uniform_int_distribution<> dist(10000, data.size() - 10000);
+    // std::uniform_int_distribution<> dist2(5,10);
 
-    for(uint64_t query_id=0;query_id<query_count;)
-    {
-      uint64_t temp_index = dist(rng);
-      // uint64_t rg_size = dist2(rng);
-      uint64_t rg_size=range_query_size;
-      probing_set[2*query_id]=data[temp_index].first;
-      probing_set[2*query_id+1]=data[temp_index+rg_size].first;
-      query_id+=1;
-    }
+    // for(uint64_t query_id=0;query_id<query_count;)
+    // {
+    //   uint64_t temp_index = dist(rng);
+    //   uint64_t rg_size = dist2(rng);
+    //   probing_set[2*query_id]=data[temp_index].first;
+    //   probing_set[2*query_id+1]=data[temp_index+rg_size].first;
+    //   query_id+=1;
+    // }
 
     
-    auto start_2 = std::chrono::high_resolution_clock::now(); 
-    int it;
+    // auto start_2 = std::chrono::high_resolution_clock::now(); 
 
-    for(int itr=0;itr<query_count;itr++)
-    {
-      // const auto searched = probing_set[itr%probing_set.size()];
-      // i++;
+    // for(int itr=0;itr<query_count;itr++)
+    // {
+    //   // const auto searched = probing_set[itr%probing_set.size()];
+    //   // i++;
 
-      // if(itr%10==0)
-      // {
-      //   std::cout<<itr<<std::endl;
-      // }
-      if(itr%100>point_query_prop)
-      {
-         it = table->rmi_range_query(probing_set[2*itr],probing_set[2*itr+1]); 
-      }
-      else
-      {
-         it = table->rmi_point_query(probing_set[2*itr]); 
-      }
+    //   // if(itr%10==0)
+    //   // {
+    //   //   std::cout<<itr<<std::endl;
+    //   // }
 
-      // Lower bound lookup
-      // auto it = table->rmi_point_query(probing_set[2*itr]); 
-      // auto it = table->rmi_range_query(probing_set[2*itr],probing_set[2*itr+1]);  // TODO: does this generate a 'call' op? =>
-                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
-      total_sum+=it;
-      benchmark::DoNotOptimize(it);
-      // __sync_synchronize();
-    }
+    //   // Lower bound lookup
+    //   // auto it = table->rmi_point_query(probing_set[2*itr]); 
+    //   auto it = table->rmi_range_query(probing_set[2*itr],probing_set[2*itr+1]);  // TODO: does this generate a 'call' op? =>
+    //                   // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+    //   total_sum+=it;
+    //   benchmark::DoNotOptimize(it);
+    //   // __sync_synchronize();
+    // }
 
-    auto stop_2 = std::chrono::high_resolution_clock::now(); 
-    // auto duration = duration_cast<milliseconds>(stop - start); 
-    auto duration_2 = duration_cast<std::chrono::nanoseconds>(stop_2 - start_2); 
-    std::cout << "RMIRangeQuery Latency is: "<< duration_2.count()*1.00/query_count << " nanoseconds" << std::endl;
+    // auto stop_2 = std::chrono::high_resolution_clock::now(); 
+    // // auto duration = duration_cast<milliseconds>(stop - start); 
+    // auto duration_2 = duration_cast<std::chrono::nanoseconds>(stop_2 - start_2); 
+    // std::cout << "RMIRangeQuery Latency is: "<< duration_2.count()*1.00/query_count << " nanoseconds" << std::endl;
 
-    auto start_1 = std::chrono::high_resolution_clock::now(); 
+    // auto start_1 = std::chrono::high_resolution_clock::now(); 
 
-    for(int itr=0;itr<query_count;itr++)
-    {
-      // const auto searched = probing_set[itr%probing_set.size()];
-      // i++;
+    // for(int itr=0;itr<query_count;itr++)
+    // {
+    //   // const auto searched = probing_set[itr%probing_set.size()];
+    //   // i++;
 
-      if(itr%100>point_query_prop)
-      {
-         it = table->hash_range_query(probing_set[2*itr],probing_set[2*itr+1]); 
-      }
-      else
-      {
-         it = table->operator[](probing_set[2*itr]); 
-      }
+    //   // Lower bound lookup
+    //   auto it = table->hash_range_query(probing_set[2*itr],probing_set[2*itr+1]);  // TODO: does this generate a 'call' op? =>
+    //                   // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+    //   total_sum+=it;
+    //   benchmark::DoNotOptimize(it);
+    //   // __sync_synchronize();
+    // }
 
-      // Lower bound lookup
-      // auto it = table->hash_range_query(probing_set[2*itr],probing_set[2*itr+1]);  // TODO: does this generate a 'call' op? =>
-                      // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
-      total_sum+=it;
-      benchmark::DoNotOptimize(it);
-      // __sync_synchronize();
-    }
-
-    auto stop_1 = std::chrono::high_resolution_clock::now(); 
-    // auto duration = duration_cast<milliseconds>(stop - start); 
-    auto duration_1 = duration_cast<std::chrono::nanoseconds>(stop_1 - start_1); 
-    std::cout << "HashRangeQuery Latency is: "<< duration_1.count()*1.00/query_count << " nanoseconds" << std::endl;
+    // auto stop_1 = std::chrono::high_resolution_clock::now(); 
+    // // auto duration = duration_cast<milliseconds>(stop - start); 
+    // auto duration_1 = duration_cast<std::chrono::nanoseconds>(stop_1 - start_1); 
+    // std::cout << "HashRangeQuery Latency is: "<< duration_1.count()*1.00/query_count << " nanoseconds" << std::endl;
 
 
-    std::cout<<"total sum:"<<total_sum<<std::endl;
+    // std::cout<<"total sum:"<<total_sum<<std::endl;
 
 
   }
@@ -525,6 +498,77 @@ static void PointProbe(benchmark::State& state) {
   Table* table = (Table*)prev_table;
 
 
+  
+
+
+  // if (previous_signature != signature)
+  // {
+  //   std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
+  //   std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+  //   table->print_data_statistics();
+
+   
+
+  //    auto start = std::chrono::high_resolution_clock::now(); 
+
+  //   for(int itr=0;itr<probing_set.size()*0.01;itr++)
+  //   {
+  //     const auto searched = probing_set[itr%probing_set.size()];
+  //     // i++;
+  //     // table->hash_val(searched);
+  //     // Lower bound lookup
+  //    table->insert(searched,searched);  // TODO: does this generate a 'call' op? =>
+  //                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+      
+      
+  //     // __sync_synchronize();
+  //   }
+
+  //    auto stop = std::chrono::high_resolution_clock::now(); 
+  //   // auto duration = duration_cast<milliseconds>(stop - start); 
+  //   auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
+  //   std::cout << "Insert Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
+
+  
+  // }
+
+  // if (previous_signature != signature)
+  // {
+  //   std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
+  //   std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
+  //   // table->print_data_statistics();
+
+  //   uint64_t total_sum=0;
+
+  //    auto start = std::chrono::high_resolution_clock::now(); 
+
+  //   for(int itr=0;itr<probing_set.size()*0.01;itr++)
+  //   {
+  //     const auto searched = probing_set[itr%probing_set.size()];
+  //     // i++;
+
+  //     // total_sum+=table->hash_val(searched); 
+
+  //     // Lower bound lookup
+  //    total_sum+=table->operator[](searched);  // TODO: does this generate a 'call' op? =>
+  //                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
+      
+  //     // total_sum+=table->rmi_range_query(searched,1); 
+  //     // total_sum+=table->range_query(searched,1); 
+  //     // __sync_synchronize();
+  //   }
+
+  //    auto stop = std::chrono::high_resolution_clock::now(); 
+  //   // auto duration = duration_cast<milliseconds>(stop - start); 
+  //   auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
+  //   // std::cout << "HashComputation Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
+  //   std::cout << "Probe Latency is: "<< duration.count()*100.00/probing_set.size() << " nanoseconds" << std::endl;
+  //    std::cout <<total_sum<<std::endl;
+   
+
+  // }
+
+  // std::cout<<"signature swap"<<std::endl;
 
   previous_signature = signature;  
 
@@ -539,8 +583,8 @@ static void PointProbe(benchmark::State& state) {
     i++;
 
     // Lower bound lookup
-    auto it = table->useless_func();
-    // auto it = table->operator[](searched);  // TODO: does this generate a 'call' op? =>
+    // auto it = table->useless_func();
+    auto it = table->operator[](searched);  // TODO: does this generate a 'call' op? =>
                     // https://stackoverflow.com/questions/10631283/how-will-i-know-whether-inline-function-is-actually-replaced-at-the-place-where
 
     benchmark::DoNotOptimize(it);
@@ -708,7 +752,7 @@ using namespace masters_thesis;
 
 #define KAPILBM(Table)                                                              \
   BENCHMARK_TEMPLATE(PointProbe, Table, 0)                                     \
-      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability,point_query_prop,range_query_size});
+      ->ArgsProduct({dataset_sizes, datasets, probe_distributions,succ_probability});
 
 
 
@@ -921,28 +965,12 @@ static void PointProbeCuckoo(benchmark::State& state) {
 
 #define BenchmarKapilCuckooExotic(BucketSize,OverAlloc,MMPHF,KickingStrat1)                           \
   using MURMUR1 = hashing::MurmurFinalizer<Key>; \
-  using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilmodelhashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
-  KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
+  using KapilCuckooExoticHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilcuckooexotichashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
+  KAPILBMCuckoo(KapilCuckooExoticHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
-using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,18,1024>;
-BenchmarKapilChainedModel(8,100,RadixSplineHash);
-
-
-using RadixSplineHash1 = learned_hashing::RadixSplineHash<std::uint64_t,18,64>;
-BenchmarKapilChainedModel(8,100,RadixSplineHash1);
-
-using RadixSplineHash2 = learned_hashing::RadixSplineHash<std::uint64_t,18,4>;
-BenchmarKapilChainedModel(8,100,RadixSplineHash2);
-
-using RMIHash = learned_hashing::RMIHash<std::uint64_t,1000000>;
-BenchmarKapilChainedModel(8,100,RMIHash);
-
-using RMIHash2 = learned_hashing::RMIHash<std::uint64_t,100>;
-BenchmarKapilChainedModel(8,100,RMIHash2);
-
-
-using RMIHash1 = learned_hashing::RMIHash<std::uint64_t,1>;
-BenchmarKapilChainedModel(8,100,RMIHash1);
+using MWHC = exotic_hashing::MWHC<Key>;
+using KickingStrat = kapilmodelhashtable::KapilModelBiasedKicking<5>;
+BenchmarKapilCuckooExotic(4,15,MWHC,KickingStrat);
 
 
 

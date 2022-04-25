@@ -85,8 +85,9 @@ class KapilChainedModelHashTable {
    * construction interface.
    */
   forceinline void insert(const Key& key, const Payload& payload) {
-    const auto index = model(key);
-    // std::cout<<"key: "<<key<<" index: "<<index<<" scale factor: "<<model.get_scale_out_factor()<<std::endl;
+    // const auto index = model(key);
+     const auto index = model(key)/100000000.0;
+    // std::cout<<"key: "<<key<<" index: "<<index<<" scale factor: "<<std::endl;
     assert(index >= 0);
     assert(index < buckets.size());
     buckets[index].insert(key, payload, *tape);
@@ -156,12 +157,14 @@ class KapilChainedModelHashTable {
     std::random_shuffle(data.begin(), data.end());
     uint64_t insert_count=1000000;
 
+    std::cout<<"Starting Inserts"<<std::endl;
+
     for(uint64_t i=0;i<data.size()-insert_count;i++)
     {
       insert(data[i].first,data[i].second);
     }
 
- 
+    std::cout<<"Mid Inserts"<<std::endl;
    
     auto start = std::chrono::high_resolution_clock::now(); 
 
@@ -171,6 +174,9 @@ class KapilChainedModelHashTable {
     }
 
      auto stop = std::chrono::high_resolution_clock::now(); 
+
+    std::cout<<"Enddd Inserts"<<std::endl;
+
     // auto duration = duration_cast<milliseconds>(stop - start); 
     auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
     std::cout<< std::endl << "Insert Latency is: "<< duration.count()*1.00/insert_count << " nanoseconds" << std::endl;
@@ -467,6 +473,41 @@ class KapilChainedModelHashTable {
 
 
     std::map<int, uint64_t>::iterator it;
+
+    std::vector<uint64_t> vec_map_count(key_vec.size(),0);
+
+    std::cout<<"Start MaxBucketSize Stats"<<std::endl;
+
+    for(int i=0;i<cdf_prediction.size();i++)
+    {
+      uint64_t a=0;
+      a=cdf_prediction[i]*key_vec.size();
+      if (a<0)
+      {
+        a=0;
+      }
+      if (a>key_vec.size())
+      {
+        a=key_vec.size()-1;
+      }
+      vec_map_count[a]++;
+    }
+
+    uint64_t max_val=0;
+
+    for(int i=0;i<vec_map_count.size();i++)
+    {
+      if(max_val<vec_map_count[i])
+      {
+        max_val=vec_map_count[i];
+      }
+    }  
+
+    std::cout<<" max keys map to a location is: "<<max_val<<std::endl;
+
+
+
+    std::cout<<"End MaxBucketSize Stats"<<std::endl;
 
     std::cout<<"Start Gap Stats"<<std::endl;
 
