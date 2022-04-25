@@ -965,12 +965,12 @@ static void PointProbeCuckoo(benchmark::State& state) {
 
 #define BenchmarKapilCuckooExotic(BucketSize,OverAlloc,MMPHF,KickingStrat1)                           \
   using MURMUR1 = hashing::MurmurFinalizer<Key>; \
-  using KapilCuckooExoticHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilcuckooexotichashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
-  KAPILBMCuckoo(KapilCuckooExoticHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
+  using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilcuckooexotichashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
+  KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
-using MWHC = exotic_hashing::MWHC<Key>;
+using BitMWHC = exotic_hashing::BitMWHC<Key>;
 using KickingStrat = kapilmodelhashtable::KapilModelBiasedKicking<5>;
-BenchmarKapilCuckooExotic(4,15,MWHC,KickingStrat);
+BenchmarKapilCuckooExotic(4,34,BitMWHC,KickingStrat);
 
 
 
