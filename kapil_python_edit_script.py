@@ -11,6 +11,7 @@ hash_mapping_dict={
     "AquaHash":"using AquaHash = hashing::AquaHash<Key>;",
     "XXHash3":"using XXHash3 = hashing::XXHash3<Key>;",
     "MWHC":"using MWHC = exotic_hashing::MWHC<Key>;",
+    "BitMWHC":"using BitMWHC = exotic_hashing::BitMWHC<Key>;",
     "FST":"using FST = exotic_hashing::FastSuccinctTrie<Data>;",
     "RadixSplineHash":"using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,num_radix_bits,max_error,100000000>;",
     "RMIHash":"using RMIHash = learned_hashing::RMIHash<std::uint64_t,max_models>;"
@@ -111,7 +112,7 @@ file1.close()
 file2.close()
 
 
-
+# print(max_models,"max_models")
 
 with open("src/benchmarks/tables.hpp", "a") as myfile:
 
