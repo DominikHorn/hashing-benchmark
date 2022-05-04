@@ -4,12 +4,16 @@ Full Scripts for Re-evaluation are under work
 
 # Files
 
-- `figures/`: **TODO(kapil)**
-- `include/`: **TODO(kapil)**
+- `include/`: 
   - `convenience/`: commonly used macros and related functionality **TODO(kapil)** is this even used anymore?
     - `builtins.hpp`: helper cpp macros like `forceinline` **TODO(kapil)** is this even used anymore?
     - `undef.hpp`: undef for macros to make sure they don't leak should this code be included somewhere else **TODO(kapil)** is this even used anymore?
-  - `*`: **TODO(kapil)**
+  - `chained.hpp`: chained hash table using traditional hash functions
+  - `chained_model.hpp`: chained hash table using learned hash functions
+  - `chained_exotic.hpp`: chained hash table using perfect hash functions
+  - `probe.hpp`: chained hash table using traditional hash functions
+  - `probe_model.hpp`: chained hash table using learned hash functions
+  - `probe_exotic.hpp`: chained hash table using perfect hash functions
   - `mmphf_table.hpp`: hashtable exploiting additional guarantees of minimal monotone perfect hash functions
   - `monotone_hashtable.hpp`: work in progress implementation of a hashtable exploiting monotone hash functions to offer lower bound lookups & scanning elements sequentially
   - `support.hpp`: simple tape storage implementation to eliminate small allocs in hashtables

@@ -968,9 +968,9 @@ static void PointProbeCuckoo(benchmark::State& state) {
   using KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1 = kapilcuckooexotichashtable::KapilCuckooExoticHashTable<Key, Payload, BucketSize,OverAlloc, MMPHF, MURMUR1,KickingStrat1>; \
   KAPILBMCuckoo(KapilCuckooModelHashTable##BucketSize##OverAlloc##HashFn##KickingStrat1);
 
-using BitMWHC = exotic_hashing::BitMWHC<Key>;
+using MWHC = exotic_hashing::MWHC<Key>;
 using KickingStrat = kapilmodelhashtable::KapilModelBiasedKicking<5>;
-BenchmarKapilCuckooExotic(4,34,BitMWHC,KickingStrat);
+BenchmarKapilCuckooExotic(4,34,MWHC,KickingStrat);
 
 
 
