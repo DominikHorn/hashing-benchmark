@@ -29,9 +29,9 @@ This repository has the source code for the implementation of various hash funct
     - `template_tables_range.hpp`: Benchmark Code for collecting range query stats of hash tables
   - `support/`: code shared by different benchmarks and tests for loading datasets and generating probe distributions
   <!-- - `tests/`: testcase code to ensure everything works correctly. Seems to have never been updated  -->
-  - `benchmarks.cpp`: original entry point for benchmarks target, idk if still used - **TODO(kapil)**
-  - `tests.cpp`: original entry point for tests target, idk if still relevant as also stated above - **TODO(kapil)**
-  - remaining files idk - **TODO(kapil)**
+  - `benchmarks.cpp`: original entry point for benchmarks target, idk if still used - 
+  - `tests.cpp`: original entry point for tests target, idk if still relevant as also stated above - 
+  - remaining files idk - 
 - `thirdparty/`: cmake dependency declarations
 - `build-debug.sh`: make debug build - 
 - `build.sh`: make production build - 
