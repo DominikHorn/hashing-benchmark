@@ -1,6 +1,7 @@
-"Can Learned Models Replace Hash Functions?" VLDB submission.
-This repository has code for various hash functions and schemes.
-Full Scripts for Re-evaluation are under work
+
+# Hashing Benchmarking
+
+This repository has code for various hash functions and schemes used in our "Can Learned Models Replace Hash Functions?" VLDB submission. 
 
 # Files
 
@@ -48,3 +49,6 @@ Full Scripts for Re-evaluation are under work
 - `run.sh`: original script to build and execute benchmark target - 
 - `setup.sh`: original script to setup repo (submodule checkout, cmake configure etc) - 
 - `test.sh`: orignal script to build and execute tests
+
+Full scripts for re-producing our experiments for the VLDB submission are under construction.
+
