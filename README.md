@@ -1,7 +1,7 @@
 
 # Hashing Benchmarking
 
-This repository has the source code for various hash functions and schemes used in our "Can Learned Models Replace Hash Functions?" VLDB submission. 
+This repository has the source code for the implementation of various hash functions and schemes used in our "Can Learned Models Replace Hash Functions?" VLDB submission. 
 
 # Files
 
