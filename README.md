@@ -49,5 +49,5 @@ This repository has the source code for the implementation of various hash funct
 - `setup.sh`: original script to setup repo (submodule checkout, cmake configure etc) 
 - `test.sh`: orignal script to build and execute tests
 
-Full scripts for re-producing our experiments for the VLDB submission are under construction.
+Full steps for re-producing our experiments for the VLDB submission are under construction.
 
