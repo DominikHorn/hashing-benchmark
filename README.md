@@ -1,9 +1,9 @@
 
-## Hashing Benchmarking
+# Hashing Benchmarking
 
 This repository has the source code for the implementation of various hash functions and schemes used in our "Can Learned Models Replace Hash Functions?" VLDB submission. 
 
-# Files
+### Files
 
 - Hash table implementation using different combinations of hashing schemes and functions:
   - `include/chained.hpp`: chained hash table using traditional hash functions
@@ -57,7 +57,7 @@ This repository has the source code for the implementation of various hash funct
 <!-- - `edit_benchmark.py`: script to copy relevant code for benchmarking -->
 <!-- - `masters_thesis.hpp`: header file exposing everything from include/ as a library (to be used by benchmarks and tests) -->
 
-# Running Steps
+### Running Steps
 
 Full steps to re-produce our experimental results for the VLDB submission are under construction.
 
