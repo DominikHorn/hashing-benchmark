@@ -12,14 +12,14 @@ This repository has the source code for the implementation of various hash funct
   - `include/probe.hpp`: linear probing hash table using traditional hash functions
   - `include/probe_model.hpp`: linear probing hash table using learned hash functions
   - `include/probe_exotic.hpp`: linear probing hash table using perfect hash functions
-  - `inclulde/cuckoo.hpp`: Cuckoo hash table using traditional hash functions
-  - `include/cuckoo_model.hpp`: Cuckoo hash table using learned hash functions
-  - `include/cuckoo_exotic.hpp`: Cuckoo hash table using perfect hash functions 
+  - `inclulde/cuckoo.hpp`: cuckoo hash table using traditional hash functions
+  - `include/cuckoo_model.hpp`: cuckoo hash table using learned hash functions
+  - `include/cuckoo_exotic.hpp`: cuckoo hash table using perfect hash functions 
   <!-- - `include/mmphf_table.hpp`: hashtable exploiting additional guarantees of minimal monotone perfect hash functions -->
   <!-- - `include/monotone_hashtable.hpp`: work in progress implementation of a hashtable exploiting monotone hash functions to offer lower bound lookups & scanning elements sequentially -->
   
 - Optimization stuff
-  - `include/convenience/`: commonly used cpp macros (e.g., `forceinline`) and related functionality. 
+  - `include/convenience/`: commonly used cpp macros (e.g., `forceinline`) and related functionality 
     <!-- - `builtins.hpp`: helper cpp macros like `forceinline` -->
     <!-- - `undef.hpp`: undef for macros to make sure they don't leak should this code be included somewhere else -->
   - `include/support.hpp`: simple tape storage implementation to eliminate small allocs in hashtables
@@ -45,7 +45,7 @@ This repository has the source code for the implementation of various hash funct
   - `build.sh`: make production build 
   - `run.sh`: original script to build and execute benchmark target 
   - `perf.sh`: like `run.sh` but with perf instrumentation
-  - `only_new.py`: helper script for `run.sh`. It extracts all datapoints we already measured from results.json and ensures that we only run new datapoints
+  - `only_new.py`: helper script for `run.sh`, which extracts all datapoints we already measured from results.json and ensures that we only run new datapoints
   - `test.sh`: orignal script to build and execute tests
   - `benchmark.sh`: script to run probe and insert relevant code for benchmarking
 
@@ -57,6 +57,7 @@ This repository has the source code for the implementation of various hash funct
 <!-- - `edit_benchmark.py`: script to copy relevant code for benchmarking -->
 <!-- - `masters_thesis.hpp`: header file exposing everything from include/ as a library (to be used by benchmarks and tests) -->
 
+# Running Steps
 
-Full steps for re-producing our experiments for the VLDB submission are under construction.
+Full steps to re-produce our experimental results for the VLDB submission are under construction.
 
