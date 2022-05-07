@@ -32,11 +32,11 @@ This repository has the source code for the implementation of various hash funct
   - `benchmarks.cpp`: original entry point for benchmarks target 
   - `tests.cpp`: original entry point for tests target 
 - `thirdparty/`: cmake dependency declarations
-- `build-debug.sh`: make debug build - 
-- `build.sh`: make production build - 
-- `cleanup.py`: deduplicate and sort measurements json file - 
-- `CMakeLists.txt`: cmake target definitions - 
-- `export.py`: original plotting script - 
+- `build-debug.sh`: make debug build 
+- `build.sh`: make production build 
+- `cleanup.py`: deduplicate and sort measurements json file 
+- `CMakeLists.txt`: cmake target definitions 
+- `export.py`: original plotting script 
 - `edit_benchmark.py`: script to copy relevant code for benchmarking
 - `benchmark.sh`: script to run probe and insert relevant code for benchmarking
 - `masters_thesis.hpp`: header file exposing everything from include/ as a library (to be used by benchmarks and tests)
@@ -45,8 +45,8 @@ This repository has the source code for the implementation of various hash funct
 - `perf.sh`: like `run.sh` but with perf instrumentation
 - `README.md` this file
 - `requirements.txt`: python requirements 
-- `run.sh`: original script to build and execute benchmark target - 
-- `setup.sh`: original script to setup repo (submodule checkout, cmake configure etc) - 
+- `run.sh`: original script to build and execute benchmark target 
+- `setup.sh`: original script to setup repo (submodule checkout, cmake configure etc) 
 - `test.sh`: orignal script to build and execute tests
 
 Full scripts for re-producing our experiments for the VLDB submission are under construction.
