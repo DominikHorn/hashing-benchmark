@@ -18,6 +18,9 @@ This repository has the source code for the implementation of various hash funct
   <!-- - `include/mmphf_table.hpp`: hashtable exploiting additional guarantees of minimal monotone perfect hash functions -->
   <!-- - `include/monotone_hashtable.hpp`: work in progress implementation of a hashtable exploiting monotone hash functions to offer lower bound lookups & scanning elements sequentially -->
   
+- Non-partitioned hash join implementation using different combinations of hashing schemes and functions:
+  - `include/join`: it has `npj_join_runner.cpp` which provides the main implementation and other helper/configuration files
+
 - Optimization stuff
   - `include/convenience/`: commonly used cpp macros (e.g., `forceinline`) and related functionality 
     <!-- - `builtins.hpp`: helper cpp macros like `forceinline` -->
@@ -48,6 +51,7 @@ This repository has the source code for the implementation of various hash funct
   - `only_new.py`: helper script for `run.sh`, which extracts all datapoints we already measured from results.json and ensures that we only run new datapoints
   - `test.sh`: orignal script to build and execute tests
   - `benchmark.sh`: script to run probe and insert relevant code for benchmarking
+  - `scripts/evaluation/join_tuner.sh`: script to run the join experiments
 
 - `*results*.json`: benchmark results from internal measurements 
 
