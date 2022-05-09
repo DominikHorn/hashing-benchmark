@@ -29,6 +29,8 @@
 # python3 edit_benchmark.py 1 34 "RMIHash" "Traditional" "Linear" "Balanced" 0 100 1024
 # python3 edit_benchmark.py 4 20 RMIHash "Model" "Cuckoo" "Biased" 5 1000 1024
 
+touch benchmark_results.json
+
 ## HASH Computation
 
 # for bucket_size in 1 
@@ -372,3 +374,7 @@ do
         done
     done
 done
+
+
+
+rm benchmark_results.json
