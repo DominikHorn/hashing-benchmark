@@ -5,15 +5,14 @@ This repository has the source code for the implementation of various hash funct
 
 
 
-## INSTALLATION 
+### Installation 
 
-git clone --recurse-submodules https://github.com/DominikHorn/hashing-benchmark.git
+Run the following command: `git clone --recurse-submodules https://github.com/DominikHorn/hashing-benchmark.git`
 
-## Build & RUN
-bash benchmark.sh
+### Build & Run
+Run the following command: `bash benchmark.sh`
 
-
-This builds the code and runs the probe throughput experiments. 
+This builds the code and runs the hash table throughput experiments. 
 The results of the probe latency are stored in JSON format in "results.json" and other stats are loggged in "log_stats.out"
 
 
@@ -74,8 +73,4 @@ The results of the probe latency are stored in JSON format in "results.json" and
 <!-- - `export.py`: original plotting script -->
 <!-- - `edit_benchmark.py`: script to copy relevant code for benchmarking -->
 <!-- - `masters_thesis.hpp`: header file exposing everything from include/ as a library (to be used by benchmarks and tests) -->
-
-### Running Steps
-
-Full steps to re-produce our experimental results for the VLDB submission are under construction.
 
