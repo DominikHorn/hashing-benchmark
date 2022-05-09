@@ -1,3 +1,172 @@
+touch benchmark_results.json
+rm results.json
+touch results.json
+rm log_stats.out
+touch log_stats.out
+######## LEARNED LINEAR PROBING ################
+
+for bucket_size in 1
+do
+    for overalloc in 34 54 82 122 185 300
+    do
+        for model_name in "RMIHash" "RadixSplineHash" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100 1024 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100 1024 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Model" "Linear" "Balanced" 0 100 1024
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+######## TRADITIONAL LINEAR PROBING ################
+
+for bucket_size in 1
+do
+    for overalloc in 34 54 82 122 185 300 
+    do
+        for model_name in "MURMUR" "MultPrime64" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Traditional" "Linear" "Balanced" 0 0 0
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+######## PERFECT LINEAR PROBING ################
+
+for bucket_size in 1
+do
+    for overalloc in 34 54 82 122 185 300 
+    do
+        for model_name in "MWHC" "BitMWHC" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Linear" "Balanced" 0 0 0 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Linear" "Balanced" 0 0 0 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Exotic" "Linear" "Balanced" 0 0 0
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+######## TRADITIONAL CHAINED PROBING ################
+
+for bucket_size in 1 
+do
+    for overalloc in 10050 10067 10080 0 34 100 300 
+    do
+        for model_name in "MURMUR" "MultPrime64" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0  >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Traditional" "Chained" "Balanced" 0 0 0
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+######## LEARNED CHAINED PROBING ################
+
+for bucket_size in 1 
+do
+    for overalloc in 10050 10067 10080 0 34 100 300
+    do
+        for model_name in "RMIHash" "RadixSplineHash" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100 1024 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100 1024 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Model" "Chained" "Balanced" 0 100 1024
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+
+####### PERFECT CHAINED PROBING ################
+
+for bucket_size in 1
+do
+    for overalloc in 34 54 82 122 185 300 
+    do
+        for model_name in "MWHC" "BitMWHC" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Linear" "Balanced" 0 0 0 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Linear" "Balanced" 0 0 0 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Exotic" "Linear" "Balanced" 0 0 0
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+
+######## TRADITIONAL CUCKOO ################
+for bucket_size in 4 
+do
+    for overalloc in 34 25 17 11 5
+    do
+        for model_name in "MURMUR" "MultPrime64"  
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Traditional" "Cuckoo" "Biased" 5 0 0
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+######## LEARNED CUCKOO ################
+for bucket_size in 4 
+do
+    for overalloc in 34 25 17 11 5
+    do
+        for model_name in "RMIHash" "RadixSplineHash" 
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100 1024 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100 1024 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Model" "Cuckoo" "Biased" 5 100000 32
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+######## PERFECT CUCKOO ################
+
+for bucket_size in 4 
+do
+    for overalloc in 34 25 17 11 5
+    do
+        for model_name in "BitMWHC" "MWHC"  
+        do
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>results.json
+            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>log_stats.out
+            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0
+            bash run.sh >>log_stats.out
+            cat benchmark_results.json >>results.json
+        done
+    done
+done
+
+
+
+rm benchmark_results.json
+
+
+
+####################################################### CODE DUMP ############################################################################
+####################################################### CODE DUMP ############################################################################
+####################################################### CODE DUMP ############################################################################
+####################################################### CODE DUMP ############################################################################
+
 # bucket_size=int(sys.argv[1])
 # overalloc=int(sys.argv[2])
 # model_name=str(sys.argv[3])
@@ -29,7 +198,7 @@
 # python3 edit_benchmark.py 1 34 "RMIHash" "Traditional" "Linear" "Balanced" 0 100 1024
 # python3 edit_benchmark.py 4 20 RMIHash "Model" "Cuckoo" "Biased" 5 1000 1024
 
-touch benchmark_results.json
+# touch benchmark_results.json
 
 ## HASH Computation
 
@@ -360,21 +529,21 @@ touch benchmark_results.json
 
 #Exotic Cuckoo Experiments 
 
-for bucket_size in 4 
-do
-    for overalloc in 34 25 17 11 5
-    do
-        for model_name in "BitMWHC" "MWHC"  
-        do
-            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>kapil_results.json
-            echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>data_stats_mar14.out
-            python3 edit_benchmark.py $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0
-            bash run.sh >>data_stats_mar14.out
-            cat benchmark_results.json >>kapil_results.json
-        done
-    done
-done
+# for bucket_size in 4 
+# do
+#     for overalloc in 34 25 17 11 5
+#     do
+#         for model_name in "BitMWHC" "MWHC"  
+#         do
+#             echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>kapil_results.json
+#             echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>data_stats_mar14.out
+#             python3 edit_benchmark.py $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0
+#             bash run.sh >>data_stats_mar14.out
+#             cat benchmark_results.json >>kapil_results.json
+#         done
+#     done
+# done
 
 
 
-rm benchmark_results.json
+# rm benchmark_results.json
