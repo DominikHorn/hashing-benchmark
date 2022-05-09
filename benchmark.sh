@@ -362,7 +362,7 @@ for bucket_size in 4
 do
     for overalloc in 34 25 17 11 5
     do
-        for model_name in "BitMWWHC" "MWHC"  
+        for model_name in "BitMWHC" "MWHC"  
         do
             echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>kapil_results.json
             echo "Start Here" $bucket_size $overalloc $model_name "Exotic" "Cuckoo" "Biased" 5 0 0 >>data_stats_mar14.out
