@@ -5,12 +5,16 @@ This repository has the source code for the implementation of various hash funct
 
 
 
-### INSTALLATION 
+## INSTALLATION 
 
 git clone --recurse-submodules https://github.com/DominikHorn/hashing-benchmark.git
 
-run "bash benchmark.sh" to build the code and run probe throughput experiments. 
-The results of the probe latency are stored in JSON format in "results.json"
+## Build & RUN
+bash benchmark.sh
+
+
+This builds the code and runs the probe throughput experiments. 
+The results of the probe latency are stored in JSON format in "results.json" and other stats are loggged in "log_stats.out"
 
 
 ### Files
