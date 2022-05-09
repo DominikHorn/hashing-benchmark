@@ -3,6 +3,16 @@
 
 This repository has the source code for the implementation of various hash functions and schemes used in our "Can Learned Models Replace Hash Functions?" VLDB submission. 
 
+
+
+### INSTALLATION 
+
+git clone --recurse-submodules https://github.com/DominikHorn/hashing-benchmark.git
+
+run "bash benchmark.sh" to build the code and run probe throughput experiments. 
+The results of the probe latency are stored in JSON format in "results.json"
+
+
 ### Files
 
 - Hash table implementation using different combinations of hashing schemes and functions:
