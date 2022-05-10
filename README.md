@@ -10,10 +10,21 @@ This repository has the source code for the implementation of various hash funct
 Run the following command: `git clone --recurse-submodules https://github.com/DominikHorn/hashing-benchmark.git`
 
 ### Build & Run
-Run the following command: `bash benchmark.sh`
+- To run the hash table experiments
+   - Change the path of SOSD datasets in file `src/support/datasets.hpp`
+   - To build and run the hash table experiemnts, run the following command: `bash benchmark.sh`
+The results of the hash table experiments are stored in JSON format in "results.json", and other stats are loggged in "log_stats.out". 
 
-This builds the code and runs the hash table throughput experiments. 
-The results of the probe latency are stored in JSON format in "results.json" and other stats are loggged in "log_stats.out"
+- To run the range query experiments
+   - Change the path of SOSD datasets in file `src/support/datasets.hpp`
+   - To build and run the range query experiemnts, run the following command: `bash benchmark_range.sh`
+The results of the range query experiments are stored in JSON format in "results.json", and other stats are loggged in "log_stats.out".
+
+- To run the join experiments
+   - Change the path of SOSD datasets in file `include/join/utils/datasets.hpp`
+   - Change the path of `OUTPUT_FOLDER` in file `scripts/evaluation/join_tuner.sh` by changing the variable `output_folder_path`
+   - To run the join experiments, run the following command `sh scripts/evaluation/join_tuner.sh`
+The results of the join experiments are stored in CSV format in the `OUTPUT_FOLDER`, and other stats are loggged in "log_stats.out".
 
 
 ### Files
