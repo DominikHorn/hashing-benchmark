@@ -24,7 +24,7 @@ The results of the range query experiments are stored in JSON format in "results
    - Change the path of SOSD datasets in file `include/join/utils/datasets.hpp`
    - Change the path of `OUTPUT_FOLDER` in file `scripts/evaluation/join_tuner.sh` by changing the variable `output_folder_path`
    - To run the join experiments, run the following command `sh scripts/evaluation/join_tuner.sh`
-The results of the join experiments are stored in CSV format in the `OUTPUT_FOLDER`, and other stats are loggged in "log_stats.out".
+The results of the join experiments are stored in CSV format in the `OUTPUT_FOLDER`.
 
 
 ### Files
