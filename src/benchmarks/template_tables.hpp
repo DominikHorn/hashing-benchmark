@@ -425,12 +425,14 @@ static void PointProbe(benchmark::State& state) {
     uint64_t total_sum=0;
     uint64_t index=0;
 
+    std::random_shuffle(probing_set.begin(), probing_set.end());
+
      auto start = std::chrono::high_resolution_clock::now(); 
 
     for(int itr=0;itr<probing_set.size()*0.1;itr++)
     {
-      index=(itr*1381)%probing_set.size();
-      const auto searched = probing_set[index];
+      // index=(itr*1381)%probing_set.size();
+      const auto searched = probing_set[itr];
       // i++;
 
       // total_sum+=table->hash_val(searched); 
@@ -768,13 +770,13 @@ static void PointProbeCuckoo(benchmark::State& state) {
     std::cout<<"Probing set size is: "<<probing_set.size()<<std::endl;
     std::cout<<std::endl<<" Dataset Size: "<<std::to_string(dataset_size) <<" Dataset: "<< dataset::name(did)<<std::endl;
 
-   
+   std::random_shuffle(probing_set.begin(), probing_set.end());
     uint64_t total_sum=0;
      auto start = std::chrono::high_resolution_clock::now(); 
 
     for(uint64_t itr=0;itr<probing_set.size()*0.1;itr++)
     {
-      const auto searched = probing_set[(itr*1381)%probing_set.size()];
+      const auto searched = probing_set[itr%probing_set.size()];
       // i++;
       // table->hash_val(searched);
       // Lower bound lookup
