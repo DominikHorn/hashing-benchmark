@@ -15,6 +15,7 @@ hash_mapping_dict={
     "FST":"using FST = exotic_hashing::FastSuccinctTrie<Data>;",
     "RadixSplineHash":"using RadixSplineHash = learned_hashing::RadixSplineHash<std::uint64_t,num_radix_bits,max_error,100000000>;",
     "RMIHash":"using RMIHash = learned_hashing::RMIHash<std::uint64_t,max_models>;"
+    "PGMHash":"using PGMHash = learned_hashing::PGMHash<std::uint64_t,max_error,max_error,500000000,float>;"
 }
 
 
