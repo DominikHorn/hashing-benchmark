@@ -163,7 +163,7 @@ class KapilLinearModelHashTable {
     // for (const auto& d : data) insert(d.first, d.second);
 
     std::random_shuffle(data.begin(), data.end());
-    uint64_t insert_count=1000000;
+    uint64_t insert_count=10000000;
 
     for(uint64_t i=0;i<data.size()-insert_count;i++)
     {

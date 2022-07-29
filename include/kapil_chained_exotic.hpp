@@ -121,8 +121,22 @@ class KapilChainedExoticHashTable {
     std::transform(data.begin(), data.end(), std::back_inserter(keys),
                    [](const auto& p) { return p.first; });
 
+
+    std::cout<<"Start Build"<<std::endl;
+    auto start_1 = std::chrono::high_resolution_clock::now();    
+
     // train mmphf on sorted data
     mmphf.construct(keys.begin(), keys.end());
+
+    auto stop_1 = std::chrono::high_resolution_clock::now(); 
+
+    std::cout<<"End Build"<<std::endl;
+
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration_1 = duration_cast<std::chrono::nanoseconds>(stop_1 - start_1); 
+    std::cout<< std::endl << "HashBuild Latency is: "<< duration_1.count() << " nanoseconds" << std::endl;
+
+    // return ;
 
     // std::cout<<std::endl<<"Start Here "<<BucketSize<<" "<<OverAlloc<<" "<<mmphf.name()<<" Exotic Chained Balanced 0 0 "<<" 0"<<std::endl<<std::endl;
 

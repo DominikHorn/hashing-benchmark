@@ -50,16 +50,17 @@ const std::vector<std::int64_t> probe_distributions{
     static_cast<std::underlying_type_t<dataset::ProbingDistribution>>(
         dataset::ProbingDistribution::UNIFORM)};
 
-const std::vector<std::int64_t> dataset_sizes{100000000};
+const std::vector<std::int64_t> dataset_sizes{1000000,5000000,10000000,20000000,50000000,100000000};
+// const std::vector<std::int64_t> dataset_sizes{100000000};
 const std::vector<std::int64_t> succ_probability{100};
 const std::vector<std::int64_t> datasets{
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
-    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
-    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::OSM)
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::SEQUENTIAL),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::GAPPED_10),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::UNIFORM),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::WIKI),
+    // static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::FB)
+    static_cast<std::underlying_type_t<dataset::ID>>(dataset::ID::NORMAL)
     };
 
 const std::vector<std::int64_t> variance_datasets{
@@ -992,20 +993,27 @@ using namespace masters_thesis;
 
 
 
-using PGMHash4 = learned_hashing::PGMHash<std::uint64_t,32,32,500000000,float>;
-BenchmarKapilCollisionChainedModel(1,0,PGMHash4);
+// using PGMHash4 = learned_hashing::PGMHash<std::uint64_t,32,32,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash4);
 
-using PGMHash5 = learned_hashing::PGMHash<std::uint64_t,2,2,500000000,float>;
-BenchmarKapilCollisionChainedModel(1,0,PGMHash5);
+// using PGMHash5 = learned_hashing::PGMHash<std::uint64_t,2,2,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash5);
 
-using PGMHash3 = learned_hashing::PGMHash<std::uint64_t,128,128,500000000,float>;
-BenchmarKapilCollisionChainedModel(1,0,PGMHash3);
+// using PGMHash3 = learned_hashing::PGMHash<std::uint64_t,128,128,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash3);
 
-using PGMHash2 = learned_hashing::PGMHash<std::uint64_t,1024,1024,500000000,float>;
-BenchmarKapilCollisionChainedModel(1,0,PGMHash2);
+// using PGMHash2 = learned_hashing::PGMHash<std::uint64_t,1024,1024,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash2);
 
-using PGMHash1 = learned_hashing::PGMHash<std::uint64_t,10000,10000,500000000,float>;
-BenchmarKapilCollisionChainedModel(1,0,PGMHash1);
+// using PGMHash1 = learned_hashing::PGMHash<std::uint64_t,10000,10000,500000000,float>;
+// BenchmarKapilCollisionChainedModel(1,0,PGMHash1);
+
+
+// using RMIHash1 = learned_hashing::RMIHash<std::uint64_t,1000>;
+// BenchmarKapilCollisionChainedModel(1,0,RMIHash1);
+
+using MWHC = exotic_hashing::MWHC<Key>;
+BenchmarKapilChainedExotic(1,20,MWHC);
 
 
 

@@ -85,9 +85,9 @@ class KapilChainedModelHashTable {
    * construction interface.
    */
   forceinline void insert(const Key& key, const Payload& payload) {
-    // const auto index = model(key);
-     const auto index = model(key)/100000000.0;
-    // std::cout<<"key: "<<key<<" index: "<<index<<" scale factor: "<<std::endl;
+    const auto index = model(key);
+    //  const auto index = model(key)/100000000.0;
+    // std::cout<<"key: "<<key<<" index: "<<index<<std::endl;
     assert(index >= 0);
     assert(index < buckets.size());
     buckets[index].insert(key, payload, *tape);
@@ -123,8 +123,22 @@ class KapilChainedModelHashTable {
     std::transform(data.begin(), data.end(), std::back_inserter(keys),
                    [](const auto& p) { return p.first; });
 
+    std::cout<<"Start Build"<<std::endl;
+    auto start_1 = std::chrono::high_resolution_clock::now();                
+
     // train model on sorted data
     model.train(keys.begin(), keys.end(), buckets.size());
+
+
+     auto stop_1 = std::chrono::high_resolution_clock::now(); 
+
+    std::cout<<"End Build"<<std::endl;
+
+    // auto duration = duration_cast<milliseconds>(stop - start); 
+    auto duration_1 = duration_cast<std::chrono::nanoseconds>(stop_1 - start_1); 
+    std::cout<< std::endl << "HashBuild Latency is: "<< duration_1.count() << " nanoseconds" << std::endl;
+
+    // return;
     
 
     std::string model_name=model.name();
@@ -157,8 +171,9 @@ class KapilChainedModelHashTable {
     std::random_shuffle(data.begin(), data.end());
     uint64_t insert_count=1000000;
 
-    std::cout<<"Starting Inserts"<<std::endl;
 
+    std::cout<<"Starting Inserts"<<std::endl;
+    
     for(uint64_t i=0;i<data.size()-insert_count;i++)
     {
       insert(data[i].first,data[i].second);
@@ -175,7 +190,7 @@ class KapilChainedModelHashTable {
 
      auto stop = std::chrono::high_resolution_clock::now(); 
 
-    std::cout<<"Enddd Inserts"<<std::endl;
+    std::cout<<"End Inserts"<<std::endl;
 
     // auto duration = duration_cast<milliseconds>(stop - start); 
     auto duration = duration_cast<std::chrono::nanoseconds>(stop - start); 
@@ -572,6 +587,8 @@ class KapilChainedModelHashTable {
 
 
     std::map<int, int>::iterator it;
+
+    std::cout<<"Proportion of Colliding Keys: "<<(num_ele.size()-num_ele_map[1])*1.00/num_ele.size()<<std::endl;
 
     std::cout<<"Start Num Elements"<<std::endl;
 

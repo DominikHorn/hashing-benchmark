@@ -263,6 +263,8 @@ class KapilChainedHashTable {
 
     std::map<int, int>::iterator it;
 
+    std::cout<<"Proportion of Colliding Keys: "<<(num_ele.size()-num_ele_map[1])*1.00/num_ele.size()<<std::endl;
+
     std::cout<<"Start Num Elements"<<std::endl;
 
     for (it = num_ele_map.begin(); it != num_ele_map.end(); it++)

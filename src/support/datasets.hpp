@@ -100,12 +100,14 @@ enum class ID {
   UNIFORM = 2,
   FB = 3,
   OSM = 4,
-  WIKI = 5,
-  NORMAL = 6,
-  Variance_2=7,
-  Variance_4=8,
-  Variance_half=9,
-  Variance_quarter=10
+  BOOK = 5,
+  WIKI = 6,
+  NORMAL = 7,
+  Variance_2=8,
+  Variance_4=9,
+  Variance_half=10,
+  Variance_quarter=11,
+  Seq1=12
 };
 
 inline std::string name(ID id) {
@@ -122,6 +124,8 @@ inline std::string name(ID id) {
       return "fb";
     case ID::OSM:
       return "osm";
+    case ID::BOOK:
+      return "book";  
     case ID::WIKI:
       return "wiki";
     case ID::Variance_2:
@@ -131,7 +135,9 @@ inline std::string name(ID id) {
     case ID::Variance_half:
       return "Variance_half";
     case ID::Variance_quarter:
-      return "Variance_quarter";    
+      return "Variance_quarter";
+    case ID::Seq1:
+      return "Seq1";      
   }
   return "unnamed";
 };
@@ -146,7 +152,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
       datasets;
 
   // cache sosd dataset files to avoid expensive load operations
-  static std::vector<Data> ds_fb, ds_osm, ds_wiki;
+  static std::vector<Data> ds_fb, ds_osm, ds_wiki, ds_book,ds_amz;
 
   // return cached (if available)
   const auto id_it = datasets.find(id);
@@ -160,6 +166,10 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
   switch (id) {
     case ID::SEQUENTIAL: {
       for (size_t i = 0; i < ds.size(); i++) ds[i] = i*10 + 20000;
+      break;
+    }
+    case ID::Seq1: {
+      for (size_t i = 0; i < ds.size(); i++) ds[i] = i;
       break;
     }
     case ID::GAPPED_10: {
@@ -336,6 +346,31 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
       }
 
       // std::cout<<" j is: "<<j<<" i is: "<<i<<std::endl;
+      break;
+    }
+    case ID::BOOK: {
+      if (ds_book.empty()) {
+        ds_book = load<Data>("/home/kapil/PhDAcads/benchmark_hashing/SOSD/scripts/data/books_200M_uint64");
+        std::shuffle(ds_book.begin(), ds_book.end(),rng);
+      }
+
+
+     
+      if (ds_book.empty()) return {};
+       size_t j=0;
+       size_t i = 0;
+      // sampling this way is only valid since ds_osm is shuffled!
+      for (; j < ds_book.size() && i < ds.size(); j++)
+        {
+          // if(log2(ds_book[j])<62.01 || log2(ds_book[j])>62.99)
+          // {
+          //   continue;
+          // }
+          ds[i] = ds_book[j];
+          i++;
+        }
+
+        // std::cout<<" j is: "<<j<<" i is: "<<i<<std::endl;
       break;
     }
     case ID::OSM: {
