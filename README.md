@@ -10,6 +10,9 @@ This repository has the source code for the implementation of various hash funct
 Run the following command: `git clone --recurse-submodules https://github.com/DominikHorn/hashing-benchmark.git`
 
 ### Build & Run
+- To download the SOSD datasets
+  - run `bash download.sh` in the data folder
+
 - To run the hash table experiments
    - Change the path of SOSD datasets in file `src/support/datasets.hpp`
    - To build and run the hash table experiemnts, run the following command: `bash benchmark.sh`

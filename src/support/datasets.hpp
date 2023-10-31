@@ -308,7 +308,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
     }
     case ID::FB: {
       if (ds_fb.empty()) {
-        ds_fb = load<Data>("/home/kapil/PhDAcads/benchmark_hashing/SOSD/scripts/data/fb_200M_uint64");
+        ds_fb = load<Data>("data/data/fb_200M_uint64");
         std::shuffle(ds_fb.begin(), ds_fb.end(),rng);
       }
       // ds file does not exist
@@ -340,7 +340,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
     }
     case ID::OSM: {
       if (ds_osm.empty()) {
-        ds_osm = load<Data>("/home/kapil/PhDAcads/benchmark_hashing/SOSD/scripts/data/osm_cellids_200M_uint64");
+        ds_osm = load<Data>("data/data/osm_cellids_800M_uint64");
         std::shuffle(ds_osm.begin(), ds_osm.end(),rng);
       }
 
@@ -370,7 +370,7 @@ std::vector<Data> load_cached(ID id, size_t dataset_size) {
     }
     case ID::WIKI: {
       if (ds_wiki.empty()) {
-        ds_wiki = load<Data>("/home/kapil/PhDAcads/benchmark_hashing/SOSD/scripts/data/wiki_ts_200M_uint64");
+        ds_wiki = load<Data>("data/data/wiki_ts_200M_uint64");
         std::shuffle(ds_wiki.begin(), ds_wiki.end(),rng);
       }
 
